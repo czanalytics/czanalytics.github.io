@@ -1,6 +1,6 @@
 ---
 layout: page
-title: CZA
+title: CZAnalytics
 ---
 
 ### R
@@ -8,6 +8,8 @@ title: CZA
 
 ### Haskell
 
+- [hs-misc](https://github.com/czanalytics/hs-misc)
+- haskell
 
 ### Clojure
 
