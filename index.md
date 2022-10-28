@@ -1,9 +1,13 @@
 ---
 layout: page
+theme: minima
 title: CZAnalytics
 ---
 
+[about](about.md)
+
 ### R
+
 [R](http://www.r-project.org/)
 
 ### Haskell
