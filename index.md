@@ -1,6 +1,6 @@
 ---
 layout: page
-theme: minima
+theme: minimal
 title: CZAnalytics
 ---
 
