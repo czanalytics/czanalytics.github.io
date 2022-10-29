@@ -1,7 +1,11 @@
 ---
-layout: page
-theme: minima
-title: About
+layout: default
 ---
 
-tbd ...
+[Home](./index.html)
+
+
+Text can be **bold**, _italic_, or ~~strikethrough~~.
+
+
+TBD ...
