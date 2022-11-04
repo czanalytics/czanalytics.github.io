@@ -7,11 +7,11 @@ layout: default
 
 ## When you wonder how to ...
 
-> better monetize your data, and new business opportinities?
-> optimize your business processes using data?
-> build a strategy for machine learning AI?
-> manage your analytics R&D projects, or lead a data science practice?
-> pitch analytics products internally or for other stakeholders?
+*   better monetize your data, and new business opportinities?
+*   optimize your business processes using data?
+*   build a strategy for machine learning AI?
+*   manage your analytics R&D projects, or lead a data science practice?
+*   pitch analytics products internally or for other stakeholders?
 
 
 ## ... please, consider my services:
@@ -30,20 +30,48 @@ layout: default
 
 ## Here is what I deliver:
 
-*   Consulting reports with ideas & recommendations
-*   Personal mentoring, inspirational talks & training
-*   Preliminary data inspection & validation, project feasibility studies
-*   Consept designs, prototypes, pilots, production systems
-*   Full source code, documentation, training
+*   As agreed, consulting reports with ideas & recommendations.
+*   Analytics maturity assessments
+*   Project feasibility studies, preliminary data inspection & validation.
+*   Consept designs, prototypes, pilots, production systems.
+*   Transparency, full source code based on open source, documentation, training.
 
 
 Solution examples:
 
-*   Environment: Open weather data solutions 
-*   Transportation: Customer behavior and demand models 
-*   Manufacturing: Predictive maintenance, failure prediction, anomaly detection
-*   Energy: Recommendation engines for optimization 
-*   Physics stuff: simulation, sensor analytics, quantum computing   
+*   Environment: Open weather data solutions. 
+*   Transportation: Customer behavior and demand models. 
+*   Manufacturing: Predictive maintenance, failure prediction, anomaly detection.
+*   Energy: Recommendation engines for optimization. 
+*   Physics stuff: simulation, sensor analytics, quantum computing.   
+
+
+* * *
+
+
+## Design principles
+
+We are passionate about:
+
+
+*   Agile & lean co-creation
+*   Support for self-help 
+*   Simple, easy to manage solutions
+*   Automation
+*   Use of open source
+*   Ethical and transparent AI
+
+
+* * *
+
+
+## Technology
+
+*   Notebooks: Colab
+*   AI: Python, PyTorch
+*   Statistics: R
+*   Containers: Docker
+*   Cloud: Azure
 
 
 * * *
