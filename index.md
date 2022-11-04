@@ -5,18 +5,16 @@ layout: default
 
 * * *
 
-
 ## When you wonder how to ...
 
+> better monetize your data, and new business opportinities?
+> optimize your business processes using data?
+> build a strategy for machine learning AI?
+> manage your analytics R&D projects, or lead a data science practice?
+> pitch analytics products internally or for other stakeholders?
 
->   better monetize your data, and new business opportinities?
->   optimize your business processes using data?
->   build a strategy for machine learning AI?
->   manage your analytics R&D projects, or lead a data science practice?
->   pitch analytics products internally or for other stakeholders?
 
-
-# ... please, consider my services:
+## ... please, consider my services:
 
 
 *   management consulting, strategy building, 
@@ -30,7 +28,7 @@ layout: default
 * * *
 
 
-# Here is what I deliver:
+## Here is what I deliver:
 
 *   Consulting reports with ideas & recommendations
 *   Personal mentoring, inspirational talks & training
@@ -39,12 +37,13 @@ layout: default
 *   Full source code, documentation, training
 
 
+Solution examples:
 
-*   Open data solutions
-*   Customer behavior and demand models
-*   Predictive maintenance: failure prediction, anomaly detection
-*   Recommendation engines
-*   Physics stuff: energy optimization, sensor analytics   
+*   Environment: Open weather data solutions 
+*   Transportation: Customer behavior and demand models 
+*   Manufacturing: Predictive maintenance, failure prediction, anomaly detection
+*   Energy: Recommendation engines for optimization 
+*   Physics stuff: simulation, sensor analytics, quantum computing   
 
 
 * * *
