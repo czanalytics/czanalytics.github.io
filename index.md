@@ -2,9 +2,6 @@
 layout: default
 ---
 
-
-* * *
-
 ## When you wonder how to ...
 
 *   better monetize your data, and new business opportinities?
@@ -18,20 +15,17 @@ layout: default
 
 
 *   management consulting, strategy building, 
-*   leadership, project management, mentoring, training 
+*   leadership, project management, mentoring, training, 
 *   ideation & innovation, 
 *   planning & consepts, 
 *   R&D project management, 
 *   implementation of analytics services.
 
 
-* * *
-
-
 ## Here is what I deliver:
 
 *   As agreed, consulting reports with ideas & recommendations.
-*   Analytics maturity assessments
+*   Analytics maturity assessments.
 *   Project feasibility studies, preliminary data inspection & validation.
 *   Consept designs, prototypes, pilots, production systems.
 *   Transparency, full source code based on open source, documentation, training.
@@ -43,29 +37,24 @@ Solution examples:
 *   Transportation: Customer behavior and demand models. 
 *   Manufacturing: Predictive maintenance, failure prediction, anomaly detection.
 *   Energy: Recommendation engines for optimization. 
-*   Physics stuff: simulation, sensor analytics, quantum computing.   
+*   Physics stuff: simulation, novel sensor systems.   
 
 
 * * *
 
 
-## Design principles
+## FYI, I'm passionate about: 
 
-We are passionate about:
-
-
-*   Agile & lean co-creation
-*   Support for self-help 
-*   Simple, easy to manage solutions
-*   Automation
-*   Use of open source
-*   Ethical and transparent AI
+*   agile & lean co-creation,
+*   support for self-help, 
+*   simple, easy to manage solutions,
+*   automation,
+*   use of open source,
+*   ethical and transparent AI
 
 
-* * *
+Implementation technologies:
 
-
-## Technology
 
 *   Notebooks: Colab
 *   AI: Python, PyTorch
