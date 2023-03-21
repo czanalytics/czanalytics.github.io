@@ -11,51 +11,50 @@ layout: default
 *   pitch analytics products internally or for other stakeholders?
 
 
-## ... please, consider my services:
+## Services
 
 
-*   management consulting, strategy building, 
-*   leadership, project management, mentoring, training, 
-*   ideation & innovation, 
-*   planning & consepts, 
-*   R&D project management, 
-*   implementation of analytics services.
+*   Management consulting, strategy building 
+*   Leadership, project management, mentoring, training 
+*   Ideation & innovation 
+*   Planning & consepts
+*   R&D project management
+*   Implementation of analytics services
 
 
-## Here is what I deliver:
+## Deliverered
 
-*   As agreed, consulting reports with ideas & recommendations.
-*   Analytics maturity assessments.
-*   Project feasibility studies, preliminary data inspection & validation.
-*   Consept designs, prototypes, pilots, production systems.
-*   Transparency, full source code based on open source, documentation, training.
+*   
+*   Consept designs, prototypes, pilots, production systems
+*   Transparency, full source code, documentation
+*   Training
 
 
-Solution examples:
+## Experience
 
-*   Environment: Open weather data solutions. 
-*   Transportation: Customer behavior and demand models. 
-*   Manufacturing: Predictive maintenance, failure prediction, anomaly detection.
-*   Energy: Recommendation engines for optimization. 
-*   Physics stuff: simulation, novel sensor systems.   
+*   Environment: Open weather data solutions
+*   Transportation: Customer behavior and demand models 
+*   Manufacturing: Predictive maintenance, failure prediction, anomaly detection
+*   Energy: Recommendation engines for optimization
+*   Physics stuff: simulation, novel sensor systems   
 
 
 * * *
 
 
-## FYI, I'm passionate about: 
+## Passion
 
-*   agile & lean co-creation,
-*   support for self-help, 
-*   simple, easy to manage solutions,
-*   automation,
-*   use of open source,
-*   ethical and transparent AI
-
-
-Implementation technologies:
+*   Agile & lean co-creation
+*   Support for self-help
+*   Simple, clean, and easy to manage solutions
+*   Automation
+*   Use of open source
+*   Ethical and transparent AI
 
 
+# Technology
+
+*   Programming: Python
 *   Notebooks: Colab
 *   AI: Python, PyTorch
 *   Statistics: R
