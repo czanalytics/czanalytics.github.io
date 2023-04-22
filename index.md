@@ -56,11 +56,15 @@ layout: default
 
 *   Programming: Python
 *   Notebooks: Colab
-*   AI: Python, PyTorch
+*   ML: scikit-learn
+*   AutoML: TPOT
+*   AI: PyTorch
 *   Statistics: R
 *   Containers: Docker
-*   Cloud: Arzure, Terraform
-
+*   Cloud: Terraform, Azure
+*   DB: Mongo
+*   API: Flask, Eve, Celery
+*   Web: PyScript, TypeScript, PureScript
 
 * * *
 
