@@ -59,7 +59,7 @@ layout: default
 *   AI: Python, PyTorch
 *   Statistics: R
 *   Containers: Docker
-*   Cloud: Azure
+*   Cloud: Arzure, Terraform
 
 
 * * *
