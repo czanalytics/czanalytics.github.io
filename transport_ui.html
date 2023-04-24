@@ -5,7 +5,7 @@
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
         <meta name="theme-color" content="#000000" />
-        <meta name="name" content="Load Tripping API" />
+        <meta name="name" content="Tansport UI" />
 
         <title>Transport UI</title>
         <link rel="icon" type="image/x-icon" href="./favicon.png" />
@@ -58,7 +58,7 @@
             src="https://unpkg.com/@holoviz/panel@0.13.1/dist/panel.min.js"></script>
         
         <script type="text/javascript">
-            Bokeh.set_log_level("info");
+            <!--   Bokeh.set_log_level("info"); -->
         </script>
 
         <link
@@ -100,7 +100,7 @@
                 <a href="/">
                     <img src="./transport-logo.png" class="logo" />
                 </a>
-                <a class="title" href="" style="color: #f0ab3c">
+                <a class="title" href="" style="color: grey">
                     API v0.17
                 </a>
             </div>
@@ -150,12 +150,28 @@
 
                     pn.config.sizing_mode = 'stretch_width'
 
-                    url = 'https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2020/2020-07-28/penguins.csv'
+                    #url = 'https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2020/2020-07-28/penguins.csv'
+                    url = 'https://raw.githubusercontent.com/czanalytics/multimodal-shipping/main/dat/nuts.csv'
+                    
                     penguins = pd.read_csv(open_url(url)).dropna()
-                    cols = list(penguins.columns)[2:6]
 
-                    x = pn.widgets.Select(name='x', options=cols, value='bill_depth_mm').servable(target='x-widget')
-                    y = pn.widgets.Select(name='y', options=cols, value='bill_length_mm').servable(target='y-widget')
+                    penguins = penguins.loc[penguins['total_cost'] < 500] # filter
+                    penguins['end_country'] = penguins.end_nuts.apply(lambda x: x[:2])
+
+                    penguins['cost'] = penguins.total_cost * 1.1
+                    penguins['co2'] = penguins.distance_road * 0.2
+                    penguins['eta'] = penguins.time_road
+                    penguins['action'] = 'none'
+
+                    #cols = list(penguins.columns)[2:6]
+                    
+                    cols = list(penguins.columns)[3:8]
+
+                    #x = pn.widgets.Select(name='x', options=cols, value='bill_depth_mm').servable(target='x-widget')
+                    #y = pn.widgets.Select(name='y', options=cols, value='bill_length_mm').servable(target='y-widget')
+
+                    x = pn.widgets.Select(name='x', options=cols, value='distance_road').servable(target='x-widget')
+                    y = pn.widgets.Select(name='y', options=cols, value='total_cost').servable(target='y-widget')
                     n_clusters = pn.widgets.IntSlider(name='n_clusters', start=1, end=5, value=3).servable(target='n-widget')
 
                     brush = alt.selection_interval(name='brush')  # selection of type "interval"
@@ -176,7 +192,16 @@
                                     x=alt.X(x, scale=alt.Scale(zero=False)),
                                     y=alt.Y(y, scale=alt.Scale(zero=False)),
                                     shape='labels',
-                                    color='species'
+                                    
+                                    #color='species'
+
+                                    #color='end_nuts'
+                                    #color='end_country'
+                                    color=alt.Color('end_country', legend=alt.Legend(
+                                     orient='none',
+                                     legendX=130, legendY=-40,
+                                     direction='horizontal',
+                                     titleAnchor='start'))
                                 ).add_selection(brush).properties(width=800) +
                             alt.Chart(centers)
                                 .mark_point(size=250, shape='cross', color='black')
