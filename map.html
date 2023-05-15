@@ -14,45 +14,59 @@
     </head>
 
     <body>
-
-                 <section class="pyscript">
-            <div id="folium"></div>
-            <py-config>
-
+    <section class="pyscript">
+      <div id="folium"></div>
+       <py-config>
                     packages = [
                       "folium",
-                      "pandas"
+                      "pandas",
+                      "numpy"
                     ]
+
                     plugins = [
                       "https://pyscript.net/latest/plugins/python/py_tutor.py"
                     ]
-                </py-config>
+       </py-config>
 
                 <py-script>
+                    # https://python-charts.com/spatial/interactive-maps-folium/
+                    # https://github.com/leakyMirror/map-of-europe
+                    # https://raw.githubusercontent.com/python-visualization/folium/main/examples/data/us-states.json
+                    # https://github.com/python-visualization/folium/blob/main/tests/us-states.json?short_path=3036216
+                    # us-states.json had "id":"AL" and id:AK ..
+                    # https://github.com/python-visualization/folium/blob/main/examples/data/US_Unemployment_Oct2012.csv?plain=1
+                    # csv
+                    # State, Unemployment
+                    # AL, 7
+                    # AK, 10
+
                     import folium
+                    from folium import plugins
                     import json
                     import pandas as pd
+                    import numpy as np
 
                     from pyodide.http import open_url
 
                     url = (
                         "https://raw.githubusercontent.com/python-visualization/folium/master/examples/data"
                     )
-
-                    # https://github.com/leakyMirror/map-of-europe
-
-                    # https://raw.githubusercontent.com/python-visualization/folium/main/examples/data/us-states.json
+                    
                     state_geo = f"{url}/us-states.json"
-                    # 
                     state_unemployment = f"{url}/US_Unemployment_Oct2012.csv"
+                    
                     state_data = pd.read_csv(open_url(state_unemployment))
                     geo_json = json.loads(open_url(state_geo).read())
 
-                    url_nuts = 'https://raw.githubusercontent.com/czanalytics/multimodal-shipping/main/dat/nuts2.json'
-                    geo_nuts = json.loads(open_url(url_nuts).read())
+                    url_nuts2 = 'https://raw.githubusercontent.com/czanalytics/multimodal-shipping/main/dat/nuts2.json'
+                    geo_nuts2= json.loads(open_url(url_nuts2).read())
 
-                    m = folium.Map(location=[48, -102], zoom_start=3)
+                    url_nuts3 = 'https://raw.githubusercontent.com/czanalytics/multimodal-shipping/main/dat/nuts3.json'
+                    geo_nuts3= json.loads(open_url(url_nuts3).read())
 
+                    m = folium.Map(location=[52.3776, 4.8246], zoom_start=5) # amsterdam
+                    
+                    """
                     folium.Choropleth(
                         geo_data=geo_json,
                         name="choropleth",
@@ -64,26 +78,16 @@
                         line_opacity=0.2,
                         legend_name="Unemployment Rate (%)",
                     ).add_to(m)
+                    """
 
-                    folium.GeoJson(geo_nuts, name="NUTS/transport").add_to(m)
- 
-                    ####
-                    #m = folium.Map(location=[39.712183, -104.998424], zoom_start=5)
-
+                    folium.GeoJson(geo_nuts2, name="NUTS2/transport").add_to(m)
+                    folium.GeoJson(geo_nuts3, name="NUTS3").add_to(m)
+                    
+                    x = 'Load Tripping'
                     latLong = [
-                    (36.31429, -117.51751, 'P1'),
-                    (40.94859, -116.15316, 'P2'),
-                    (34.14757, -119.81985, 'P3'),
-                    (46.31292, -117.57516, 'P4'),
-                    (41.04159, -116.15316, 'P2'),
-                    (44.22093, -119.82198, 'P2'),
-                    (42.25308, -117.27589, 'P3'),
-                    (41.60302, -115.97012, 'P4'),
-                    (44.35519, -117.94183, 'P4'),
-                    (44.02027, -117.22198, 'P1'),
-                    (45.91613, -113.05364, 'P5'),
-                    (48.17537, -117.90075, 'P1'),
-                    (37.65961, -117.61321, 'P1')]
+                    (52.37760, 4.82460, x),
+                    (52.52, 13.40, x),
+                    (59.85, 17.64, x)]
 
                     # point_layer name list
                     all_gp = []
@@ -107,18 +111,62 @@
                           pl_group.append(v)
 
                     for (lat,lng,nameP),pg in zip(latLong, pl_group):
-                      folium.CircleMarker(location=[lat, lng], radius=10,
+                      folium.CircleMarker(location=[lat, lng], radius=5,
                         popup=str(nameP) + " Lat: " + str(lat) + " , Long: " + str(lng),
                         tooltip=str(nameP) + " Lat: " + str(lat) + " , Long: " + str(lng),
                         fill=True,  # Set fill to True
-                        color='red',
+                        color='green',
                         fill_opacity=1.0).add_to(pg)
 
                     pg.add_to(m)
                     m.add_child(folium.LayerControl(collapsed=False))
-                    ####
+                    
+                    """
+                    folium.CircleMarker(
+                    location = [34.06, -118.25]).add_to(folium.FeatureGroup(name = 'Circle Marker').add_to(m))
+
+                    folium.Marker(
+                      location = [34.14, -118.35]).add_to(folium.FeatureGroup(name = 'Marker').add_to(m))
+                    """
+
+                    folium.Marker(location = [52.3776, 4.8246],
+                     popup="Load Tripping HQ",
+                     icon=folium.Icon(color="blue", icon="info-sign"),).add_to(m)
+                    
+                    
+                    folium.Marker(
+                     location=[60.45, 26.22],
+                     popup="LT price calculator / Google ",
+                     icon=folium.Icon(icon="cloud"), ).add_to(m)
+                     
+                    folium.CircleMarker(
+                      location=[52.52, 13.40],
+                      radius=100,
+                      popup="Price calc. range=100",
+                      color="#3186cc",
+                      fill=True,
+                      fill_color="#3186cc",  ).add_to(m)
+
+                    x1=52.42
+                    x2=13.40
+                    lane_coord = [
+                      (x1, x2),
+                      (x1-1,x2-1),
+                      (x1-2,x2-1),
+                      (x1-2,x2-2),
+                      (x1-3,x2-2)]
+
+                    folium.PolyLine(lane_coord, 
+                     color="#bb8833",
+                     opacity=0.7,
+                     tooltip="Lane ID 001").add_to(m)
 
                     folium.LayerControl().add_to(m)
+                    
+                    #data = np.array([np.random.uniform(low = 25, high = 50, size = 100),
+                    # np.random.uniform(low = -125, high = -70, size = 100)]).T
+                    # m = folium.Map([40, -100], zoom_start = 3)
+                    #plugins.MarkerCluster(data).add_to(m)
 
                     display(m, target="folium")
                 </py-script>
