@@ -98,10 +98,10 @@
         <nav class="navbar" style="background-color: #000000">
             <div class="app-header">
                 <a href="/">
-                    <img src="./transport-logo.png" class="logo" />
+                    <img src="./transport-logo.png" width="30%" class="logo" />
                 </a>
                 <a class="title" href="" style="color: grey">
-                    API v0.17
+                    API v0.20
                 </a>
             </div>
         </nav>
@@ -141,6 +141,7 @@
                 </py-config>
 
                 <py-script>
+                    # https://jeff.glass/post/7-guis-pyscript/
                     import altair as alt
                     import panel as pn
                     import pandas as pd
@@ -255,5 +256,18 @@
             });
         </script>
 
+<py-script src="./temperature.py"></py-script>
+<div class="m-4">
+    <div class="grid grid-cols-2 p-4 m-auto bg-blue-100 border-2 justify-items-center">
+            <div>
+                <h4 class="font-semibold">Fahrenheit</h4>
+                <input id = "f-temp" class="w-3/4 bg-white border-4">
+            </div>
+            <div>
+                <h4 class="font-semibold">Celsuis</h4>
+                <input id="c-temp" class="w-3/4 bg-white border-4">
+            </div>
+    </div>
+</div>
     </body>
 </html>
