@@ -241,6 +241,14 @@
 
         </section>
 
+<py-script src="./temperature.py"></py-script>
+<div>
+            Convert F
+                <input id = "f-temp" class="">
+                to C
+                <input id="c-temp" class="">
+</div> 
+
         <script>
             $(document).ready(function () {
                 $("#sidebarCollapse").on("click", function () {
@@ -256,16 +264,5 @@
             });
         </script>
 
-<py-script src="./temperature.py"></py-script>
-<div>
-            <div>
-                <h4 class="font-semibold">Fahrenheit</h4>
-                <input id = "f-temp" class="w-3/4 bg-white border-4">
-            </div>
-            <div>
-                <h4 class="font-semibold">Celsuis</h4>
-                <input id="c-temp" class="w-3/4 bg-white border-4">
-            </div>
-    </div>
  </body>
 </html>
