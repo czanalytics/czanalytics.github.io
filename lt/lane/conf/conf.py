@@ -1,9 +1,9 @@
 
 def hello():
-    print('Hello from Lane :)
+    print('Hello from Lane :')
 
 def conf2():
-          """Default Lane configation"""
+    """Default Lane configation"""
     lt = {'a':1, 'ab':'xxx'}
     return lt
 
