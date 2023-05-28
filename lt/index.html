@@ -136,9 +136,8 @@
                     ]
                 </py-config>
 
-            <py-script src="./lane/conf/colab.py"> s=hello()</py-script>
+            <py-script src="./lane/conf/colab.py"> s=hello()
 
-                <py-script>
                     import warnings # no need to cofigure
                     warnings.filterwarnings("ignore")
 
@@ -174,8 +173,7 @@
                     lnt = pn.widgets.Select(name='to', options=cn, value='DE').servable(target='to')
                     #nts = pn.widgets.Select(name='nuts', option = nu, value='NL11').servable(target='nuts')
 
-                    #intro = pn.pane.Markdown("Lane cost between EU NUTS regions").servable(target='intro')
-                    intro = pn.pane.Markdown(s).servable(target='intro')
+                    intro = pn.pane.Markdown("Lane cost between EU NUTS regions").servable(target='intro')
 
                     tbl = pn.widgets.Tabulator(d, 
                         pagination='remote', page_size=10).servable(target='table')
