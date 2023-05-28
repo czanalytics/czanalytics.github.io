@@ -5,9 +5,9 @@
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
         <meta name="theme-color" content="#000000" />
-        <meta name="name" content="Tansport UI" />
+        <meta name="name" content="Lane" />
 
-        <title>Transport UI</title>
+        <title>Lane</title>
         <link rel="icon" type="image/x-icon" href="./favicon.png" />
 
         <link
@@ -75,7 +75,7 @@
 
         <style>
             #sidebar {
-                width: 350px;
+                width: 200px;
             }
         </style>
 
@@ -101,7 +101,7 @@
                     <img src="./transport-logo.png" width="30%" class="logo" />
                 </a>
                 <a class="title" href="" style="color: grey">
-                    API v0.20
+                    API v0.22
                 </a>
             </div>
         </nav>
@@ -111,20 +111,17 @@
 
                 <div class="sidenav" id="sidebar">
                     <ul class="nav flex-column">
-                        <div class="bk-root" id="x-widget"></div>
-                        <div class="bk-root" id="y-widget"></div>
-                        <div class="bk-root" id="n-widget"></div>
+                        <div class="bk-root" id="from"></div>
+                        <div class="bk-root" id="to"></div>
                     </ul>
                 </div>
 
                 <div class="col mh-100 float-left" id="main">
                     <div class="bk-root" id="intro"></div>
-                    <div class="bk-root" id="cluster-plot"></div>
                     <div class="bk-root" id="table"></div>
+                    <div class="bk-root" id="plot"></div>
                 </div>
             </div>
-
-            <py-tutor>
 
                 <py-config>
                     packages = [
@@ -136,118 +133,62 @@
                       "panel==0.13.1"
                     ]
                     plugins = [
-                      "https://pyscript.net/latest/plugins/python/py_tutor.py"
                     ]
                 </py-config>
 
+            <py-script src="./lane/conf/colab.py"> s=hello()</py-script>
+
                 <py-script>
-                    # https://jeff.glass/post/7-guis-pyscript/
+                    import warnings # no need to cofigure
+                    warnings.filterwarnings("ignore")
+
                     import altair as alt
                     import panel as pn
                     import pandas as pd
 
-                    from sklearn.cluster import KMeans
                     from pyodide.http import open_url
 
                     pn.config.sizing_mode = 'stretch_width'
 
-                    #url = 'https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2020/2020-07-28/penguins.csv'
                     url = 'https://raw.githubusercontent.com/czanalytics/multimodal-shipping/main/dat/nuts.csv'
                     
-                    penguins = pd.read_csv(open_url(url)).dropna()
+                    d = pd.read_csv(open_url(url)).dropna()
 
-                    penguins = penguins.loc[penguins['total_cost'] < 500] # filter
-                    penguins['end_country'] = penguins.end_nuts.apply(lambda x: x[:2])
-
-                    penguins['cost'] = penguins.total_cost * 1.1
-                    penguins['co2'] = penguins.distance_road * 0.2
-                    penguins['eta'] = penguins.time_road
-                    penguins['action'] = 'none'
-
-                    #cols = list(penguins.columns)[2:6]
+                    #d = d.loc[d['total_cost'] < 500] # filter
                     
-                    cols = list(penguins.columns)[3:8]
+                    d['action'] = '-'
+                    d['start'] = d.start_nuts.apply(lambda x: x[:2])
+                    d['end'] = d.end_nuts.apply(lambda x: x[:2])
+                    d['cost']= d.total_cost
+                    d['eta'] = d.time_road
+                    d['co2'] = d.distance_road * 0.2
+                    d['km_cost'] = round(d.total_cost / d.distance_road, 2)  
+                   
+                    cols = ['action', 'start', 'end', 'start_nuts', 'end_nuts', 'distance_road', 'time_road', 'total_cost', 'km_cost', 'co2']
+                    d = d[cols]
+                    cn = d.start.unique().tolist()
+                    nu = d.start_nuts.unique().tolist()
+                    
+                    
+                    lnf = pn.widgets.Select(name='from,', options=cn, value='NL').servable(target='from')
+                    lnt = pn.widgets.Select(name='to', options=cn, value='DE').servable(target='to')
+                    #nts = pn.widgets.Select(name='nuts', option = nu, value='NL11').servable(target='nuts')
 
-                    #x = pn.widgets.Select(name='x', options=cols, value='bill_depth_mm').servable(target='x-widget')
-                    #y = pn.widgets.Select(name='y', options=cols, value='bill_length_mm').servable(target='y-widget')
+                    #intro = pn.pane.Markdown("Lane cost between EU NUTS regions").servable(target='intro')
+                    intro = pn.pane.Markdown(s).servable(target='intro')
 
-                    x = pn.widgets.Select(name='x', options=cols, value='distance_road').servable(target='x-widget')
-                    y = pn.widgets.Select(name='y', options=cols, value='total_cost').servable(target='y-widget')
-                    n_clusters = pn.widgets.IntSlider(name='n_clusters', start=1, end=5, value=3).servable(target='n-widget')
+                    tbl = pn.widgets.Tabulator(d, 
+                        pagination='remote', page_size=10).servable(target='table')
 
-                    brush = alt.selection_interval(name='brush')  # selection of type "interval"
+                    tbl.add_filter(lnf, 'start')
+                    tbl.add_filter(lnt, 'end')
+                    #tbl.add_filter(nts, 'start_nuts')
 
-                    def get_clusters(n_clusters):
-                        kmeans = KMeans(n_clusters=n_clusters)
-                        est = kmeans.fit(penguins[cols].values)
-                        df = penguins.copy()
-                        df['labels'] = est.labels_.astype('str')
-                        return df
 
-                    def get_chart(x, y, df):
-                        centers = df.groupby('labels').mean()
-                        return (
-                            alt.Chart(df)
-                                .mark_point(size=100)
-                                .encode(
-                                    x=alt.X(x, scale=alt.Scale(zero=False)),
-                                    y=alt.Y(y, scale=alt.Scale(zero=False)),
-                                    shape='labels',
-                                    
-                                    #color='species'
-
-                                    #color='end_nuts'
-                                    #color='end_country'
-                                    color=alt.Color('end_country', legend=alt.Legend(
-                                     orient='none',
-                                     legendX=130, legendY=-40,
-                                     direction='horizontal',
-                                     titleAnchor='start'))
-                                ).add_selection(brush).properties(width=800) +
-                            alt.Chart(centers)
-                                .mark_point(size=250, shape='cross', color='black')
-                                .encode(x=x+':Q', y=y+':Q')
-                        )
-
-                    intro = pn.pane.Markdown("""
-                    Price and CO2 estimates for transportation line specs. 
-                    """).servable(target='intro')
-
-                    chart = pn.pane.Vega().servable(target='cluster-plot')
-                    table = pn.widgets.Tabulator(pagination='remote', page_size=10).servable(target='table')
-
-                    def update_table(event=None):
-                        table.value = get_clusters(n_clusters.value)
-
-                    n_clusters.param.watch(update_table, 'value')
-
-                    @pn.depends(x, y, n_clusters, watch=True)
-                    def update_chart(*events):
-                        chart.object = get_chart(x.value, y.value, table.value)
-                        chart.selection.param.watch(update_filters, 'brush')
-
-                    def update_filters(event=None):
-                        filters = []
-                        for k, v in (getattr(event, 'new') or {}).items():
-                            filters.append(dict(field=k, type='>=', value=v[0]))
-                            filters.append(dict(field=k, type='<=', value=v[1]))
-                        table.filters = filters
-
-                    update_table()
-                    update_chart()
                 </py-script>
 
-            </py-tutor>
 
         </section>
-
-<py-script src="./temperature.py"></py-script>
-<div>
-            Convert F
-                <input id = "f-temp" class="">
-                to C
-                <input id="c-temp" class="">
-</div> 
 
         <script>
             $(document).ready(function () {
