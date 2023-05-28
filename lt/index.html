@@ -136,8 +136,9 @@
                     ]
                 </py-config>
 
-            <py-script src="./lane/conf/colab.py"> s=hello()
+                <py-script src="./lane/conf/colab.py"></py-script>
 
+                <py-script>
                     import warnings # no need to cofigure
                     warnings.filterwarnings("ignore")
 
@@ -181,7 +182,6 @@
                     tbl.add_filter(lnf, 'start')
                     tbl.add_filter(lnt, 'end')
                     #tbl.add_filter(nts, 'start_nuts')
-
 
                 </py-script>
 
