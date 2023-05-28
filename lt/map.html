@@ -2,13 +2,12 @@
 <html lang="en">
 
     <head>
-        <title>Folium</title>
+        <title>Lane Map</title>
         <meta charset="utf-8" />
         <link rel="icon" type="image/x-icon" href="./favicon.png" />
         <link
             rel="stylesheet"
-            href="https://pyscript.net/latest/pyscript.css"
-        />
+            href="https://pyscript.net/latest/pyscript.css"/>
         <script defer src="https://pyscript.net/latest/pyscript.js"></script>
         <link rel="stylesheet" href="./assets/css/examples.css" />
     </head>
@@ -27,6 +26,8 @@
                       "https://pyscript.net/latest/plugins/python/py_tutor.py"
                     ]
        </py-config>
+    
+       <py-script src="./lane/conf/colab.py"></py-script>
 
                 <py-script>
                     # https://python-charts.com/spatial/interactive-maps-folium/
@@ -133,7 +134,6 @@
                      popup="Load Tripping HQ",
                      icon=folium.Icon(color="blue", icon="info-sign"),).add_to(m)
                     
-                    
                     folium.Marker(
                      location=[60.45, 26.22],
                      popup="LT price calculator / Google ",
@@ -169,8 +169,8 @@
                     #plugins.MarkerCluster(data).add_to(m)
 
                     display(m, target="folium")
-                </py-script>
-                 </section>
+         </py-script>
+    </section>
 
     </body>
 
