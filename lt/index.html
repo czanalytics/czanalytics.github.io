@@ -75,7 +75,7 @@
 
         <style>
             #sidebar {
-                width: 200px;
+                width: 250px;
             }
         </style>
 
@@ -113,18 +113,21 @@
                     <ul class="nav flex-column">
                         <div class="bk-root" id="from"></div>
                         <div class="bk-root" id="to"></div>
+                        <div class="bk-root" id="model"></div>
+                        <div class="bk-root" id="json"></div>
+                        <div class="bk-root" id="file"></div>
                     </ul>
                 </div>
 
                 <div class="col mh-100 float-left" id="main">
                     <div class="bk-root" id="intro"></div>
                     <div class="bk-root" id="table"></div>
-                    <div class="bk-root" id="plot"></div>
+                    <div class="bk-root" id="json_edit"></div>
                 </div>
             </div>
 
-                <py-config>
-                    packages = [
+<py-config>
+    packages = [
                       "https://cdn.holoviz.org/panel/0.14.3/dist/wheels/bokeh-2.4.3-py3-none-any.whl",
                       "altair",
                       "numpy",
@@ -134,10 +137,22 @@
                     ]
                     plugins = [
                     ]
-                </py-config>
+</py-config>
 
-                <py-script src="./lane/conf/api.py">print(a)</py-script>
+<py-script src="./lane/conf/api.py">print(a)</py-script>
 
+<py-script>
+api2_obj = {
+    'boolean': False,
+    'dict': {'a': 1, 'b': 2, 'c': 3},
+    'int': 1,
+    'float': 3.1,
+    'list': [1, 2, 3],
+    'models': ['price_nuts','price_ai', 'eta', 'eta_iot', 'co2_aprox'],
+    'null': None,
+    'string': 'A string',
+}
+</py-script>
                 <py-script>
                     import warnings # no need to cofigure
                     warnings.filterwarnings("ignore")
@@ -169,20 +184,44 @@
                     cn = d.start.unique().tolist()
                     nu = d.start_nuts.unique().tolist()
                     
-                    
                     lnf = pn.widgets.Select(name='from,', options=cn, value='NL').servable(target='from')
                     lnt = pn.widgets.Select(name='to', options=cn, value='DE').servable(target='to')
                     #nts = pn.widgets.Select(name='nuts', option = nu, value='NL11').servable(target='nuts')
 
-                    intro = pn.pane.Markdown("Lane cost between EU NUTS regions").servable(target='intro')
+                    js = pn.pane.JSON(api2_obj, name='JSON').servable(target='json') #
+                    
+                    #ms = api2_obj.models
+                    ms = ['price_nuts', 'price_ai', 'eta', 'eta_iot', 'co2','co2_aprox']
+                    multi_choice = pn.widgets.MultiChoice(name='models', value=['price'],
+                    options=ms).servable(target='model')
+                    
+                    file_input = pn.widgets.FileInput(accept='.csv,.json').servable(target='file')
+                
+                    #pn.state.notifications.info('This is a info notification.', duration=2000)
 
-                    tbl = pn.widgets.Tabulator(d, 
+                    jse = pn.widgets.JSONEditor(
+                        schema={"title": "Person",
+                        "type": "object",
+                        "properties": {"firstName": {"type": "string", 
+                        "description": "The person's first name."},
+                        "lastName": {
+                        "type": "string", "description": "The person's last name."},
+                        "age": {"description": "Age in years which must be equal to or greater than zero.",
+                        "type": "integer",
+                        "minimum": 0}}},
+                    value={
+                    'firstName': 2,
+                    'lastName': 'Smith',
+                    'age': 13.5}, height=200, width=150).servable(target='json_edit')
+
+                    intro = pn.pane.Markdown("Lane cost between EU _NUTS_ regions").servable(target='intro')
+                    
+                    gr = ['start', 'start_nuts']
+                    tbl = pn.widgets.Tabulator(d, groupby=gr, 
                         pagination='remote', page_size=10).servable(target='table')
 
                     tbl.add_filter(lnf, 'start')
                     tbl.add_filter(lnt, 'end')
-                    #tbl.add_filter(nts, 'start_nuts')
-
                 </py-script>
 
 
