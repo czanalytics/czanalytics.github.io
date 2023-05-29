@@ -123,8 +123,8 @@
                 </div>
             </div>
 
-                <py-config>
-                    packages = [
+<py-config>
+    packages = [
                       "https://cdn.holoviz.org/panel/0.14.3/dist/wheels/bokeh-2.4.3-py3-none-any.whl",
                       "altair",
                       "numpy",
@@ -134,9 +134,21 @@
                     ]
                     plugins = [
                     ]
-                </py-config>
+</py-config>
 
-                <py-script src="./lane/conf/api.py">print(a)</py-script>
+<py-script src="./lane/conf/api.py">print(a)</py-script>
+
+<py-script>
+api2_obj = {
+    'boolean': False,
+    'dict': {'a': 1, 'b': 2, 'c': 3},
+    'int': 1,
+    'float': 3.1,
+    'list': [1, 2, 3],
+    'null': None,
+    'string': 'A string',
+}
+</py-script>
 
                 <py-script>
                     import warnings # no need to cofigure
@@ -174,16 +186,27 @@
                     #nts = pn.widgets.Select(name='nuts', option = nu, value='NL11').servable(target='nuts')
 
                     intro = pn.pane.Markdown("Lane cost between EU _NUTS_ regions").servable(target='intro')
+                    
+                    api3_obj = {
+                        'boolean': False,
+                        'dict': {'a': 1, 'b': 2, 'c': 3},
+                        'int': 1,
+                        'float': 3.1,
+                        'list': [1, 2, 3],
+                        'null': None,
+                        'string': 'A string',
+                    }
 
-                    json = pn.pane.JSON(api_obj, name='JSON').serveable(target='json')
-
+                    pn.pane.JSON(api_obj, name='JSON')
+                    
                     tbl = pn.widgets.Tabulator(d, 
                         pagination='remote', page_size=10).servable(target='table')
 
                     tbl.add_filter(lnf, 'start')
                     tbl.add_filter(lnt, 'end')
-                    #tbl.add_filter(nts, 'start_nuts')
 
+                    js = pn.pane.JSON(api_obj, name='JSON')
+                    js
                 </py-script>
 
 
