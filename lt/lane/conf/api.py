@@ -9,9 +9,9 @@ CONF_API = {
     'string': 'A string',
 }
 
-def hello():
-    print('Hello from Lane api')
-    return 1
+def conf_foo():
+    return CONF_API
 
-#s = hello()
+def hello(txt="Hello from lane UI"):
+    return txt + txt
 

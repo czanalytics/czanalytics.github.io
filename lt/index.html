@@ -147,7 +147,8 @@
 
 <py-script src="./lane/conf/api.py">
     print(CONF_API)
-    print(hello())
+    print(hello("hi"))
+    print(conf_foo())
 </py-script>
 
 <py-script src="./lane/model/co2.py">
@@ -198,7 +199,10 @@
     cn = d.start.unique().tolist()
     nu = d.start_nuts.unique().tolist()
     
-    ms = MODEL_CO2['models']
+    #ms = MODEL_CO2['models']
+    ms = CONF2_API['models']
+    ms2 = conf_foo()
+    x =  ms2['models']
     #ms = ['price_nuts', 'price_ai', 'eta', 'eta_iot', 'co2', 'co2_aprox']
 
     gr = ['start', 'start_nuts']
