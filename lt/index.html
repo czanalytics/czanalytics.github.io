@@ -144,7 +144,7 @@
     plugins = [
     ]
     [[fetch]]
-        files = ["./mathslib.py", "./api.py"]
+        files = ["./mathslib.py", "./api.py", "./co2.py"]
 </py-config>
 
 <py-script>
@@ -153,6 +153,12 @@ print(subtract(8, 4))
 
 from api import hello
 print(hello())
+
+from co2 import co2_foo
+
+model_conf = co2_foo()
+ms = model_conf['models']
+print(ms)
 </py-script>    
 
 <py-script>
