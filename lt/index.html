@@ -154,7 +154,8 @@ print(subtract(8, 4))
 from api import hello
 print(hello())
 
-from co2 import co2_foo
+#from co2 import co2_foo
+import co2
 
 model_conf = co2_foo()
 ms = model_conf['models']
@@ -205,30 +206,9 @@ print(ms)
     cn = d.start.unique().tolist()
     nu = d.start_nuts.unique().tolist()
     
-    ms = CONF2_API['models'] # models list from dict
+    #ms = CONF2_API['models'] # models list from dict
     gr = ['start', 'start_nuts']
 </py-script>
-
-
-<py-script src="./lane/conf/api.py">
-    print(CONF_API)
-    print(hello("hi"))
-    print(conf_foo())
-    print(api_1)
-</py-script>
-
-<py-script src="./lane/model/co2.py">
-    print(MODEL_CO2)
-
-    #ms = MODEL_CO2['models']
-    ms2 = co2_foo()
-    ms =  ms2['models']
-    print(ms)
-    print(co2(1))
-    print(co2_1)
-
-</py-script>
-
 
 <py-script>
     lnf = pn.widgets.Select(name='from,', options=cn, value='NL').servable(target='from')
