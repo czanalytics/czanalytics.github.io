@@ -144,7 +144,7 @@
     plugins = [
     ]
     [[fetch]]
-        files = ["./mathslib.py"]
+        files = ["./mathslib.py", "./line/conf/api.py"]
 </py-config>
 
 
@@ -153,9 +153,8 @@
 from mathslib import subtract
 print(subtract(8, 4))
 
-#from api import hello
-#print(hello())
-
+from api import hello
+print(hello())
 </py-script>    
 
 <py-script>
