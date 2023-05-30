@@ -143,15 +143,20 @@
     ]
     plugins = [
     ]
-   [[fetch]]
-   files = ["./lane/conf/api.py"]
 </py-config>
 
 
-<py-script>
-from api import hello
+<py-config>
+[[fetch]]
+   files = ["./mathslib.py"]
+</py-config>
 
-print(hello())
+<py-script>
+from mathslib import subtract
+print(subtract(8, 4))
+
+#from api import hello
+#print(hello())
 
 </py-script>    
 
