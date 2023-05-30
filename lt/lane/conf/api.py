@@ -15,3 +15,5 @@ def conf_foo():
 def hello(txt="Hello from lane UI"):
     return txt + txt
 
+
+api_1 = hello("hei")

@@ -203,14 +203,19 @@
     print(CONF_API)
     print(hello("hi"))
     print(conf_foo())
+    print(api_1)
 </py-script>
 
 <py-script src="./lane/model/co2.py">
     print(MODEL_CO2)
 
     #ms = MODEL_CO2['models']
-    #ms2 = conf_foo()
-    #x =  ms2['models']
+    ms2 = co2_foo()
+    x =  ms2['models']
+    print(x)
+    print(co2(1))
+    print(co2_1)
+
 </py-script>
 
 
@@ -221,6 +226,8 @@
     js = pn.pane.JSON(CONF2_API, name='JSON').servable(target='json') #
 
     multi_choice = pn.widgets.MultiChoice(name='models', value=['price'], options=ms).servable(target='model')
+
+    file_input = pn.widgets.FileInput(accept='.csv,.json').servable(target='file')
 
     #pn.state.notifications.info('This is a info notification.', duration=2000)
 
@@ -238,9 +245,7 @@
     'firstName': 2,
     'lastName': 'Smith',
     'age': 13.5}, height=200, width=150).servable(target='json_edit')
-
-    file_input = pn.widgets.FileInput(accept='.csv,.json').servable(target='file')
-    
+   
     intro = pn.pane.Markdown("Lane cost between EU _NUTS_ regions").servable(target='intro')
 
     tbl = pn.widgets.Tabulator(d, groupby=gr,  pagination='remote', page_size=10).servable(target='table')
