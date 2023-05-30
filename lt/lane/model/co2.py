@@ -1,7 +1,7 @@
-CONF_CO2 = {
+MODEL_CO2 = {
     'models': ["co2_lite"],
-    'vehicle': {'bicyle': 0, 'e-train': 0, 'truck-base':1,'trailer':1.5},
-    'fuel':  {'diesel': 74.0, 'gasoline':73.3, 'crude-oil':73.3,'natural-gas':55.8},
+    'vehicle': {'bicyle': 0, 'e-train': 0, 'truck-base': 1, 'trailer': 1.5},
+    'fuel':  {'diesel': 74.0, 'gasoline': 73.3, 'crude-oil': 73.3, 'natural-gas': 55.8},
 }
 
 def co2_lite(dist, coef):

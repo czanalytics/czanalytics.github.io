@@ -11,7 +11,7 @@ CONF_API = {
 
 def hello():
     print('Hello from Lane api')
+    return 1
 
-s = hello()
+#s = hello()
 
-#

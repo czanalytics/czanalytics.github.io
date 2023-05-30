@@ -147,6 +147,7 @@
 
 <py-script src="./lane/conf/api.py">
     print(CONF_API)
+    print(hello())
 </py-script>
 
 <py-script src="./lane/model/co2.py">
@@ -154,13 +155,13 @@
 </py-script>
 
 <py-script>
-    api2_obj = {
+    CONF2_API = {
     'boolean': False,
     'dict': {'a': 1, 'b': 2, 'c': 3},
     'int': 1,
     'float': 3.1,
     'list': [1, 2, 3],
-    'models': ['price_nuts','price_ai', 'eta', 'eta_iot', 'co2_aprox'],
+    'models': ['price_nuts', 'price_ai', 'eta', 'eta_iot', 'co2_aprox'],
     'null': None,
     'string': 'A string',
     }
@@ -196,22 +197,21 @@
     d = d[cols]
     cn = d.start.unique().tolist()
     nu = d.start_nuts.unique().tolist()
+    
+    ms = MODEL_CO2['models']
+    #ms = ['price_nuts', 'price_ai', 'eta', 'eta_iot', 'co2', 'co2_aprox']
+
+    gr = ['start', 'start_nuts']
 </py-script>
 
 
 <py-script>
     lnf = pn.widgets.Select(name='from,', options=cn, value='NL').servable(target='from')
     lnt = pn.widgets.Select(name='to', options=cn, value='DE').servable(target='to')
-    #nts = pn.widgets.Select(name='nuts', option = nu, value='NL11').servable(target='nuts')
 
-    js = pn.pane.JSON(api2_obj, name='JSON').servable(target='json') #
+    js = pn.pane.JSON(CONF2_API, name='JSON').servable(target='json') #
 
-    #ms = api2_obj.models
-    ms = ['price_nuts', 'price_ai', 'eta', 'eta_iot', 'co2','co2_aprox']
-    multi_choice = pn.widgets.MultiChoice(name='models', value=['price'],
-    options=ms).servable(target='model')
-
-    file_input = pn.widgets.FileInput(accept='.csv,.json').servable(target='file')
+    multi_choice = pn.widgets.MultiChoice(name='models', value=['price'], options=ms).servable(target='model')
 
     #pn.state.notifications.info('This is a info notification.', duration=2000)
 
@@ -230,10 +230,11 @@
     'lastName': 'Smith',
     'age': 13.5}, height=200, width=150).servable(target='json_edit')
 
+    file_input = pn.widgets.FileInput(accept='.csv,.json').servable(target='file')
+    
     intro = pn.pane.Markdown("Lane cost between EU _NUTS_ regions").servable(target='intro')
-    gr = ['start', 'start_nuts']
-    tbl = pn.widgets.Tabulator(d, groupby=gr, 
-    pagination='remote', page_size=10).servable(target='table')
+
+    tbl = pn.widgets.Tabulator(d, groupby=gr,  pagination='remote', page_size=10).servable(target='table')
     tbl.add_filter(lnf, 'start')
     tbl.add_filter(lnt, 'end')
 </py-script>
