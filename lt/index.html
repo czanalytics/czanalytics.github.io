@@ -145,15 +145,6 @@
     ]
 </py-config>
 
-<py-script src="./lane/conf/api.py">
-    print(CONF_API)
-    print(hello("hi"))
-    print(conf_foo())
-</py-script>
-
-<py-script src="./lane/model/co2.py">
-    print(MODEL_CO2)
-</py-script>
 
 <py-script>
     CONF2_API = {
@@ -162,7 +153,7 @@
     'int': 1,
     'float': 3.1,
     'list': [1, 2, 3],
-    'models': ['price_nuts', 'price_ai', 'eta', 'eta_iot', 'co2_aprox'],
+    'models': ['price_nuts', 'price_ai', 'eta', 'eta_iot', 'co2_lite' ,'co2_aprox'],
     'null': None,
     'string': 'A string',
     }
@@ -200,12 +191,26 @@
     nu = d.start_nuts.unique().tolist()
     
     #ms = MODEL_CO2['models']
-    ms = CONF2_API['models']
     #ms2 = conf_foo()
     #x =  ms2['models']
-    #ms = ['price_nuts', 'price_ai', 'eta', 'eta_iot', 'co2', 'co2_aprox']
 
+    ms = CONF2_API['models'] # models list from dict
     gr = ['start', 'start_nuts']
+</py-script>
+
+
+<py-script src="./lane/conf/api.py">
+    print(CONF_API)
+    print(hello("hi"))
+    print(conf_foo())
+</py-script>
+
+<py-script src="./lane/model/co2.py">
+    print(MODEL_CO2)
+
+    #ms = MODEL_CO2['models']
+    #ms2 = conf_foo()
+    #x =  ms2['models']
 </py-script>
 
 
