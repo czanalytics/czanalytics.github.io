@@ -143,8 +143,17 @@
     ]
     plugins = [
     ]
+   [[fetch]]
+   files = ["./lane/conf/api.py"]
 </py-config>
 
+
+<py-script>
+from api import hello
+
+print(hello())
+
+</py-script>    
 
 <py-script>
     CONF2_API = {
