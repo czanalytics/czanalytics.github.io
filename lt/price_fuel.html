@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8" />
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+        <meta name="theme-color" content="#000000" />
+        <meta name="name" content="Fuel price" />
+
+        <title>Fuel price</title>
+
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" type="text/css"/>
+        <link rel="stylesheet" href="https://unpkg.com/@holoviz/panel@0.13.1/dist/css/widgets.css" type="text/css"/>
+        <link rel="stylesheet" href="https://unpkg.com/@holoviz/panel@0.13.1/dist/css/markdown.css" type="text/css"/>
+
+        <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/vega@5"></script>
+        <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/vega-lite@5"></script>
+        <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/vega-embed@6"></script>
+        <script type="text/javascript" src="https://unpkg.com/tabulator-tables@4.9.3/dist/js/tabulator.js"></script>
+        <script type="text/javascript" src="https://cdn.bokeh.org/bokeh/release/bokeh-2.4.3.js"></script>
+        <script type="text/javascript" src="https://cdn.bokeh.org/bokeh/release/bokeh-widgets-2.4.3.min.js"></script>
+        <script type="text/javascript" src="https://cdn.bokeh.org/bokeh/release/bokeh-tables-2.4.3.min.js"></script>
+        <script type="text/javascript" src="https://unpkg.com/@holoviz/panel@0.13.1/dist/panel.min.js"></script>
+
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.1/dist/css/bootstrap.min.css"/>
+        <link rel="stylesheet" href="https://unpkg.com/@holoviz/panel@0.13.1/dist/bundled/bootstraptemplate/bootstrap.css"/>
+        <link rel="stylesheet" href="https://unpkg.com/@holoviz/panel@0.13.1/dist/bundled/defaulttheme/default.css"/>
+
+        <style>
+            #sidebar {
+                width: 250px;
+            }
+        </style>
+
+        <script src="https://cdn.jsdelivr.net/npm/jquery@3.5.1/dist/jquery.slim.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.1/dist/js/bootstrap.bundle.min.js"></script>
+
+        <link rel="stylesheet" href="https://pyscript.net/latest/pyscript.css"/>
+
+        <script defer src="https://pyscript.net/latest/pyscript.js"></script>
+    </head>
+
+    <body>
+        <section class="pyscript">
+            <div class="row overflow-hidden" id="content">
+                <div class="sidenav" id="sidebar">
+                    <ul class="nav flex-column">
+                        <div class="bk-root" id="from"></div>
+                        <div class="bk-root" id="fuel"></div>
+                        <div class="bk-root" id="model"></div>
+                    </ul>
+                </div>
+
+                <div class="col mh-100 float-left" id="main">
+                    <div class="bk-root" id="intro"></div>
+                    <div class="bk-root" id="table"></div>
+                </div>
+            </div>
+
+<py-config>
+    packages = [
+    "https://cdn.holoviz.org/panel/0.14.3/dist/wheels/bokeh-2.4.3-py3-none-any.whl",
+    "altair",
+    "numpy",
+    "pandas",
+    "scikit-learn",
+    "panel==0.13.1"
+    ]
+    plugins = []
+    [[fetch]]
+        files = ["./fuel.py"]
+</py-config>
+
+<py-script>
+    from fuel import fuel_conf
+    fc = fuel_conf()
+    ms = fc['models']
+
+    print(fc)
+    print(ms)
+</py-script>    
+
+<py-script>
+</py-script>
+
+<py-script>
+    import warnings # no need to cofigure
+    warnings.filterwarnings("ignore")
+
+    import altair as alt
+    import panel as pn
+    import pandas as pd
+
+    from pyodide.http import open_url
+
+    pn.config.sizing_mode = 'stretch_width'
+
+    # url = 'https://raw.githubusercontent.com/czanalytics/multimodal-shipping/main/dat/nuts.csv'
+    
+    url0 = fc['url'] + fc['files'][0]
+    d0 = pd.read_csv(open_url(url0)).dropna()
+    url1 = fc['url'] + fc['files'][1]
+    d1 = pd.read_csv(open_url(url1)).dropna()
+
+    d = pd.concat([d0, d1])
+
+    d['price_model'] = d['price']
+
+    cn = d.country.unique().tolist()
+    fs = d.fuel.unique().tolist()
+    gr = ['country', 'date']
+    gr = []
+</py-script>
+
+<py-script>
+    lnf = pn.widgets.Select(name='country', options=cn, value='NL').servable(target='from')
+    fuels = pn.widgets.Select(name='fuels', options=fs, value='Euro-super 95').servable(target='fuel')
+
+    multi_choice = pn.widgets.MultiChoice(name='models', value=['price'], options=ms).servable(target='model')
+
+    intro = pn.pane.Markdown("Weekly fuel prices in EU").servable(target='intro')
+
+    tbl = pn.widgets.Tabulator(d, groupby=gr,  pagination='remote', page_size=10).servable(target='table')
+    tbl.add_filter(lnf, 'country')
+    tbl.add_filter(fuels, 'fuel')
+</py-script>
+
+</section>
+
+<script>
+    $(document).ready(function () {
+        $("#sidebarCollapse").on("click", function () {
+            $("#sidebar").toggleClass("active");
+            $(this).toggleClass("active");
+            var interval = setInterval(function () {
+                window.dispatchEvent(new Event("resize"));
+            }, 10);
+            setTimeout(function () {
+                clearInterval(interval);
+            }, 210);
+        });
+    });
+</script>
+
+ </body>
+</html>
