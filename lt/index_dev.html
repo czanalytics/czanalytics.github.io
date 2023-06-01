@@ -89,9 +89,6 @@
             href="https://pyscript.net/latest/pyscript.css"/>
 
         <script defer src="https://pyscript.net/latest/pyscript.js"></script>
-        
-        <link rel="stylesheet" href="./assets/css/examples.css" />
-
     </head>
 
     <body>
@@ -114,8 +111,8 @@
                         <div class="bk-root" id="from"></div>
                         <div class="bk-root" id="to"></div>
                         <div class="bk-root" id="model"></div>
-                        <div class="bk-root" id="json"></div>
                         <div class="bk-root" id="file"></div>
+                        <div class="bk-root" id="json"></div>
                     </ul>
                 </div>
 
@@ -128,119 +125,132 @@
 
 <py-config>
     packages = [
-                      "https://cdn.holoviz.org/panel/0.14.3/dist/wheels/bokeh-2.4.3-py3-none-any.whl",
-                      "altair",
-                      "numpy",
-                      "pandas",
-                      "scikit-learn",
-                      "panel==0.13.1"
-                    ]
-                    plugins = [
-                    ]
+    "https://cdn.holoviz.org/panel/0.14.3/dist/wheels/bokeh-2.4.3-py3-none-any.whl",
+    "altair",
+    "numpy",
+    "pandas",
+    "scikit-learn",
+    "panel==0.13.1"
+    ]
+    plugins = [
+    ]
+    [[fetch]]
+        files = ["./mathslib.py", "./ui.py", "./co2.py"]
 </py-config>
 
-<py-script src="./lane/conf/api.py">print(a)</py-script>
+<py-script>
+from mathslib import subtract
+print(subtract(8, 4))
+
+from ui import hello
+print(hello())
+
+from co2 import co2_foo
+# import co2 # doesn't work
+
+model_conf = co2_foo()
+ms = model_conf['models']
+print(ms)
+</py-script>    
 
 <py-script>
-api2_obj = {
+    CONF2_API = {
     'boolean': False,
     'dict': {'a': 1, 'b': 2, 'c': 3},
     'int': 1,
     'float': 3.1,
     'list': [1, 2, 3],
-    'models': ['price_nuts','price_ai', 'eta', 'eta_iot', 'co2_aprox'],
+    'models': ['price_nuts', 'price_ai', 'eta', 'eta_iot', 'co2_lite' ,'co2_aprox'],
     'null': None,
     'string': 'A string',
-}
+    }
 </py-script>
-                <py-script>
-                    import warnings # no need to cofigure
-                    warnings.filterwarnings("ignore")
 
-                    import altair as alt
-                    import panel as pn
-                    import pandas as pd
+<py-script>
+    import warnings # no need to cofigure
+    warnings.filterwarnings("ignore")
 
-                    from pyodide.http import open_url
+    import altair as alt
+    import panel as pn
+    import pandas as pd
 
-                    pn.config.sizing_mode = 'stretch_width'
+    from pyodide.http import open_url
 
-                    url = 'https://raw.githubusercontent.com/czanalytics/multimodal-shipping/main/dat/nuts.csv'
-                    
-                    d = pd.read_csv(open_url(url)).dropna()
+    pn.config.sizing_mode = 'stretch_width'
 
-                    #d = d.loc[d['total_cost'] < 500] # filter
-                    
-                    d['action'] = '-'
-                    d['start'] = d.start_nuts.apply(lambda x: x[:2])
-                    d['end'] = d.end_nuts.apply(lambda x: x[:2])
-                    d['cost']= d.total_cost
-                    d['eta'] = d.time_road
-                    d['co2'] = d.distance_road * 0.2
-                    d['km_cost'] = round(d.total_cost / d.distance_road, 2)  
-                   
-                    cols = ['action', 'start', 'end', 'start_nuts', 'end_nuts', 'distance_road', 'time_road', 'total_cost', 'km_cost', 'co2']
-                    d = d[cols]
-                    cn = d.start.unique().tolist()
-                    nu = d.start_nuts.unique().tolist()
-                    
-                    lnf = pn.widgets.Select(name='from,', options=cn, value='NL').servable(target='from')
-                    lnt = pn.widgets.Select(name='to', options=cn, value='DE').servable(target='to')
-                    #nts = pn.widgets.Select(name='nuts', option = nu, value='NL11').servable(target='nuts')
+    url = 'https://raw.githubusercontent.com/czanalytics/multimodal-shipping/main/dat/nuts.csv'
 
-                    js = pn.pane.JSON(api2_obj, name='JSON').servable(target='json') #
-                    
-                    #ms = api2_obj.models
-                    ms = ['price_nuts', 'price_ai', 'eta', 'eta_iot', 'co2','co2_aprox']
-                    multi_choice = pn.widgets.MultiChoice(name='models', value=['price'],
-                    options=ms).servable(target='model')
-                    
-                    file_input = pn.widgets.FileInput(accept='.csv,.json').servable(target='file')
-                
-                    #pn.state.notifications.info('This is a info notification.', duration=2000)
+    d = pd.read_csv(open_url(url)).dropna()
 
-                    jse = pn.widgets.JSONEditor(
-                        schema={"title": "Person",
-                        "type": "object",
-                        "properties": {"firstName": {"type": "string", 
-                        "description": "The person's first name."},
-                        "lastName": {
-                        "type": "string", "description": "The person's last name."},
-                        "age": {"description": "Age in years which must be equal to or greater than zero.",
-                        "type": "integer",
-                        "minimum": 0}}},
-                    value={
-                    'firstName': 2,
-                    'lastName': 'Smith',
-                    'age': 13.5}, height=200, width=150).servable(target='json_edit')
+    #d = d.loc[d['total_cost'] < 500] # filter
 
-                    intro = pn.pane.Markdown("Lane cost between EU _NUTS_ regions").servable(target='intro')
-                    
-                    gr = ['start', 'start_nuts']
-                    tbl = pn.widgets.Tabulator(d, groupby=gr, 
-                        pagination='remote', page_size=10).servable(target='table')
+    d['action'] = '-'
+    d['start'] = d.start_nuts.apply(lambda x: x[:2])
+    d['end'] = d.end_nuts.apply(lambda x: x[:2])
+    d['cost']= d.total_cost
+    d['eta'] = d.time_road
+    d['co2'] = d.distance_road * 0.2
+    d['km_cost'] = round(d.total_cost / d.distance_road, 2)  
 
-                    tbl.add_filter(lnf, 'start')
-                    tbl.add_filter(lnt, 'end')
-                </py-script>
+    cols = ['action', 'start', 'end', 'start_nuts', 'end_nuts', 'distance_road', 'time_road', 'total_cost', 'km_cost', 'co2']
+    d = d[cols]
+    cn = d.start.unique().tolist()
+    nu = d.start_nuts.unique().tolist()
+    
+    #ms = CONF2_API['models'] # models list from dict
+    gr = ['start', 'start_nuts']
+</py-script>
 
+<py-script>
+    lnf = pn.widgets.Select(name='from,', options=cn, value='NL').servable(target='from')
+    lnt = pn.widgets.Select(name='to', options=cn, value='DE').servable(target='to')
 
-        </section>
+    js = pn.pane.JSON(CONF2_API, name='JSON').servable(target='json') #
 
-        <script>
-            $(document).ready(function () {
-                $("#sidebarCollapse").on("click", function () {
-                    $("#sidebar").toggleClass("active");
-                    $(this).toggleClass("active");
-                    var interval = setInterval(function () {
-                        window.dispatchEvent(new Event("resize"));
-                    }, 10);
-                    setTimeout(function () {
-                        clearInterval(interval);
-                    }, 210);
-                });
+    multi_choice = pn.widgets.MultiChoice(name='models', value=['price'], options=ms).servable(target='model')
+
+    file_input = pn.widgets.FileInput(accept='.csv,.json').servable(target='file')
+
+    #pn.state.notifications.info('This is a info notification.', duration=2000)
+
+    jse = pn.widgets.JSONEditor(
+    schema={"title": "Person",
+    "type": "object",
+    "properties": {"firstName": {"type": "string", 
+    "description": "The person's first name."},
+    "lastName": {
+    "type": "string", "description": "The person's last name."},
+    "age": {"description": "Age in years which must be equal to or greater than zero.",
+    "type": "integer",
+    "minimum": 0}}},
+    value={
+    'firstName': 2,
+    'lastName': 'Smith',
+    'age': 13.5}, height=200, width=150).servable(target='json_edit')
+   
+    intro = pn.pane.Markdown("Lane cost between EU _NUTS_ regions").servable(target='intro')
+
+    tbl = pn.widgets.Tabulator(d, groupby=gr,  pagination='remote', page_size=10).servable(target='table')
+    tbl.add_filter(lnf, 'start')
+    tbl.add_filter(lnt, 'end')
+</py-script>
+
+</section>
+
+<script>
+     $(document).ready(function () {
+        $("#sidebarCollapse").on("click", function () {
+            $("#sidebar").toggleClass("active");
+            $(this).toggleClass("active");
+            var interval = setInterval(function () {
+                window.dispatchEvent(new Event("resize"));
+            }, 10);
+            setTimeout(function () {
+                clearInterval(interval);
+            }, 210);
+    });
             });
-        </script>
+</script>
 
  </body>
 </html>

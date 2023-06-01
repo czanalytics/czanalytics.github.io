@@ -89,15 +89,6 @@
             href="https://pyscript.net/latest/pyscript.css"/>
 
         <script defer src="https://pyscript.net/latest/pyscript.js"></script>
-        
-        <!-- <link rel="stylesheet" href="./assets/css/examples.css" /> 
-        --> 
-        <!-- dont work
-            <py-env>
-            - paths:
-            - ./line/conf/api.py
-            </py-env>
-        -->
     </head>
 
     <body>
@@ -144,14 +135,14 @@
     plugins = [
     ]
     [[fetch]]
-        files = ["./mathslib.py", "./api.py", "./co2.py"]
+        files = ["./mathslib.py", "./ui.py", "./co2.py"]
 </py-config>
 
 <py-script>
 from mathslib import subtract
 print(subtract(8, 4))
 
-from api import hello
+from ui import hello
 print(hello())
 
 from co2 import co2_foo
