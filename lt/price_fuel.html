@@ -84,6 +84,8 @@
 </py-script>
 
 <py-script>
+    import os
+    import asyncio
     import warnings # no need to cofigure
     warnings.filterwarnings("ignore")
 
@@ -92,15 +94,53 @@
     import pandas as pd
 
     from pyodide.http import open_url
+    from pyodide.http import pyfetch
 
     pn.config.sizing_mode = 'stretch_width'
+  
+    urlf1="https://drive.google.com/file/d/1-0hoEsruehAdtl30O3w5GNXfHz1qMfsQ"
+    urlf2="https://drive.google.com/file/d/1-RFzTeGt49FlRK1wfMONgNrK44XBLtjI"
+    urls = [urlf1, urlf2]
+    #url="https://drive.google.com/drive/folders/1idAMHhP_SbGqHwnPGHndeQdBb_HRFxqv"
+    #response = await pyfetch(url=urlf)
 
-    # url = 'https://raw.githubusercontent.com/czanalytics/multimodal-shipping/main/dat/nuts.csv'
+    async def main():
+        for i in range(3):
+            print(i)
+            await asyncio.sleep(1)
+
+    asyncio.ensure_future(main())
     
-    url0 = fc['url'] + fc['files'][0]
-    d0 = pd.read_csv(open_url(url0)).dropna()
-    url1 = fc['url'] + fc['files'][1]
-    d1 = pd.read_csv(open_url(url1)).dropna()
+    async def get_data():
+        for url in urls:
+            print(url)
+            #i = await pyfetch(url)    
+            #r = await i.read()
+            #print(r)
+            await asyncio.sleep(1)
+            
+    asyncio.ensure_future(get_data())
+
+
+    #response_dict = await response.json()
+    #response = await pyfetch(url="https://cat-fact.herokuapp.com/facts/random", method="GET")
+    #response_dict = await response.json()
+
+    #status = f"Request status: {response.status}"
+    #text = f"Text: {response_dict['text']}"
+
+    #pyscript.write('request_status', status)
+    #pyscript.write('request_text', text)
+
+    print('Root directory contents:')
+    files = os.listdir('/') # https://www.jhanley.com/blog/pyscript-files-and-file-systems-part-1/
+    for file in files:
+        print(file)
+    
+    u0 = fc['url'] + fc['files'][0]
+    d0 = pd.read_csv(open_url(u0)).dropna()
+    u1 = fc['url'] + fc['files'][1]
+    d1 = pd.read_csv(open_url(u1)).dropna()
 
     d = pd.concat([d0, d1])
 

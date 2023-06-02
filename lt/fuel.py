@@ -1,6 +1,7 @@
 FUEL = {
     'url': "https://raw.githubusercontent.com/czanalytics/multimodal-shipping/main/dat/fuel_price/",
-    'files': ["fuel-price-23-05-15.csv", "fuel-price-23-05-22.csv"],
+    'url1': "https://drive.google.com/drive/folders/1idAMHhP_SbGqHwnPGHndeQdBb_HRFxqv?usp=sharing/",
+    'files': ["fuel-price-23-05-15.csv", "fuel-price-23-05-22.csv", "fuel-price-23-05-29.csv"],
     'models': ["price_latest", "price_trend", "price_ai"],
 }
 
