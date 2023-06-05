@@ -48,6 +48,7 @@
                         <div class="bk-root" id="from"></div>
                         <div class="bk-root" id="fuel"></div>
                         <div class="bk-root" id="model"></div>
+                        <div class="bk-root" id="trend"></div>
                     </ul>
                 </div>
 
@@ -91,16 +92,27 @@
 
     import altair as alt
     import panel as pn
+    import numpy as np
     import pandas as pd
 
     from pyodide.http import open_url
     from pyodide.http import pyfetch
 
     pn.config.sizing_mode = 'stretch_width'
-  
+    
+    async def foo() :
+      from pyodide.http import pyfetch
+      response = await pyfetch("https://drive.google.com/file/d/1-2D_Js9TmIQKjGpicCRDcIOcfA49Nmnu")
+      await response.unpack_archive()
+    
+    asyncio.ensure_future(foo())
+    
+    # https://drive.google.com/file/d/1-2D_Js9TmIQKjGpicCRDcIOcfA49Nmnu/view?usp=share_link
     urlf1="https://drive.google.com/file/d/1-0hoEsruehAdtl30O3w5GNXfHz1qMfsQ"
     urlf2="https://drive.google.com/file/d/1-RFzTeGt49FlRK1wfMONgNrK44XBLtjI"
-    urls = [urlf1, urlf2]
+    urlf3="https://drive.google.com/file/d/1Em4q3xCuWb5hcw8w8UqtACGqALD4ju7K"
+    urls = [urlf1, urlf2, urlf3]
+
     #url="https://drive.google.com/drive/folders/1idAMHhP_SbGqHwnPGHndeQdBb_HRFxqv"
     #response = await pyfetch(url=urlf)
 
@@ -121,7 +133,6 @@
             
     asyncio.ensure_future(get_data())
 
-
     #response_dict = await response.json()
     #response = await pyfetch(url="https://cat-fact.herokuapp.com/facts/random", method="GET")
     #response_dict = await response.json()
@@ -132,17 +143,14 @@
     #pyscript.write('request_status', status)
     #pyscript.write('request_text', text)
 
-    print('Root directory contents:')
-    files = os.listdir('/') # https://www.jhanley.com/blog/pyscript-files-and-file-systems-part-1/
-    for file in files:
-        print(file)
-    
     u0 = fc['url'] + fc['files'][0]
     d0 = pd.read_csv(open_url(u0)).dropna()
     u1 = fc['url'] + fc['files'][1]
     d1 = pd.read_csv(open_url(u1)).dropna()
+    u2 = fc['url'] + fc['files'][2]
+    d2 = pd.read_csv(open_url(u2)).dropna()
 
-    d = pd.concat([d0, d1])
+    d = pd.concat([d0, d1, d2])
 
     d['price_model'] = d['price']
 
@@ -150,6 +158,53 @@
     fs = d.fuel.unique().tolist()
     gr = ['country', 'date']
     gr = []
+</py-script>
+
+<py-script>
+    import importlib
+    from pathlib import Path
+
+    Path("mymodule.py").write_text("""\
+    def hello():
+      print("he-hellou!")
+    """
+    )
+
+    importlib.invalidate_caches() # Esure Python notices the .py file
+    from mymodule import hello
+ 
+    hello()
+</py-script>
+
+<py-script>
+    print('Root directory contents:')
+    files = os.listdir('/') # https://www.jhanley.com/blog/pyscript-files-and-file-systems-part-1/
+    for file in files:
+        print(file)
+
+    dh = '/home/pyodide/' # py-scripts are here
+    print(dh)
+    files = os.listdir(dh)
+    for file in files:
+        print(file)
+
+    dh = '/home/web_user/'
+    print(dh)
+    files = os.listdir(dh)
+    for file in files:
+        print(file)
+
+    dh = '/tmp/'
+    print(dh)
+    files = os.listdir(dh)
+    for file in files:
+        print(file)
+
+    dh = '/usr/'
+    print(dh)
+    files = os.listdir(dh)
+    for file in files:
+        print(file)
 </py-script>
 
 <py-script>
@@ -163,6 +218,14 @@
     tbl = pn.widgets.Tabulator(d, groupby=gr,  pagination='remote', page_size=10).servable(target='table')
     tbl.add_filter(lnf, 'country')
     tbl.add_filter(fuels, 'fuel')
+</py-script>
+
+<py-script>
+# print(tbl.price) # TBD access selected data   
+data = {'x': np.arange(5), 'y': np.random.randn(5).cumsum()}
+data = {'x': [1,2,3], 'y':[1.8, 1.9, 1.8]}
+trend = pn.indicators.Trend(
+    title='Price', data=data, width=150, height=150).servable(target='trend')
 </py-script>
 
 </section>
