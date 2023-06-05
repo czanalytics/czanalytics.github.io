@@ -95,6 +95,7 @@
     import panel as pn
     import numpy as np
     import pandas as pd
+    import datetime as dt
 
     from pyodide.http import open_url
     from pyodide.http import pyfetch
@@ -153,6 +154,10 @@
 
     d = pd.concat([d0, d1, d2])
 
+    days = pd.Timestamp("2023-05-29") # Monday
+    print(days.day_name())
+
+    d['date'] = pd.to_datetime(d.date, format='%Y-%m-%d')
     d['price_model'] = d['price']
 
     cn = d.country.unique().tolist()
@@ -178,6 +183,9 @@
 </py-script>
 
 <py-script>
+    tnow = dt.datetime.now()
+    print(tnow)
+
     print('Root directory contents:')
     files = os.listdir('/') # https://www.jhanley.com/blog/pyscript-files-and-file-systems-part-1/
     for file in files:
@@ -219,14 +227,30 @@
     tbl = pn.widgets.Tabulator(d, groupby=gr,  pagination='remote', page_size=10).servable(target='table')
     tbl.add_filter(lnf, 'country')
     tbl.add_filter(fuels, 'fuel')
+
+    d = tbl.selected_dataframe # always 0 rows ?
 </py-script>
 
 <py-script>
-# print(tbl.price) # TBD access selected data   
-data = {'x': np.arange(5), 'y': np.random.randn(5).cumsum()}
-data = {'x': [1,2,3], 'y':[1.8, 1.9, 1.8]}
-trend = pn.indicators.Trend(
-    title='Price', data=data, width=150, height=150).servable(target='trend')
+# https://panel.holoviz.org/reference/widgets/Tabulator.html
+def trend(xx, yy) :
+    d = tbl.current_view
+    print(d.shape)
+    p = d['price'].to_numpy()
+    data = {'x': [1,2,3], 'y':[1.8, 1.9, 1.8]}
+    data = {'x': np.arange(p.size), 'y': p}
+    # https://panel.holoviz.org/reference/indicators/Trend.html
+    #pn.indicators.Trend(title='Price', data=data, width=150, height=150).servable(target='trend')
+    tr=pn.indicators.Trend(title='Price', data=data, width=150, height=150)
+    return tr
+    
+#tr = pn.indicators.Trend(title='Price', data=data, width=150, height=150).servable(target='trend')
+
+#lnf.param.watch(trend, 'value')
+#pn.Row(pn.bind(trend, lnf))
+foo_funck = pn.bind(trend, lnf, fuels)
+pn.panel(foo_funck).servable(target='trend')
+#trend()
 </py-script>
 
 </section>
