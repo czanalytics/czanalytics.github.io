@@ -151,8 +151,12 @@
     d1 = pd.read_csv(open_url(u1)).dropna()
     u2 = fc['url'] + fc['files'][2]
     d2 = pd.read_csv(open_url(u2)).dropna()
+    u3 = fc['url'] + fc['files'][3]
+    d3 = pd.read_csv(open_url(u3)).dropna()
 
-    d = pd.concat([d0, d1, d2])
+
+    d = pd.concat([d0, d1, d2, d3])
+    #d = pd.concat([d0, d1, d2])
 
     days = pd.Timestamp("2023-05-29") # Monday
     print(days.day_name())
