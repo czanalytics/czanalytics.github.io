@@ -39,6 +39,7 @@
 
 import folium
 from folium import plugins
+
 import json
 import pandas as pd
 import numpy as np
@@ -156,6 +157,13 @@ folium.PolyLine(lane_coord,
  tooltip="Lane ID 001").add_to(m)
 
 folium.LayerControl().add_to(m)
+
+plugins.Fullscreen(
+  position="topright",
+  title="Expand me",
+  title_cancel="Exit me",
+  force_separate_button=True,
+).add_to(m)
 
 #data = np.array([np.random.uniform(low = 25, high = 50, size = 100),
 # np.random.uniform(low = -125, high = -70, size = 100)]).T
