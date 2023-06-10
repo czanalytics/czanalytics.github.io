@@ -114,6 +114,8 @@ for (lat,lng,nameP),pg in zip(latLong, pl_group):
     color='green',
     fill_opacity=1.0).add_to(pg)
 
+plugins.Geocoder().add_to(m)
+
 pg.add_to(m)
 m.add_child(folium.LayerControl(collapsed=False))
 
@@ -156,7 +158,13 @@ folium.PolyLine(lane_coord,
  opacity=0.7,
  tooltip="Lane ID 001").add_to(m)
 
-folium.LayerControl().add_to(m)
+n=100
+data = np.array([
+  np.random.uniform(low=35, high=60, size=n),
+  np.random.uniform(low=-12, high=30, size=n),]).T
+popups = [str(i) for i in range(n)]  # Popups texts are simple numbers.
+#plugins.MarkerCluster(data, popups=popups).add_to(m)
+
 
 plugins.Fullscreen(
   position="topright",
@@ -164,6 +172,11 @@ plugins.Fullscreen(
   title_cancel="Exit me",
   force_separate_button=True,
 ).add_to(m)
+
+
+minimap = plugins.MiniMap()
+m.add_child(minimap)
+
 
 #data = np.array([np.random.uniform(low = 25, high = 50, size = 100),
 # np.random.uniform(low = -125, high = -70, size = 100)]).T
