@@ -18,7 +18,9 @@
   <div id="folium"></div>
    
 <py-config>
-  packages = ["folium", "pandas", "numpy"]
+  packages = [
+  "https://cdn.holoviz.org/panel/0.14.3/dist/wheels/bokeh-2.4.3-py3-none-any.whl",
+  "folium", "pandas", "numpy", "panel==0.13.1"]
   plugins = ["https://pyscript.net/latest/plugins/python/py_tutor.py"]
 </py-config>
         
@@ -60,7 +62,29 @@ geo_nuts2= json.loads(open_url(url_nuts2).read())
 url_nuts3 = 'https://raw.githubusercontent.com/czanalytics/multimodal-shipping/main/dat/nuts3.json'
 geo_nuts3= json.loads(open_url(url_nuts3).read())
 
-m = folium.Map(location=[52.3776, 4.8246], zoom_start=5) # amsterdam
+m = folium.Map(location=[52.3776, 4.8246], zoom_start=5, control_scale=True) 
+
+#folium.GeoJson(geo_nuts2, name="NUTS2/transport").add_to(m)
+
+folium.GeoJson(geo_nuts3, name="NUTS3").add_to(m)
+
+nuts_ids = ['AT11', 'AT12', 'AT13']
+from_ids = ['FI19', 'FI20']
+to_ids = ['BE10', 'BE21', 'BE22', 'BE23', 'BE24']
+
+folium.GeoJson(
+  geo_nuts2, 
+  name="NUTS2",
+  style_function=lambda x: {
+  'fillColor': 'red'
+  if x['properties']['NUTS_ID'] in from_ids
+  else 'green',
+  'fillOpacity': .5
+  if x['properties']['NUTS_ID'] in to_ids 
+  else 0.1,
+  'weight': 0.1 
+  },
+).add_to(m)
 
 """
 folium.Choropleth(
@@ -75,9 +99,6 @@ folium.Choropleth(
     legend_name="Unemployment Rate (%)",
 ).add_to(m)
 """
-
-folium.GeoJson(geo_nuts2, name="NUTS2/transport").add_to(m)
-folium.GeoJson(geo_nuts3, name="NUTS3").add_to(m)
 
 x = 'Load Tripping'
 latLong = [
@@ -117,15 +138,8 @@ for (lat,lng,nameP),pg in zip(latLong, pl_group):
 plugins.Geocoder().add_to(m)
 
 pg.add_to(m)
+
 m.add_child(folium.LayerControl(collapsed=False))
-
-"""
-folium.CircleMarker(
-location = [34.06, -118.25]).add_to(folium.FeatureGroup(name = 'Circle Marker').add_to(m))
-
-folium.Marker(
-  location = [34.14, -118.35]).add_to(folium.FeatureGroup(name = 'Marker').add_to(m))
-"""
 
 folium.Marker(location = [52.3776, 4.8246],
  popup="Load Tripping HQ",
@@ -158,25 +172,15 @@ folium.PolyLine(lane_coord,
  opacity=0.7,
  tooltip="Lane ID 001").add_to(m)
 
-n=100
-data = np.array([
-  np.random.uniform(low=35, high=60, size=n),
-  np.random.uniform(low=-12, high=30, size=n),]).T
-popups = [str(i) for i in range(n)]  # Popups texts are simple numbers.
-#plugins.MarkerCluster(data, popups=popups).add_to(m)
-
-
 plugins.Fullscreen(
   position="topright",
   title="Expand me",
-  title_cancel="Exit me",
+  title_cancel="Exit full screen",
   force_separate_button=True,
 ).add_to(m)
 
-
 minimap = plugins.MiniMap()
 m.add_child(minimap)
-
 
 #data = np.array([np.random.uniform(low = 25, high = 50, size = 100),
 # np.random.uniform(low = -125, high = -70, size = 100)]).T
@@ -187,5 +191,15 @@ display(m, target="folium")
 </py-script>
 
 </section>
+
+<section>
+  <py-script>
+    import panel as pn
+
+    from1 = pn.widgets.Select(name='country', options=['FI', 'SE', 'BR'], value='FI')
+    from1
+  </py-script>  
+</section>
+
 </body>
 
