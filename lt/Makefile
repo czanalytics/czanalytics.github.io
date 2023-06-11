@@ -10,5 +10,9 @@ browse:
 %.ui0 : %.html
 	$(BROWSER)  $< 
 
+# sudo kill <PID> # python3
+ps:
+	pgrep -l -u ah
+
 server:
 	python3 -m http.server &
