@@ -98,7 +98,7 @@
                     <img src="./transport-logo.png" width="30%" class="logo" />
                 </a>
                 <a class="title" href="" style="color: grey">
-                    API v0.22
+                    v0.24
                 </a>
             </div>
         </nav>
@@ -110,16 +110,18 @@
                     <ul class="nav flex-column">
                         <div class="bk-root" id="from"></div>
                         <div class="bk-root" id="to"></div>
+                        <div class="bk-root" id="zip"></div>
                         <div class="bk-root" id="model"></div>
                         <div class="bk-root" id="file"></div>
-                        <div class="bk-root" id="json"></div>
+                       <!-- <div class="bk-root" id="json"></div> -->
                     </ul>
                 </div>
 
                 <div class="col mh-100 float-left" id="main">
                     <div class="bk-root" id="intro"></div>
-                    <div class="bk-root" id="table"></div>
-                    <div class="bk-root" id="json_edit"></div>
+                    <div class="bk-root" id="table1"></div>
+                    <div class="bk-root" id="map"></div>
+                    <!-- <div class="bk-root" id="table2"></div> -->
                 </div>
             </div>
 
@@ -130,6 +132,7 @@
     "numpy",
     "pandas",
     "scikit-learn",
+    "folium",
     "panel==0.13.1"
     ]
     plugins = [
@@ -176,7 +179,6 @@ print(ms)
     pn.config.sizing_mode = 'stretch_width'
 
     url = 'https://raw.githubusercontent.com/czanalytics/multimodal-shipping/main/dat/nuts.csv'
-
     d = pd.read_csv(open_url(url)).dropna()
 
     #d = d.loc[d['total_cost'] < 500] # filter
@@ -189,7 +191,9 @@ print(ms)
     d['co2'] = d.distance_road * 0.2
     d['km_cost'] = round(d.total_cost / d.distance_road, 2)  
 
-    cols = ['action', 'start', 'end', 'start_nuts', 'end_nuts', 'distance_road', 'time_road', 'total_cost', 'km_cost', 'co2']
+    cols = ['action', 'start', 'end', 'start_nuts', 'end_nuts', 
+    'distance_road', 'time_road', 'total_cost', 'km_cost', 'co2']
+ 
     d = d[cols]
     cn = d.start.unique().tolist()
     nu = d.start_nuts.unique().tolist()
@@ -202,7 +206,7 @@ print(ms)
     lnf = pn.widgets.Select(name='from,', options=cn, value='NL').servable(target='from')
     lnt = pn.widgets.Select(name='to', options=cn, value='DE').servable(target='to')
 
-    js = pn.pane.JSON(CONF2_API, name='JSON').servable(target='json') #
+    #js = pn.pane.JSON(CONF2_API, name='JSON').servable(target='json') #
 
     multi_choice = pn.widgets.MultiChoice(name='models', value=['price'], options=ms).servable(target='model')
 
@@ -210,26 +214,48 @@ print(ms)
 
     #pn.state.notifications.info('This is a info notification.', duration=2000)
 
-    jse = pn.widgets.JSONEditor(
-    schema={"title": "Person",
-    "type": "object",
-    "properties": {"firstName": {"type": "string", 
-    "description": "The person's first name."},
-    "lastName": {
-    "type": "string", "description": "The person's last name."},
-    "age": {"description": "Age in years which must be equal to or greater than zero.",
-    "type": "integer",
-    "minimum": 0}}},
-    value={
-    'firstName': 2,
-    'lastName': 'Smith',
-    'age': 13.5}, height=200, width=150).servable(target='json_edit')
-   
     intro = pn.pane.Markdown("Lane cost between EU _NUTS_ regions").servable(target='intro')
 
-    tbl = pn.widgets.Tabulator(d, groupby=gr,  pagination='remote', page_size=10).servable(target='table')
+    tbl = pn.widgets.Tabulator(d,pagination='remote', page_size=10).servable(target='table1')
+    #tbl = pn.widgets.Tabulator(d, groupby=gr,  pagination='remote', page_size=10).servable(target='table1')
     tbl.add_filter(lnf, 'start')
     tbl.add_filter(lnt, 'end')
+
+
+    urlz = 'https://raw.githubusercontent.com/czanalytics/multimodal-shipping/main/dat/pc-be.csv'
+    dz = pd.read_csv(open_url(urlz)).dropna()
+
+    colsz = ['country_code', 'zipcode', 'place', 'latitude', 'longitude']
+    dz = dz[colsz]
+    #dz = dz.iloc(:500)
+
+    print(dz.head())
+    grz = dz.zipcode.unique().tolist()
+    print(grz)
+     
+    zip = pn.widgets.Select(name='BE zipcode', options=grz, value=grz[0]).servable(target='zip')
+    
+    tb = pn.widgets.Tabulator(dz, page_size=10).servable(target='table2')
+    tb.add_filter(zip, 'zipcode')
+    
+    print(zip.value)
+
+</py-script>
+
+<py-script>
+    import folium
+    import panel as pn
+
+    pn.extension(sizing_mode="stretch_width")
+
+    m = folium.Map(location=[52.51, 13.39], zoom_start=12)
+
+    fol = pn.pane.plot.Folium(m, height=300).servable(target='map') # width
+    #fol = pn.pane.plot.Folium(m, height=400)
+    
+    folium.Marker(
+    [52.516, 13.381], popup="<i>Brandenburg Gate</i>", tooltip="Click me!"
+    ).add_to(m)
 </py-script>
 
 </section>
