@@ -71,10 +71,15 @@ folium.GeoJson(geo_nuts3, name="NUTS3").add_to(m)
 nuts_ids = ['AT11', 'AT12', 'AT13']
 from_ids = ['FI19', 'FI20']
 to_ids = ['BE10', 'BE21', 'BE22', 'BE23', 'BE24']
+ids = from_ids + to_ids # areas of interest
+
+# filter geojeson
+g = geo_nuts2
+g['features'] = [r for r in g['features'] if  r['properties']['NUTS_ID'] in ids]
 
 folium.GeoJson(
-  geo_nuts2, 
-  name="NUTS2",
+  g, 
+  name="from / to",
   style_function=lambda x: {
   'fillColor': 'red'
   if x['properties']['NUTS_ID'] in from_ids
@@ -135,8 +140,6 @@ for (lat,lng,nameP),pg in zip(latLong, pl_group):
     color='green',
     fill_opacity=1.0).add_to(pg)
 
-plugins.Geocoder().add_to(m)
-
 pg.add_to(m)
 
 m.add_child(folium.LayerControl(collapsed=False))
@@ -162,10 +165,10 @@ x1=52.42
 x2=13.40
 lane_coord = [
   (x1, x2),
-  (x1-1,x2-1),
-  (x1-2,x2-1),
-  (x1-2,x2-2),
-  (x1-3,x2-2)]
+  (x1-1, x2-1),
+  (x1-2, x2-1),
+  (x1-2, x2-2),
+  (x1-3, x2-2)]
 
 folium.PolyLine(lane_coord, 
  color="#bb8833",
@@ -178,6 +181,9 @@ plugins.Fullscreen(
   title_cancel="Exit full screen",
   force_separate_button=True,
 ).add_to(m)
+
+plugins.Geocoder().add_to(m)
+plugins.LocateControl().add_to(m)
 
 minimap = plugins.MiniMap()
 m.add_child(minimap)
@@ -193,12 +199,14 @@ display(m, target="folium")
 </section>
 
 <section>
-  <py-script>
-    import panel as pn
 
-    from1 = pn.widgets.Select(name='country', options=['FI', 'SE', 'BR'], value='FI')
-    from1
-  </py-script>  
+<py-script>
+import panel as pn
+
+from1 = pn.widgets.Select(name='country', options=['FI', 'SE', 'BR'], value='FI')
+from1
+</py-script>  
+
 </section>
 
 </body>
