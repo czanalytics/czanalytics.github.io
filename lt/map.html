@@ -13,7 +13,6 @@
 </head>
 
 <body>
-
 <section class="pyscript">
   <div id="folium"></div>
    
@@ -41,15 +40,12 @@
 
 import folium
 from folium import plugins
-
+from pyodide.http import open_url
 import json
 import pandas as pd
 import numpy as np
 
-from pyodide.http import open_url
-
 url = ("https://raw.githubusercontent.com/python-visualization/folium/master/examples/data")
-
 state_geo = f"{url}/us-states.json"
 state_unemployment = f"{url}/US_Unemployment_Oct2012.csv"
 
@@ -58,6 +54,7 @@ geo_json = json.loads(open_url(state_geo).read())
 
 url_nuts2 = 'https://raw.githubusercontent.com/czanalytics/multimodal-shipping/main/dat/nuts2.json'
 geo_nuts2= json.loads(open_url(url_nuts2).read())
+g = geo_nuts2
 
 url_nuts3 = 'https://raw.githubusercontent.com/czanalytics/multimodal-shipping/main/dat/nuts3.json'
 geo_nuts3= json.loads(open_url(url_nuts3).read())
@@ -71,25 +68,40 @@ folium.GeoJson(geo_nuts3, name="NUTS3").add_to(m)
 nuts_ids = ['AT11', 'AT12', 'AT13']
 from_ids = ['FI19', 'FI20']
 to_ids = ['BE10', 'BE21', 'BE22', 'BE23', 'BE24']
-ids = from_ids + to_ids # areas of interest
 
-# filter geojeson
-g = geo_nuts2
-g['features'] = [r for r in g['features'] if  r['properties']['NUTS_ID'] in ids]
+filter_ids = from_ids + to_ids # areas of interest
+g['features'] = [r for r in g['features'] if r['properties']['NUTS_ID'] in filter_ids] # filter
 
 folium.GeoJson(
   g, 
   name="from / to",
   style_function=lambda x: {
-  'fillColor': 'red'
-  if x['properties']['NUTS_ID'] in from_ids
-  else 'green',
-  'fillOpacity': .5
-  if x['properties']['NUTS_ID'] in to_ids 
-  else 0.1,
-  'weight': 0.1 
+    'fillColor': 'red'
+    if x['properties']['NUTS_ID'] in from_ids
+    else 'green',
+    'fillOpacity': .5
+    if x['properties']['NUTS_ID'] in to_ids 
+    else 0.1,
+    'weight': 0.1 
   },
 ).add_to(m)
+
+d = {'nuts_id': to_ids, 'price': [3, 4, 5, 7,8]}
+d_price = pd.DataFrame(data=d)
+
+folium.Choropleth(
+    geo_data=g,
+    name="price estimate",
+    data=d_price,
+    columns=["nuts_id", "price"], 
+    key_on="feature.properties.NUTS_ID",
+    fill_color="YlGn",
+    fill_opacity=0.7,
+    line_opacity=0.2,
+    legend_name="Price",
+).add_to(m)
+
+# https://www.nagarajbhat.com/post/folium-visualization/
 
 """
 folium.Choropleth(
@@ -132,7 +144,7 @@ for n in all_gp:
     if n == vars(v)['layer_name']:
       pl_group.append(v)
 
-for (lat,lng,nameP),pg in zip(latLong, pl_group):
+for (lat,lng,nameP), pg in zip(latLong, pl_group):
   folium.CircleMarker(location=[lat, lng], radius=5,
     popup=str(nameP) + " Lat: " + str(lat) + " , Long: " + str(lng),
     tooltip=str(nameP) + " Lat: " + str(lat) + " , Long: " + str(lng),
@@ -152,7 +164,8 @@ folium.Marker(
  location=[60.45, 26.22],
  popup="LT price calculator / Google ",
  icon=folium.Icon(icon="cloud"), ).add_to(m)
- 
+
+""" 
 folium.CircleMarker(
   location=[52.52, 13.40],
   radius=100,
@@ -160,6 +173,7 @@ folium.CircleMarker(
   color="#3186cc",
   fill=True,
   fill_color="#3186cc",  ).add_to(m)
+"""
 
 x1=52.42
 x2=13.40
