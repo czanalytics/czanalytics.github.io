@@ -102,20 +102,17 @@ folium.Choropleth(
 ).add_to(m)
 
 # https://www.nagarajbhat.com/post/folium-visualization/
+d0 = {'id': [1, 2], 'lat': [52.37, 53.52], 'lon': [4.8, 13.4], 'price': [1000, 2000]}
+dp = pd.DataFrame(data=d0)
 
-"""
-folium.Choropleth(
-    geo_data=geo_json,
-    name="choropleth",
-    data=state_data,
-    columns=["State", "Unemployment"],
-    key_on="feature.id",
-    fill_color="YlGn",
-    fill_opacity=0.7,
-    line_opacity=0.2,
-    legend_name="Unemployment Rate (%)",
-).add_to(m)
-"""
+for i in range(0, len(dp)):
+   folium.Circle(
+     location=[dp.iloc[i]['lat'], dp.iloc[i]['lon']],
+     popup="lane " + str(dp.iloc[i]['id']) + ": " + str(dp.iloc[i]['price']) + "EUR",
+     radius=float(dp.iloc[i]['price']*20),
+     color='white', 
+     fill=True,
+     fill_color='red').add_to(m)
 
 x = 'Load Tripping'
 latLong = [
