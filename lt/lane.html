@@ -243,6 +243,120 @@ print(ms)
 </py-script>
 
 <py-script>
+url = 'https://nominatim.openstreetmap.org/search.php?country=Finland&postalcode=00100&format=jsonv2'
+url = 'https://mocki.io/v1/d4867d8b-b5d5-4a48-a4ab-79131b5809b8'
+
+import pyodide
+import asyncio
+import time
+
+import os
+import json
+
+async def return_value():
+	return 1234
+
+  
+async def get_data(url):
+    value = await return_value()
+    print(value)
+
+    response = await pyodide.http.pyfetch(url)
+    json = await response.json()
+    return json
+
+def bar():
+    #print(res)
+    #print(response.result())
+    #print(os.getcwd())
+    #file = 'postcode.json'
+    #f = open(file, 'w')
+    #f.write("dddd")
+    #f.write(res) # ??
+    #f.close()
+    return 1
+
+#asyncio.ensure_future(get_data(url))
+
+#>>>
+async def say_after(delay, what):
+    await asyncio.sleep(delay)
+    print(what)
+
+async def main():
+    print(f"started at {time.strftime('%X')}")
+
+    await say_after(1, 'one')
+    
+    x = await get_data(url)
+    print(x)
+    
+    file = 'postcode.json'
+    f = open(file, 'w')
+    x = '{"a": 1, "b": 2}'
+    f.write(x)
+    #f.write(str(x))
+    f.close()
+
+    await say_after(2, 'two')
+    peek()
+    xx = foo()
+    print("from file:", xx)
+
+    try:  
+        j = json.loads(xx)
+        print(type(j))
+    except:
+        print("ERROR: json.loads(payload)")
+
+    await say_after(3, 'tree')
+    print(f"ended at {time.strftime('%X')}")
+
+asyncio.ensure_future(main())
+
+#<<<:w
+
+
+#-----
+file = 'postcode.json'
+#f = open(file, 'w')
+#f.write('Hello PyScript World')
+#f.close()
+
+def foo(file='postcode.json'):
+    f = open(file, 'r')
+    #print(f.read())
+    print('foo()')
+    s = f.read() # string
+    f.close()
+    return s
+
+#foo(file)
+#print(s)
+#print(s.upper())
+
+def peek():    
+    print('peek():')
+    files = os.listdir('/home/pyodide/') # / 
+    for file in files:
+        print(file)
+
+json_data = '[{"ID":10,"Name":"Pankaj","Role":"CEO"},' \
+            '{"ID":20,"Name":"David Lee","Role":"Editor"}]'
+
+json_object = json.loads(json_data)
+json_formatted_str = json.dumps(json_object, indent=2)
+print(json_formatted_str)
+</py-script>
+
+<py-script>
+print('files:')
+files = os.listdir('/home/pyodide/') # / 
+for file in files:
+        print(file)
+</py-script>
+
+<py-script>
     import folium
     import panel as pn
 
@@ -250,15 +364,18 @@ print(ms)
 
     m = folium.Map(location=[52.51, 13.39], zoom_start=12)
 
-    fol = pn.pane.plot.Folium(m, height=300).servable(target='map') # width
+    fol = pn.pane.plot.Folium(m, height=300).servable(target='map') # width=300
     #fol = pn.pane.plot.Folium(m, height=400)
     
-    folium.Marker(
-    [52.516, 13.381], popup="<i>Brandenburg Gate</i>", tooltip="Click me!"
+    folium.Marker([52.516, 13.381], popup="<i>Brandenburg Gate</i>", tooltip="Click me!"
     ).add_to(m)
+
+    fol.object = m # pane's view updated
+
 </py-script>
 
 </section>
+
 
 <script>
      $(document).ready(function () {
