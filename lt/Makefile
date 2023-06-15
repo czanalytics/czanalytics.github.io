@@ -1,5 +1,6 @@
-# make server > make browse > select html
-# #
+# On unique WSL cd <html project>
+# make server > make browse 
+# 
 BROWSER  := google-chrome
 BROWSER0 := explorer.exe
 URL      := http://0.0.0.0:8000
