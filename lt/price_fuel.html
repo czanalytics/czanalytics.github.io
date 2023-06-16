@@ -101,30 +101,16 @@
     from pyodide.http import pyfetch
 
     pn.config.sizing_mode = 'stretch_width'
-    
+   
+    # TBD
     async def foo() :
       from pyodide.http import pyfetch
       response = await pyfetch("https://drive.google.com/file/d/1-2D_Js9TmIQKjGpicCRDcIOcfA49Nmnu")
       await response.unpack_archive()
     
-    asyncio.ensure_future(foo())
+    #asyncio.ensure_future(foo())
     
-    # https://drive.google.com/file/d/1-2D_Js9TmIQKjGpicCRDcIOcfA49Nmnu/view?usp=share_link
-    urlf1="https://drive.google.com/file/d/1-0hoEsruehAdtl30O3w5GNXfHz1qMfsQ"
-    urlf2="https://drive.google.com/file/d/1-RFzTeGt49FlRK1wfMONgNrK44XBLtjI"
-    urlf3="https://drive.google.com/file/d/1Em4q3xCuWb5hcw8w8UqtACGqALD4ju7K"
-    urls = [urlf1, urlf2, urlf3]
-
-    #url="https://drive.google.com/drive/folders/1idAMHhP_SbGqHwnPGHndeQdBb_HRFxqv"
-    #response = await pyfetch(url=urlf)
-
-    async def main():
-        for i in range(3):
-            print(i)
-            await asyncio.sleep(1)
-
-    asyncio.ensure_future(main())
-    
+    """
     async def get_data():
         for url in urls:
             print(url)
@@ -134,29 +120,22 @@
             await asyncio.sleep(1)
             
     asyncio.ensure_future(get_data())
+    """
 
-    #response_dict = await response.json()
-    #response = await pyfetch(url="https://cat-fact.herokuapp.com/facts/random", method="GET")
-    #response_dict = await response.json()
+    u0 = fc['url'] + "catalog.csv"
+    d0 = pd.read_csv(open_url(u0))
+    d0.head()
+    print(d0.head())
+    print(d0['file'])
+    
+    def GetFile(f):
+        u = fc['url'] + f
+        df = pd.read_csv(open_url(u))
+        return df
 
-    #status = f"Request status: {response.status}"
-    #text = f"Text: {response_dict['text']}"
-
-    #pyscript.write('request_status', status)
-    #pyscript.write('request_text', text)
-
-    u0 = fc['url'] + fc['files'][0]
-    d0 = pd.read_csv(open_url(u0)).dropna()
-    u1 = fc['url'] + fc['files'][1]
-    d1 = pd.read_csv(open_url(u1)).dropna()
-    u2 = fc['url'] + fc['files'][2]
-    d2 = pd.read_csv(open_url(u2)).dropna()
-    u3 = fc['url'] + fc['files'][3]
-    d3 = pd.read_csv(open_url(u3)).dropna()
-
-
-    d = pd.concat([d0, d1, d2, d3])
-    #d = pd.concat([d0, d1, d2])
+    # we use catalog to access files
+    df = [GetFile(f) for f in d0['file']]
+    d = pd.concat(df)
 
     days = pd.Timestamp("2023-05-29") # Monday
     print(days.day_name())
