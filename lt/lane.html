@@ -136,7 +136,8 @@
     "pandas",
     "scikit-learn",
     "folium",
-    "panel==0.13.1"
+    "panel==0.13.1",
+    "pytholog"
     ]
     plugins = [
     ]
@@ -181,6 +182,27 @@ async def clock_forever():
         await asyncio.sleep(15)
 
 pyscript.loop.create_task(clock_forever())
+</py-script>
+
+<py-script>
+import pytholog as pl
+
+graph = pl.KnowledgeBase("graph")
+graph([
+	"edge(a, b, 6)", "edge(a, c, 1)", "edge(b, e, 4)",
+	"edge(b, f, 3)", "edge(c, d, 3)", "edge(d, e, 8)",
+	"edge(e, f, 2)",
+	"path(X, Y, W) :- edge(X , Y, W)",
+	"path(X, Y, W) :- edge(X, Z, W1), path(Z, Y, W2), W is W1 + W2"])
+
+answer, path = graph.query(pl.Expr("path(a, f, W)"), show_path = True)
+
+print("Knowledge Base, KB")
+
+rules = graph.rule_search(pl.Expr("edge(From, To, Dist)"))
+print(rules)
+print(answer)
+print([x for x in path if str(x) > "Z"])
 </py-script>
 
 <py-script>
