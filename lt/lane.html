@@ -154,7 +154,7 @@ Element('today').write(dt.date.today().strftime('%A %B %d, %Y'))
 <py-script>
 async def run_jobs(f="postcode.json"):
   now = datetime.now()
-  print(now)
+  log.info("run_jobs()")
     
   await asyncio.sleep(1)
     
@@ -184,7 +184,20 @@ async def clock_forever():
 pyscript.loop.create_task(clock_forever())
 </py-script>
 
+
 <py-script>
+import logging as log
+
+log.basicConfig(format='%(asctime)s, %(levelname)s, %(message)s', level=log.DEBUG)
+
+log.debug('This message should appear on the console')
+log.info('So should this')
+log.warning('And this, too')
+</py-script>
+
+<py-script>
+log.info('KB conf. ')
+
 import pytholog as pl
 
 graph = pl.KnowledgeBase("graph")
@@ -195,14 +208,17 @@ graph([
 	"path(X, Y, W) :- edge(X , Y, W)",
 	"path(X, Y, W) :- edge(X, Z, W1), path(Z, Y, W2), W is W1 + W2"])
 
-answer, path = graph.query(pl.Expr("path(a, f, W)"), show_path = True)
+  
+log.info('KB set')
 
-print("Knowledge Base, KB")
+answer, path = graph.query(pl.Expr("path(a, f, W)"), show_path = True)
 
 rules = graph.rule_search(pl.Expr("edge(From, To, Dist)"))
 print(rules)
 print(answer)
 print([x for x in path if str(x) > "Z"])
+
+log.debug('KB goals done')
 </py-script>
 
 <py-script>
