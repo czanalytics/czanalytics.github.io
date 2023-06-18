@@ -95,10 +95,13 @@
         <nav class="navbar" style="background-color: #000000">
             <div class="app-header">
                 <a href="/">
-                    <img src="./transport-logo.png" width="30%" class="logo" />
+                    <img src="./transport-logo.png" width="30%" class="logo"/>
+                    &nbsp v0.25
                 </a>
                 <a class="title" href="" style="color: grey">
-                    v0.24
+                    <label id='today'></label>
+                    <label id='clock'></label>
+                
                 </a>
             </div>
         </nav>
@@ -140,6 +143,45 @@
     [[fetch]]
         files = ["./ui.py", "./co2.py"]
 </py-config>
+
+<py-script>
+import datetime as dt
+Element('today').write(dt.date.today().strftime('%A %B %d, %Y'))
+</py-script>
+
+
+<py-script>
+async def run_jobs(f="postcode.json"):
+  now = datetime.now()
+  print(now)
+    
+  await asyncio.sleep(1)
+    
+  s = '{"a": 1, "b": 2}'
+  try:  
+    j =  json.loads(s)
+    print(type(j))
+  except:
+    print("ERROR: run_jobs()")
+
+</py-script>
+
+<py-script>
+from datetime import datetime
+import asyncio
+
+async def clock_forever():
+    while(True):
+        now = datetime.now()
+        Element('clock').write(f"{now.hour}:{now.minute:02}") # also {now.second:02}
+        #Element('clock').write(f"{now.hour}:{now.minute:02}:{now.second:02}")
+        
+        await run_jobs()
+
+        await asyncio.sleep(15)
+
+pyscript.loop.create_task(clock_forever())
+</py-script>
 
 <py-script>
 from ui import hello
