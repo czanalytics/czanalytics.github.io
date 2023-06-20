@@ -150,7 +150,6 @@ import datetime as dt
 Element('today').write(dt.date.today().strftime('%A %B %d, %Y'))
 </py-script>
 
-
 <py-script>
 async def run_jobs(f="postcode.json"):
   now = datetime.now()
@@ -184,7 +183,6 @@ async def clock_forever():
 pyscript.loop.create_task(clock_forever())
 </py-script>
 
-
 <py-script>
 import logging as log
 
@@ -207,7 +205,6 @@ graph([
 	"edge(e, f, 2)",
 	"path(X, Y, W) :- edge(X , Y, W)",
 	"path(X, Y, W) :- edge(X, Z, W1), path(Z, Y, W2), W is W1 + W2"])
-
   
 log.info('KB set')
 
@@ -301,7 +298,6 @@ print(ms)
     tbl.add_filter(lnf, 'start')
     tbl.add_filter(lnt, 'end')
 
-
     urlz = 'https://raw.githubusercontent.com/czanalytics/multimodal-shipping/main/dat/pc-be.csv'
     dz = pd.read_csv(open_url(urlz)).dropna()
 
@@ -336,7 +332,6 @@ import json
 async def return_value():
 	return 1234
 
-  
 async def get_data(url):
     value = await return_value()
     print(value)
@@ -396,7 +391,6 @@ asyncio.ensure_future(main())
 
 #<<<:w
 
-
 #-----
 file = 'postcode.json'
 #f = open(file, 'w')
@@ -455,7 +449,6 @@ for file in files:
 </py-script>
 
 </section>
-
 
 <script>
      $(document).ready(function () {
