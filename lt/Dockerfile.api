@@ -1,0 +1,13 @@
+# flask api for transportation (price, eta, co2) estimates
+FROM python:3
+
+ADD api.py /
+
+RUN pip install flask
+RUN pip install flask_restful
+RUN pip install flask-expects-json
+
+EXPOSE 3333
+
+CMD ["python", "./api.py"]
+
