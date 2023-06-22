@@ -52,7 +52,7 @@
         <script
             type="text/javascript"
             src="https://cdn.bokeh.org/bokeh/release/bokeh-tables-2.4.3.min.js"></script>
-        
+              
         <script
             type="text/javascript"
             src="https://unpkg.com/@holoviz/panel@0.13.1/dist/panel.min.js"></script>
@@ -129,21 +129,23 @@
             </div>
 
 <py-config>
-    packages = [
+    packages = [ 
     "https://cdn.holoviz.org/panel/0.14.3/dist/wheels/bokeh-2.4.3-py3-none-any.whl",
-    "altair",
+    "panel==0.13.1",
     "numpy",
     "pandas",
     "scikit-learn",
     "folium",
-    "panel==0.13.1",
-    "pytholog"
+    "pytholog",
     ]
     plugins = [
     ]
     [[fetch]]
         files = ["./ui.py", "./co2.py"]
 </py-config>
+
+<py-script>
+</py-script>
 
 <py-script>
 import datetime as dt
@@ -247,7 +249,6 @@ print(ms)
     import warnings # no need to cofigure
     warnings.filterwarnings("ignore")
 
-    import altair as alt
     import panel as pn
     import pandas as pd
 
