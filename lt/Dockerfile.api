@@ -2,6 +2,7 @@
 FROM python:3
 
 ADD api.py /
+ADD lane.py /
 
 RUN pip install flask
 RUN pip install flask_restful
