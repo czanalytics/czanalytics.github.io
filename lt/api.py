@@ -21,9 +21,9 @@ api = Api(app)
 
 schema =  {'type': 'object',
                  'properties': {
-                     'mode': {'type': 'string'},
-                     'distance': {'type': 'string'}},
-                 'required': ['mode']
+                     'date': {'type': 'string'},
+                     'from_lat': {'type': 'float'}},
+                 'required': ['date', 'from_lat']
            }
 
 class intro(Resource):
@@ -39,7 +39,6 @@ class intro(Resource):
             'endpoints': ['price', 'eta', 'co'],
             'schema_expected': schema,
             'datetime': datetime.now(),
-        #    'req': req
         }
 
         resp = jsonify(message)
@@ -51,9 +50,7 @@ class intro(Resource):
 class price(Resource):
     def get(self):
         req = request.json
-        dist = req['distance']
-
-        p, p_lo, p_hi = price_est(dist) # !
+        p, p_lo, p_hi = price_est(req) # !
 
         message = {
             'price': p, 'price_lo': p_lo, 'price_hi': p_hi,
@@ -76,9 +73,7 @@ class price(Resource):
 class eta(Resource):
     def get(self):
         req = request.json
-        d = req['distance']
-
-        t, t_lo, t_hi = eta_est(d) # !
+        t, t_lo, t_hi = eta_est(req) # !
 
         message = {
             'eta': t, 'eta_lo': t_lo, 'eta_hi': t_hi,
@@ -101,9 +96,7 @@ class eta(Resource):
 class co(Resource):
     def get(self):
         req = request.json
-        d = req['distance']
-
-        co, co_lo, co_hi = co_est(d) # !
+        co, co_lo, co_hi = co_est(req) # !
 
         message = {
             'co': co, 'co_lo': co_lo, 'co_hi': co_hi,

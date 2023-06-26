@@ -25,12 +25,12 @@ api() {
 
  hjson="Content-type: application/json"
  
- d1='{"id":"00001", "lane":1, "mode":"trailer.o1", "distance":10}'
- d2='{"id":"00002", "lane":2, "mode":"trailer.o4", "distance":100}'
- d3='{"id":"00003", "lane":3, "mode":"trailer.o4", "distance":500}'
- d4='{"id":"00004", "lane":4, "mode":"roro",       "distance":1000}'
+ d1='{"date":"2023-07-01", "from_lat":60.192059, "from_lon":24.945831, "to_lat":60.205490, "to_lon":24.655899}'
+ d2='{"date":"2023-07-02", "from_lat":60.192059, "from_lon":24.945831, "to_lat":60.305490, "to_lon":24.755899}'
+ d3='{"date":"2023-07-03", "from_lat":60.192059, "from_lon":24.945831, "to_lat":60.405490, "to_lon":24.855899}'
+ d4='{"date":"2023-07-04", "from_lat":60.192059, "from_lon":24.945831, "to_lat":60.505490, "to_lon":24.955899}'
 
- #curl -s -v $url # testing api endpoints
+ # testing api endpoints
 
  curl -s "$url"/api        | "$pp" # prettyprinted with silent -s
 
