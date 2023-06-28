@@ -5,18 +5,12 @@ from flask_expects_json import expects_json
 from datetime import datetime, date
 import json
 
+from lane import conf
 from lane import price_est, eta_est, co_est
 
 app = Flask(__name__)
 
 api = Api(app)
-
-schema =  {'type': 'object',
-                 'properties': {
-                     'date': {'type': 'string'},
-                     'from_lat': {'type': 'float'}},
-                 'required': ['date', 'from_lat']
-           }
 
 class intro(Resource):
     """
@@ -27,9 +21,9 @@ class intro(Resource):
 
         msg = {
             'api': 'lane_calculator',
-            'version': 0.27,
+            'version': conf["version"],
             'endpoints': ['price', 'eta', 'co'],
-            'schema_expected': schema,
+            'schema_expected': conf["schema"],
             'datetime': datetime.now()
         }
         # status_code such as 200 is set automatically 
@@ -106,5 +100,5 @@ api.add_resource(eta,   '/api/eta',   endpoint='/api/eta')
 api.add_resource(co,    '/api/co',    endpoint='/api/co')
 
 if __name__ == '__main__':
-    app.run('0.0.0.0', '3333')
+    app.run(conf["app_ip"], conf["app_port"])
 
