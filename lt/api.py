@@ -20,7 +20,7 @@ class intro(Resource):
        # req = request.json
 
         msg = {
-            'api': 'lane_calculator',
+            'api': 'lane',
             'version': conf["version"],
             'endpoints': ['price', 'eta', 'co'],
             'schema_expected': conf["schema"],
@@ -35,10 +35,12 @@ class price(Resource):
     """
     def get(self):
         req = request.json
-        p, p_lo, p_hi = price_est(req) # !
+        mod = conf["model"]["price"]
+        p, p_lo, p_hi = price_est(req, mod) # !
 
         msg = {
             'price': p, 'price_lo': p_lo, 'price_hi': p_hi,
+            'model': mod,
             'datetime': datetime.now(),
             'req': req
         }
@@ -56,10 +58,12 @@ class eta(Resource):
     """
     def get(self):
         req = request.json
-        t, t_lo, t_hi = eta_est(req) # !
+        mod = conf["model"]["eta"]
+        t, t_lo, t_hi = eta_est(req, mod) # !
 
         msg = {
             'eta': t, 'eta_lo': t_lo, 'eta_hi': t_hi,
+            'model': mod,
             'datetime': datetime.now(),
             'req': req
         }
@@ -77,10 +81,12 @@ class co(Resource):
     """
     def get(self):
         req = request.json
-        co, co_lo, co_hi = co_est(req) # !
+        mod = conf["model"]["co"]
+        co, co_lo, co_hi = co_est(req, mod) # !
 
         msg = {
             'co': co, 'co_lo': co_lo, 'co_hi': co_hi,
+            'model': mod,
             'datetime': datetime.now(),
             'req': req
         }
