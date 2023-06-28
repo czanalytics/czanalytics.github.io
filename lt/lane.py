@@ -1,4 +1,12 @@
 # lane.py
+# functionality for api.py endpoints
+#
+# https://apiflask.com/api/app/
+# https://github.com/Fischerfredl/flask-expects-json
+# https://lovelace.oulu.fi/ohjelmoitava-web/programmable-web-project-spring-2019/implementing-rest-apis-with-flask/
+# pip install jsonschema ?
+# curl https://stackoverflow.com/questions/52133268/flask-get-requests-with-json-parameter-using-curl
+# https://stackoverflow.com/questions/13081532/return-json-response-from-flask-view
 
 def dist(d):
     from math import sin, cos, sqrt, atan2, radians
