@@ -11,10 +11,18 @@
 import logging as log # log.debug/info/warning 
 import json
 
-schema_api = {'type': 'object',
-          'properties': {'date': {'type': 'string'},
-                         'from_lat': {'type': 'float'}},
-                         'required': ['date', 'from_lat']
+schema_api = {'type': 'object', 'properties': {
+    'id': {'type': 'string'},
+    'seg': {'type': 'integer'}, # voyage segment 1,2, ...
+    'da': {'type': 'string'},   # date, time [a, b] -range
+    'ta': {'type': 'string'},
+    'db': {'type': 'string'},
+    'tb': {'type': 'string'},
+    'lat1': {'type': 'float'},  # latitude, longitude [1, 2] from, to - coordinates 
+    'lon1': {'type': 'float'},
+    'lat2': {'type': 'float'},
+    'lon2': {'type': 'float'}},
+    'required': ['id', 'seg', 'da', 'lat1', 'lon1', 'lat2', 'lon2']
           }
 
 mods = {'price': 'price_simple', 'eta': 'eta_simple','co': 'co_simple' }
@@ -119,11 +127,11 @@ def dist(d):
     """
     from math import sin, cos, sqrt, atan2, radians
 
-    lat1 = radians(d['from_lat'])
-    lon1 = radians(d['from_lon'])
+    lat1 = radians(d['lat1'])
+    lon1 = radians(d['lon1'])
 
-    lat2 = radians(d['to_lat'])
-    lon2 = radians(d['to_lon'])
+    lat2 = radians(d['lat2'])
+    lon2 = radians(d['lon2'])
 
     lond = lon2 - lon1
     latd = lat2 - lat1
@@ -146,8 +154,8 @@ def price_gam(d, price_km=2, price_min=50, err=0.1):
     """
     l = dist(d)
 
-    from_reg = region(lat=d["from_lat"], lon=d["from_lon"])
-    to_reg = region(lat=d["to_lat"], lon=d["to_lon"])
+    from_reg = region(lat=d["lat1"], lon=d["lon1"])
+    to_reg   = region(lat=d["lat2"], lon=d["lon2"])
 
     log.debug('from: %s', from_reg)
     log.debug('to  : %s', to_reg)
