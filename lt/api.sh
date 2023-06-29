@@ -4,8 +4,8 @@
 api() { 
  # test api functionality
  echo "fn:"${FUNCNAME[*]}
- DateTag=$(date)
- echo "   : " $DateTag
+ echo $(date)
+ start_time=$(date +%s)
  set -x # shell echo, set +x unsets
 
  con="api"
@@ -22,35 +22,32 @@ api() {
  docker run -d -p 3333:3333 --name $conn $con  # -d for detached mode in bg
  
  sleep 3
-
- hjson="Content-type: application/json"
  
+ # tests
  d1='{"date":"2023-07-01", "from_lat":60.192059, "from_lon":24.945831, "to_lat":60.205490, "to_lon":24.655899}'
  d2='{"date":"2023-07-02", "from_lat":60.192059, "from_lon":24.945831, "to_lat":60.305490, "to_lon":24.755899}'
  d3='{"date":"2023-07-03", "from_lat":60.192059, "from_lon":24.945831, "to_lat":60.405490, "to_lon":24.855899}'
  d4='{"date":"2023-07-04", "from_lat":60.192059, "from_lon":24.945831, "to_lat":60.505490, "to_lon":24.955899}'
-
- # testing api endpoints
-
- curl -s "$url"/api        | "$pp" # prettyprinted with silent -s
-
- curl -s -X GET  -H "$hjson" $url/api/price --data "$d1" | "$pp" # price
- curl -s -X GET  -H "$hjson" $url/api/price --data "$d2" | "$pp"
- curl -s -X GET  -H "$hjson" $url/api/price --data "$d3" | "$pp"
- curl -s -X GET  -H "$hjson" $url/api/price --data "$d4" | "$pp"
-
- curl -s -X GET  -H "$hjson" $url/api/eta   --data "$d1" | "$pp" # eta
- curl -s -X GET  -H "$hjson" $url/api/eta   --data "$d2" | "$pp"
- curl -s -X GET  -H "$hjson" $url/api/eta   --data "$d3" | "$pp"
- curl -s -X GET  -H "$hjson" $url/api/eta   --data "$d4" | "$pp"
  
- curl -s -X GET  -H "$hjson" $url/api/co    --data "$d1" | "$pp" # co
- curl -s -X GET  -H "$hjson" $url/api/co    --data "$d2" | "$pp"
- curl -s -X GET  -H "$hjson" $url/api/co    --data "$d3" | "$pp"
- curl -s -X GET  -H "$hjson" $url/api/co    --data "$d4" | "$pp"
+ cnt="Content-type: application/json"
+
+ curl -s "$url"/api        | "$pp" # request prettyprinted with silent -s
+
+ for i in {1..4}
+ do
+   di="d$i"         # select the test
+   d=$(echo ${!di}) # evaluate
+
+   curl -s -X GET  -H "$cnt" $url/api/price --data "$d" | "$pp"
+   curl -s -X GET  -H "$cnt" $url/api/eta   --data "$d" | "$pp" 
+   curl -s -X GET  -H "$cnt" $url/api/co    --data "$d" | "$pp" 
+ done
 
  set +x
  docker logs -t $conn
  echo $(date)
+ 
+ end_time=$(date +%s)
+ echo "time elapsed `expr $end_time - $start_time` sec."
 }
 
