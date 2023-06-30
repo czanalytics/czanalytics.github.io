@@ -14,6 +14,7 @@ import json
 schema_api = {'type': 'object', 'properties': {
     'id': {'type': 'string'},
     'seg': {'type': 'integer'}, # voyage segment 1,2, ...
+    'co': {'type': 'integer'},  # co2 g/km 
     'da': {'type': 'string'},   # date, time [a, b] -range
     'ta': {'type': 'string'},
     'db': {'type': 'string'},
@@ -22,7 +23,7 @@ schema_api = {'type': 'object', 'properties': {
     'lon1': {'type': 'float'},
     'lat2': {'type': 'float'},
     'lon2': {'type': 'float'}},
-    'required': ['id', 'seg', 'da', 'lat1', 'lon1', 'lat2', 'lon2']
+    'required': ['id', 'seg', 'co', 'da', 'lat1', 'lon1', 'lat2', 'lon2']
           }
 
 mods = {'price': 'price_simple', 'eta': 'eta_simple','co': 'co_simple' }
@@ -200,6 +201,8 @@ def co_simple(d, c=100, err=0.2):
     distance d [km], CO2/km c [g/km]
     """
     l = dist(d)
+
+    c = d.get('co', c) # get co from the dict d, or use the default value c
 
     co = c * l
     co_lo = co - co * err
