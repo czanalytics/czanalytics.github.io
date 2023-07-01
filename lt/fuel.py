@@ -1,3 +1,5 @@
+# fuel.py
+
 FUEL = {
     'url': "https://raw.githubusercontent.com/czanalytics/multimodal-shipping/main/dat/fuel_price/",
     'url1': "https://drive.google.com/drive/folders/1idAMHhP_SbGqHwnPGHndeQdBb_HRFxqv?usp=sharing/",
@@ -26,4 +28,44 @@ def price_ai(p, args):
     latest = p[-1] # smooth(latest)    
     pe = latest + change
     return  pe
+
+def file_info():
+   import os
+   import asyncio
+   import datetime as dt
+
+   tnow = dt.datetime.now()
+   print(tnow)
+
+   print('Root directory contents:')
+   files = os.listdir('/') # https://www.jhanley.com/blog/pyscript-files-and-file-systems-part-1/
+   for file in files:
+      print(file)
+
+   dh = '/home/pyodide/' # py-scripts are here
+   print(dh)
+   files = os.listdir(dh)
+   for file in files:
+     print(file)
+
+   dh = '/home/web_user/'
+   print(dh)
+   files = os.listdir(dh)
+   for file in files:
+      print(file)
+
+   dh = '/tmp/'
+   print(dh)
+   files = os.listdir(dh)
+   for file in files:
+     print(file)
+
+   dh = '/usr/'
+   print(dh)
+   files = os.listdir(dh)
+   for file in files:
+     print(file)
+
+   return 1
+
 

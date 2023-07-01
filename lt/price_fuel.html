@@ -73,22 +73,20 @@
 </py-config>
 
 <py-script>
-    from fuel import fuel_conf
+    from fuel import fuel_conf, file_info
     fc = fuel_conf()
     ms = fc['models']
-
 
     print(fc)
     print(ms)
 </py-script>    
 
 <py-script>
-</py-script>
-
-<py-script>
     import os
     import asyncio
+    import time
     import warnings # no need to cofigure
+
     warnings.filterwarnings("ignore")
 
     import altair as alt
@@ -101,44 +99,51 @@
     from pyodide.http import pyfetch
 
     pn.config.sizing_mode = 'stretch_width'
-   
-    # TBD
-    async def foo() :
-      from pyodide.http import pyfetch
-      response = await pyfetch("https://drive.google.com/file/d/1-2D_Js9TmIQKjGpicCRDcIOcfA49Nmnu")
-      await response.unpack_archive()
-    
-    #asyncio.ensure_future(foo())
-    
-    """
-    async def get_data():
-        for url in urls:
-            print(url)
-            #i = await pyfetch(url)    
-            #r = await i.read()
-            #print(r)
-            await asyncio.sleep(1)
-            
-    asyncio.ensure_future(get_data())
-    """
-
+ 
     u0 = fc['url'] + "catalog.csv"
     d0 = pd.read_csv(open_url(u0))
     d0.head()
     print(d0.head())
     print(d0['file'])
-    
-    def GetFile(f):
+    fs = d0['file']
+
+    async def get_file(f):
         u = fc['url'] + f
+        print("reading", f)
+
         df = pd.read_csv(open_url(u))
-        return df
+        
+        dir = '/tmp/'+f
+        print("saving", dir)
+        df.to_csv(dir)
+        return 1
 
-    # we use catalog to access files
-    df = [GetFile(f) for f in d0['file']]
-    d = pd.concat(df)
+    async def coro(fs):
+      d = [get_file(f) for f in fs]
+      return await asyncio.gather(*d, return_exceptions=True)
 
-    days = pd.Timestamp("2023-05-29") # Monday
-    print(days.day_name())
+    async def inspect():
+      await asyncio.sleep(1)
+      df = [pd.read_csv(('/tmp/'+ f)) for f in fs]
+      d = pd.concat(df)
+      print(d)
+
+      d.to_csv('/tmp/fuel_price.csv')
+      print("file_info")
+      file_info()
+      return 1
+
+    #asyncio.ensure_future(coro(fs))
+    #asyncio.ensure_future(inspect())
+</py-script>
+
+<py-script>
+async def dd(fs):
+    await coro(fs)
+    await inspect()
+    
+    print("read")
+    d = pd.read_csv('/tmp/fuel_price.csv')
 
     d['date'] = pd.to_datetime(d.date, format='%Y-%m-%d')
     d['price_model'] = d['price']
@@ -147,7 +152,37 @@
     fs = d.fuel.unique().tolist()
     gr = ['country', 'date']
     gr = []
+    lnf = pn.widgets.Select(name='country', options=cn, value='NL').servable(target='from')
+    fuels = pn.widgets.Select(name='fuels', options=fs, value='Euro-super 95').servable(target='fuel')
+
+    multi_choice = pn.widgets.MultiChoice(name='models', value=['price'], options=ms).servable(target='model')
+
+    intro = pn.pane.Markdown("Weekly fuel prices in EU").servable(target='intro')
+
+    tbl = pn.widgets.Tabulator(d, groupby=gr,  pagination='remote', page_size=10).servable(target='table')
+    tbl.add_filter(lnf, 'country')
+    tbl.add_filter(fuels, 'fuel')
+
+    def trend(xx, yy) :
+       d = tbl.current_view
+       print(d.shape)
+       p = d['price'].to_numpy()
+       data = {'x': [1,2,3], 'y':[1.8, 1.9, 1.8]}
+       data = {'x': np.arange(p.size), 'y': p}
+       # https://panel.holoviz.org/reference/indicators/Trend.html
+       #pn.indicators.Trend(title='Price', data=data, width=150, height=150).servable(target='trend')
+       tr=pn.indicators.Trend(title='Price', data=data, width=150, height=150)
+       return tr
+
+    d = tbl.selected_dataframe # always 0 rows ?
+    
+    foo_funck = pn.bind(trend, lnf, fuels)
+    pn.panel(foo_funck).servable(target='trend')
+
+
+asyncio.ensure_future(dd(fs))
 </py-script>
+
 
 <py-script>
     import importlib
@@ -163,77 +198,6 @@
     from mymodule import hello
  
     hello()
-</py-script>
-
-<py-script>
-    tnow = dt.datetime.now()
-    print(tnow)
-
-    print('Root directory contents:')
-    files = os.listdir('/') # https://www.jhanley.com/blog/pyscript-files-and-file-systems-part-1/
-    for file in files:
-        print(file)
-
-    dh = '/home/pyodide/' # py-scripts are here
-    print(dh)
-    files = os.listdir(dh)
-    for file in files:
-        print(file)
-
-    dh = '/home/web_user/'
-    print(dh)
-    files = os.listdir(dh)
-    for file in files:
-        print(file)
-
-    dh = '/tmp/'
-    print(dh)
-    files = os.listdir(dh)
-    for file in files:
-        print(file)
-
-    dh = '/usr/'
-    print(dh)
-    files = os.listdir(dh)
-    for file in files:
-        print(file)
-</py-script>
-
-<py-script>
-    lnf = pn.widgets.Select(name='country', options=cn, value='NL').servable(target='from')
-    fuels = pn.widgets.Select(name='fuels', options=fs, value='Euro-super 95').servable(target='fuel')
-
-    multi_choice = pn.widgets.MultiChoice(name='models', value=['price'], options=ms).servable(target='model')
-
-    intro = pn.pane.Markdown("Weekly fuel prices in EU").servable(target='intro')
-
-    tbl = pn.widgets.Tabulator(d, groupby=gr,  pagination='remote', page_size=10).servable(target='table')
-    tbl.add_filter(lnf, 'country')
-    tbl.add_filter(fuels, 'fuel')
-
-    d = tbl.selected_dataframe # always 0 rows ?
-</py-script>
-
-<py-script>
-# https://panel.holoviz.org/reference/widgets/Tabulator.html
-def trend(xx, yy) :
-    d = tbl.current_view
-    print(d.shape)
-    p = d['price'].to_numpy()
-    data = {'x': [1,2,3], 'y':[1.8, 1.9, 1.8]}
-    data = {'x': np.arange(p.size), 'y': p}
-    # https://panel.holoviz.org/reference/indicators/Trend.html
-    #pn.indicators.Trend(title='Price', data=data, width=150, height=150).servable(target='trend')
-    tr=pn.indicators.Trend(title='Price', data=data, width=150, height=150)
-    return tr
-    
-#tr = pn.indicators.Trend(title='Price', data=data, width=150, height=150).servable(target='trend')
-
-#lnf.param.watch(trend, 'value')
-#pn.Row(pn.bind(trend, lnf))
-foo_funck = pn.bind(trend, lnf, fuels)
-pn.panel(foo_funck).servable(target='trend')
-#trend()
 </py-script>
 
 </section>
