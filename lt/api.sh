@@ -26,7 +26,7 @@ api() {
  d6='{"id":"230703-001","seg":2,"co":100,"da":"23-07-03","ta":"15:00","db":"23-07-03","tb":"17:00","lat1":60.192059,"lon1":24.945831,"lat2":60.705490,"lon2":24.755899}'
  d7='{"id":"230703-002","seg":1,"co":100,"da":"23-07-03","ta":"10:00","db":"23-07-03","tb":"12:00","lat1":60.192059,"lon1":24.945831,"lat2":60.905490,"lon2":24.955899}'
 
- source api_data.sh # access data and models
+ # source api_data.sh # access weekly updated data
 
  docker stop $cn # clean
  docker rm   $cn
