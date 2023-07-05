@@ -6,7 +6,7 @@ from datetime import datetime, date
 import json
 
 from lane import conf
-from lane import price_est, eta_est, co_est
+from lane import price_est, eta_est, co_est, route_est
 
 app = Flask(__name__)
 
@@ -47,10 +47,8 @@ class price(Resource):
         return jsonify(msg)
 
     def post(self):
-        return jsonify(
-            greeting = ["foo", "post"],
-            date = datetime.today(),
-        )
+        msg = {'x': 1}
+        return jsonify(msg)
 
 class eta(Resource):
     """
@@ -69,12 +67,6 @@ class eta(Resource):
         }
         return jsonify(msg)
 
-    def post(self):
-        return jsonify(
-            greeting = ["foo", "post"],
-            date = datetime.today(),
-        )
-
 class co(Resource):
     """
     Lane CO2 estimate
@@ -92,11 +84,22 @@ class co(Resource):
         }
         return jsonify(msg)
 
-    def post(self):
-        return jsonify(
-            greeting = ["foo", "post"],
-            date = datetime.today(),
-        )
+class route(Resource):
+    """
+    Route estimated
+    """
+    def get(self):
+        req = request.json
+        cnf = conf["routing"]
+        route = route_est(req, cnf) # !
+
+        msg = {
+            'route': route,
+            'routing': cnf,
+            'datetime': datetime.now(),
+            'req': req
+        }
+        return jsonify(msg)
 
 api.add_resource(intro, '/',          endpoint='/')
 api.add_resource(intro, '/api',       endpoint='/api')
@@ -104,6 +107,7 @@ api.add_resource(intro, '/api',       endpoint='/api')
 api.add_resource(price, '/api/price', endpoint='/api/price')
 api.add_resource(eta,   '/api/eta',   endpoint='/api/eta')
 api.add_resource(co,    '/api/co',    endpoint='/api/co')
+api.add_resource(route, '/api/route', endpoint='/api/route')
 
 if __name__ == '__main__':
     app.run(conf["app_ip"], conf["app_port"])

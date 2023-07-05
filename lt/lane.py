@@ -20,7 +20,7 @@ schema_api = {'type': 'object', 'properties': {
     'db': {'type': 'string'},
     'tb': {'type': 'string'},
     'lat1': {'type': 'float'},  # latitude, longitude [1, 2] from, to - coordinates 
-    'lon1': {'type': 'float'},
+    'lon1': {'type': 'float'},  # the format D.ddddd has 5 decimals, providing ~1 meter accuracy
     'lat2': {'type': 'float'},
     'lon2': {'type': 'float'}},
     'required': ['id', 'seg', 'co', 'da', 'lat1', 'lon1', 'lat2', 'lon2']
@@ -31,11 +31,16 @@ mods = {'price': 'price_simple', 'eta': 'eta_simple','co': 'co_simple' }
 #mods = {'price': 'price_gam', 'eta': 'eta_gam','co': 'co_gam' }
 #mods = {'price': 'price_automl', 'eta': 'eta_automl','co': 'co_automl' }
 
+routing = {'service': 'route_streetmap', 'foo': 'bar'}
+#routing = {'service': 'route_openroute'}
+#routing = {'service': 'route_googlemaps'}
+
 conf = {'version': 0.27,
         'app_ip': '0.0.0.0',
         'app_port': 3333,
         'schema': schema_api,
-        'model': mods
+        'model': mods,
+        'routing': routing
         }
 
 l = log.DEBUG
@@ -104,6 +109,25 @@ def co_est(d, mod):
             co, co_lo, co_hi = 0, 0, 0
 
     return round(co), round(co_lo), round(co_hi)
+
+
+def route_est(d, conf):
+    """
+    Dispatch route estimation to requested service
+    """
+    match conf["service"]:
+        case 'route_streetmap':
+            route = route_streetmap(d, conf)
+        case 'route_openroute':
+            route = 0
+            #route = route_openroute(d, conf)
+        case 'route_googlemaps':
+            route = 0
+            #route = route_googlemaps(d, conf)
+        case _:
+            route = 0
+
+    return route
 
 
 def region(lat, lon):
@@ -210,3 +234,13 @@ def co_simple(d, c=100, err=0.2):
 
     return round(co), round(co_lo), round(co_hi)
 
+
+def route_streetmap(d, conf):
+    """
+    Route calculation using streetmap
+    """
+    l = dist(d)
+
+    route = 0
+
+    return route

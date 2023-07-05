@@ -46,7 +46,8 @@ api() {
 
    curl -s -X GET -H "$ct" $url/api/price --data "$d" | "$pp"
    curl -s -X GET -H "$ct" $url/api/eta   --data "$d" | "$pp" 
-   curl -s -X GET -H "$ct" $url/api/co    --data "$d" | "$pp" 
+   curl -s -X GET -H "$ct" $url/api/co    --data "$d" | "$pp"
+   curl -s -X GET -H "$ct" $url/api/route --data "$d" | "$pp"
  done
 
  set +x
