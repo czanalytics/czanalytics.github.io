@@ -10,6 +10,9 @@
 
 import logging as log # log.debug/info/warning 
 import json
+import numpy as np
+import pandas as pd
+from geopy.distance import geodesic
 
 schema_api = {'type': 'object', 'properties': {
     'id': {'type': 'string'},
@@ -26,7 +29,8 @@ schema_api = {'type': 'object', 'properties': {
     'required': ['id', 'seg', 'co', 'da', 'lat1', 'lon1', 'lat2', 'lon2']
           }
 
-mods = {'price': 'price_simple', 'eta': 'eta_simple','co': 'co_simple' }
+mods = {'price': 'price_lite', 'eta': 'eta_simple','co': 'co_simple' }
+#mods = {'price': 'price_simple', 'eta': 'eta_simple','co': 'co_simple' }
 #mods = {'price': 'price_lite', 'eta': 'eta_lite','co': 'co_lite' }
 #mods = {'price': 'price_gam', 'eta': 'eta_gam','co': 'co_gam' }
 #mods = {'price': 'price_automl', 'eta': 'eta_automl','co': 'co_automl' }
@@ -48,6 +52,10 @@ l = log.DEBUG
 log.basicConfig(format='%(asctime)s, %(name)s, %(levelname)s, %(funcName)s:%(lineno)s, %(message)s', level=l)
 #log.basicConfig(format='%(asctime)s, %(levelname)s, %(message)s', level=log.DEBUG)
 
+dp = pd.read_csv("./nuts.csv")
+dd = pd.read_csv("./nuts_centroid.csv")
+
+#log.INFO('data read')
 
 def price_est(d, mod):
     """
@@ -55,21 +63,20 @@ def price_est(d, mod):
     """
     match mod:
         case 'price_simple':
-            p, p_lo, p_hi = price_simple(d)
+            p, p_lo, p_hi, meta = price_simple(d)
         case 'price_lite':
-            p, p_lo, p_hi = 0, 0, 0
-            #t, t_lo, t_hi = price_lite(d)
+            p, p_lo, p_hi, meta = price_lite(d)
         case 'price_gam':
-            p, p_lo, p_hi = 0, 0, 0
-            #t, t_lo, t_hi = price_gam(d)
+            p, p_lo, p_hi, meta = 0, 0, 0, 0
+            #p, p_lo, p_hi, meta = price_gam(d)
         case 'price_automl':
-            p, p_lo, p_hi = 0, 0, 0
-            #p, p_lo, p_hi = price_automl(d)
+            p, p_lo, p_hi, meta = 0, 0, 0, 0
+            #p, p_lo, p_hi, meta = price_automl(d)
         case _:
-            p, p_lo, p_hi = 0, 0, 0
+            p, p_lo, p_hi, meta = 0, 0, 0, 0
             #log.ERROR('unknown model') # fails
 
-    return round(p), round(p_lo), round(p_hi)
+    return round(p), round(p_lo), round(p_hi), meta
 
 
 def eta_est(d, mod):
@@ -79,17 +86,17 @@ def eta_est(d, mod):
     # structural pattern mathing, https://peps.python.org/pep-0622/
     match mod:
         case 'eta_simple':
-            t, t_lo, t_hi = eta_simple(d)
+            t, t_lo, t_hi, meta = eta_simple(d)
         case 'eta_lite':
-            t, t_lo, t_hi = 0, 0, 0
-            #t, t_lo, t_hi = eta_lite(d)
+            t, t_lo, t_hi, meta = 0, 0, 0, 0
+            #t, t_lo, t_hi, meta = eta_lite(d)
         case 'eta_gam':
-            t, t_lo, t_hi = 0, 0, 0
-            #t, t_lo, t_hi = eta_gam(d)
+            t, t_lo, t_hi, meta = 0, 0, 0, 0
+            #t, t_lo, t_hi, meta = eta_gam(d)
         case _:
-            t, t_lo, t_hi = 0, 0, 0
+            t, t_lo, t_hi, meta = 0, 0, 0, 0
 
-    return round(t, 1), round(t_lo, 1), round(t_hi, 1)
+    return round(t, 1), round(t_lo, 1), round(t_hi, 1), meta
 
 
 def co_est(d, mod):
@@ -98,17 +105,17 @@ def co_est(d, mod):
     """
     match mod:
         case 'co_simple':
-            co, co_lo, co_hi = co_simple(d)
+            co, co_lo, co_hi, meta = co_simple(d)
         case 'co_lite':
-            co, co_lo, co_hi = 0, 0, 0
-            #co, co_lo, co_hi = co_lite(d)
+            co, co_lo, co_hi, meta = 0, 0, 0, 0
+            #co, co_lo, co_hi, meta = co_lite(d)
         case 'co_gam':
-            co, co_lo, co_hi = 0, 0, 0
-            #co, co_lo, co_hi = co_gam(d)
+            co, co_lo, co_hi, meta = 0, 0, 0, 0
+            #co, co_lo, co_hi, meta = co_gam(d)
         case _:
-            co, co_lo, co_hi = 0, 0, 0
+            co, co_lo, co_hi, meta = 0, 0, 0, 0
 
-    return round(co), round(co_lo), round(co_hi)
+    return round(co), round(co_lo), round(co_hi), meta
 
 
 def route_est(d, conf):
@@ -185,10 +192,10 @@ def price_gam(d, price_km=2, price_min=50, err=0.1):
     log.debug('from: %s', from_reg)
     log.debug('to  : %s', to_reg)
 
-    p, p_lo, p_hi = 0, 0, 0
+    p, p_lo, p_hi, meta = 0, 0, 0, 0
     #p, p_lo, p_hi = pridict(model, df)
 
-    return round(p), round(p_lo), round(p_hi)
+    return round(p), round(p_lo), round(p_hi), meta
 
 
 def price_simple(d, price_km=2, price_min=50, err=0.1):
@@ -202,8 +209,21 @@ def price_simple(d, price_km=2, price_min=50, err=0.1):
     p_lo = p - p * err
     p_hi = p + p * err
 
-    return round(p), round(p_lo), round(p_hi)
+    meta = 0
 
+    return round(p), round(p_lo), round(p_hi), meta
+
+
+def price_lite(d, price_km=2, price_min=50, err=0.1):
+    """
+    Lite transportation price estimate using EU transportation data for NUTS regions
+    price, p [EUR] =  straight_line(length, l [km], price/km [EUR/km], price_min [EUR])
+    """
+
+    r = nuts_intel(dd, dp, d["lat1"], d["lon1"], d["lat2"], d["lon2"])
+    p, p_hi, p_lo, meta = price_nuts(r)
+
+    return round(p), round(p_lo), round(p_hi), meta
 
 def eta_simple(d, v=80, err=0.1):
     """
@@ -216,7 +236,8 @@ def eta_simple(d, v=80, err=0.1):
     t_lo = t - t * err
     t_hi = t + t * err
 
-    return round(t, 1), round(t_lo, 1), round(t_hi, 1)
+    meta = 0
+    return round(t, 1), round(t_lo, 1), round(t_hi, 1), meta
 
 
 def co_simple(d, c=100, err=0.2):
@@ -232,7 +253,9 @@ def co_simple(d, c=100, err=0.2):
     co_lo = co - co * err
     co_hi = co + co * err
 
-    return round(co), round(co_lo), round(co_hi)
+    meta = 0
+
+    return round(co), round(co_lo), round(co_hi), meta
 
 
 def route_streetmap(d, conf):
@@ -244,3 +267,77 @@ def route_streetmap(d, conf):
     route = 0
 
     return route
+
+
+def closest_nuts(d, lat, lon):
+  """
+  Find the NUTS region closest to (lat, lon)
+  """
+  #from scipy.spatial.distance import pdist
+  from geopy.distance import geodesic
+  #import numpy as np
+  la = lat
+  lo = lon
+
+  def dist(r, la, lo):
+    loc1 = (la, lo)
+    loc2 = (r['lat'], r['lon'])
+    try:
+      return (geodesic(loc1, loc2).kilometers)
+    except:
+      pass
+
+  print(la, lo)
+  d['dist'] = d.apply(lambda r: dist(r, la, lo), axis = 1)
+  d = d.round({'dist':0})
+  dd = d.sort_values(by = ['dist'])
+  return dd[:1] # dd[1:6]
+
+
+def nuts_intel(dd, dp, lat1, lon1, lat2, lon2):
+  """
+  Access price data using closest NUTS2-region, dd.
+  1st NUTS3 (from, to) regions are determined from (lat, lon)
+  """
+  nc1 = closest_nuts(dd, lat=lat1, lon=lon1) # NUTS3
+  nc2 = closest_nuts(dd, lat=lat2, lon=lon2)
+  n1 = nc1['id_nuts'].values[0][0:4]  # NUTS3 nuts NUTS2 conversion
+  n2 = nc2['id_nuts'].values[0][0:4]  # pick 4 first letters
+  dp1 = dp[dp['start_nuts'] == n1 ] # filter
+  dp2 = dp1[dp1['end_nuts'] == n2]
+  return dp2
+
+
+def round_base(x, base=5):
+  """
+  Round x to closest integer using base.
+  For example round_base(123, 5)=125.
+  """
+  return base * round(x / base)
+
+
+def price_nuts(r, err_p=0.15, base=10):
+  """
+  Estimate price [EUR] from NUT2 region to other
+  """
+  price = r['total_cost'].values[0]
+  price_lo = price - err_p * price
+  price_hi = price + err_p * price
+
+  #r = r.reset_index(drop=True)
+  meta = r.to_dict("records")
+
+  return round_base(price, base), round_base(price_lo, base), round_base(price_hi, base), meta
+
+
+def eta_nuts(r, err_p=0.15):
+  """
+  Estimate time on road [h] from NUTS2 region to other
+  """
+  t = r['time_road'].values[0]
+  t_lo = t - err_p * t
+  t_hi = t + err_p * t
+
+  meta = 0
+
+  return round(t, 1), round(t_lo, 1), round(t_hi, 1), meta

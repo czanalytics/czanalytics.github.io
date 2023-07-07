@@ -36,12 +36,13 @@ class price(Resource):
     def get(self):
         req = request.json
         mod = conf["model"]["price"]
-        p, p_lo, p_hi = price_est(req, mod) # !
+        p, p_lo, p_hi, meta = price_est(req, mod) # !
 
         msg = {
             'price': p, 'price_lo': p_lo, 'price_hi': p_hi,
             'model': mod,
             'datetime': datetime.now(),
+            'meta': meta,
             'req': req
         }
         return jsonify(msg)
@@ -57,12 +58,13 @@ class eta(Resource):
     def get(self):
         req = request.json
         mod = conf["model"]["eta"]
-        t, t_lo, t_hi = eta_est(req, mod) # !
+        t, t_lo, t_hi, meta = eta_est(req, mod) # !
 
         msg = {
             'eta': t, 'eta_lo': t_lo, 'eta_hi': t_hi,
             'model': mod,
             'datetime': datetime.now(),
+            'meta': meta,
             'req': req
         }
         return jsonify(msg)
@@ -74,12 +76,13 @@ class co(Resource):
     def get(self):
         req = request.json
         mod = conf["model"]["co"]
-        co, co_lo, co_hi = co_est(req, mod) # !
+        co, co_lo, co_hi, meta = co_est(req, mod) # !
 
         msg = {
             'co': co, 'co_lo': co_lo, 'co_hi': co_hi,
             'model': mod,
             'datetime': datetime.now(),
+            'meta': meta,
             'req': req
         }
         return jsonify(msg)

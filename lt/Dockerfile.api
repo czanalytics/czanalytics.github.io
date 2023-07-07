@@ -9,11 +9,18 @@ ADD tmp/ODMatrix2021_N2.csv /
 ADD tmp/nuts-names-21.csv /
 ADD tmp/nuts.csv /
 ADD tmp/nuts3.json /
+ADD tmp/nuts_centroid.csv /
 # ADD tmp/<models>
 
 RUN pip install flask
 RUN pip install flask_restful
 RUN pip install flask-expects-json
+RUN pip install pandas
+RUN pip install numpy
+RUN pip install geopy
+#import pandas as pd
+#import numpy as np
+#from geopy.distance import geodesic
 
 EXPOSE 3333
 
