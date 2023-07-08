@@ -5,6 +5,10 @@ BROWSER  := google-chrome
 BROWSER0 := explorer.exe
 URL      := http://0.0.0.0:8000
 
+# python code check 
+ruff:
+	ruff check .
+
 browse:
 	$(BROWSER) $(URL) &
 
