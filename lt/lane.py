@@ -9,10 +9,10 @@
 # https://www.toptal.com/python/in-depth-python-logging
 
 import logging as log # log.debug/info/warning 
-import json
-import numpy as np
+#import json
+#import numpy as np
 import pandas as pd
-from geopy.distance import geodesic
+#from geopy.distance import geodesic
 
 schema_api = {'type': 'object', 'properties': {
     'id': {'type': 'string'},
@@ -23,7 +23,7 @@ schema_api = {'type': 'object', 'properties': {
     'db': {'type': 'string'},
     'tb': {'type': 'string'},
     'lat1': {'type': 'float'},  # latitude, longitude [1, 2] from, to - coordinates 
-    'lon1': {'type': 'float'},  # the format D.ddddd has 5 decimals, providing ~1 meter accuracy
+    'lon1': {'type': 'float'},  # format D.ddddd with 5 decimals has ~1 m accuracy
     'lat2': {'type': 'float'},
     'lon2': {'type': 'float'}},
     'required': ['id', 'seg', 'co', 'da', 'lat1', 'lon1', 'lat2', 'lon2']
@@ -47,10 +47,11 @@ conf = {'version': 0.27,
         'routing': routing
         }
 
-l = log.DEBUG
+lv = log.DEBUG
 #l = log.ERROR
-log.basicConfig(format='%(asctime)s, %(name)s, %(levelname)s, %(funcName)s:%(lineno)s, %(message)s', level=l)
-#log.basicConfig(format='%(asctime)s, %(levelname)s, %(message)s', level=log.DEBUG)
+log.basicConfig(format='%(asctime)s, %(name)s, %(levelname)s, \
+                %(funcName)s:%(lineno)s, %(message)s', level=lv)
+#log.basicConfig(format='%(asctime)s, %(levelname)s, %(message)s', level=lv)
 
 dp = pd.read_csv("./nuts.csv")
 dd = pd.read_csv("./nuts_centroid.csv")
@@ -139,7 +140,8 @@ def route_est(d, conf):
 
 def region(lat, lon):
     """
-    Determine country, NUTS region, and closest postal code using (lat, lon) -coordinates
+    Determine country, NUTS region, and closest postal code, zip,
+    using (lat, lon) -coordinates
     """
     zip = '00100'
     # zip = open_street(lat, lon)
@@ -184,7 +186,7 @@ def price_gam(d, price_km=2, price_min=50, err=0.1):
     ML based transportation price estimate.
     GAM model uses EU statistics, price-distance matrix between NUTS regions.
     """
-    l = dist(d)
+    #l = dist(d)
 
     from_reg = region(lat=d["lat1"], lon=d["lon1"])
     to_reg   = region(lat=d["lat2"], lon=d["lon2"])
@@ -201,11 +203,11 @@ def price_gam(d, price_km=2, price_min=50, err=0.1):
 def price_simple(d, price_km=2, price_min=50, err=0.1):
     """
     Simplistic transportation price estimate
-    price, p [EUR] =  straight_line(length, l [km], price/km [EUR/km], price_min [EUR])
+    price, p [EUR] =  straight_line(length, ln [km], price/km [EUR/km], price_min [EUR])
     """
-    l = dist(d)
+    ln = dist(d)
 
-    p = price_km * l + price_min
+    p = price_km * ln + price_min
     p_lo = p - p * err
     p_hi = p + p * err
 
@@ -228,11 +230,11 @@ def price_lite(d, price_km=2, price_min=50, err=0.1):
 def eta_simple(d, v=80, err=0.1):
     """
     Simplistic transportation time estimate.
-    time t [h], lane length l [km], and speed v [km/h]
+    time t [h], lane length ln [km], and speed v [km/h]
     """
-    l = dist(d)
+    ln = dist(d)
 
-    t = l / v
+    t = ln / v
     t_lo = t - t * err
     t_hi = t + t * err
 
@@ -245,11 +247,11 @@ def co_simple(d, c=100, err=0.2):
     Simplistic transportation CO2 [g] estimate
     distance d [km], CO2/km c [g/km]
     """
-    l = dist(d)
+    ln = dist(d)
 
     c = d.get('co', c) # get co from the dict d, or use the default value c
 
-    co = c * l
+    co = c * ln
     co_lo = co - co * err
     co_hi = co + co * err
 
@@ -262,7 +264,7 @@ def route_streetmap(d, conf):
     """
     Route calculation using streetmap
     """
-    l = dist(d)
+    #l = dist(d)
 
     route = 0
 
@@ -283,9 +285,11 @@ def closest_nuts(d, lat, lon):
     loc1 = (la, lo)
     loc2 = (r['lat'], r['lon'])
     try:
-      return (geodesic(loc1, loc2).kilometers)
-    except:
-      pass
+      ds = (geodesic(loc1, loc2).kilometers)
+    except Exception as e:
+      log.ERROR(e.message)
+
+    return ds
 
   print(la, lo)
   d['dist'] = d.apply(lambda r: dist(r, la, lo), axis = 1)
@@ -320,14 +324,14 @@ def price_nuts(r, err_p=0.15, base=10):
   """
   Estimate price [EUR] from NUT2 region to other
   """
-  price = r['total_cost'].values[0]
-  price_lo = price - err_p * price
-  price_hi = price + err_p * price
+  p = r['total_cost'].values[0]
+  p_lo = p - err_p * p
+  p_hi = p + err_p * p
 
   #r = r.reset_index(drop=True)
   meta = r.to_dict("records")
 
-  return round_base(price, base), round_base(price_lo, base), round_base(price_hi, base), meta
+  return round_base(p, base), round_base(p_lo, base), round_base(p_hi, base), meta
 
 
 def eta_nuts(r, err_p=0.15):
