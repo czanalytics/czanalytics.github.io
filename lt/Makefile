@@ -5,6 +5,9 @@ BROWSER  := google-chrome
 BROWSER0 := explorer.exe
 URL      := http://0.0.0.0:8000
 
+test:
+	python3 test.py
+
 # python code check 
 ruff:
 	ruff check .
