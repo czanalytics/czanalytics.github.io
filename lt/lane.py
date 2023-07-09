@@ -1,5 +1,4 @@
-# lane.py
-# functions for api.py endpoints
+# lane.py implements api.py endpoints
 #
 # https://apiflask.com/api/app/
 # https://github.com/Fischerfredl/flask-expects-json
@@ -29,17 +28,20 @@ schema_api = {'type': 'object', 'properties': {
     'required': ['id', 'seg', 'co', 'da', 'lat1', 'lon1', 'lat2', 'lon2']
           }
 
-mods = {'price': 'price_lite', 'eta': 'eta_simple','co': 'co_simple' }
-#mods = {'price': 'price_simple', 'eta': 'eta_simple','co': 'co_simple' }
+# model conf simple/lite/gam/autom
+mods = {'price': 'price_lite', 'eta': 'eta_lite','co': 'co_simple' }      # lite
+#mods = {'price': 'price_lite', 'eta': 'eta_simple','co': 'co_simple' }
+#mods = {'price': 'price_simple', 'eta': 'eta_simple','co': 'co_simple' } # simple
 #mods = {'price': 'price_lite', 'eta': 'eta_lite','co': 'co_lite' }
-#mods = {'price': 'price_gam', 'eta': 'eta_gam','co': 'co_gam' }
-#mods = {'price': 'price_automl', 'eta': 'eta_automl','co': 'co_automl' }
+#mods = {'price': 'price_gam', 'eta': 'eta_gam','co': 'co_gam' }          # gam
+#mods = {'price': 'price_automl', 'eta': 'eta_automl','co': 'co_automl' } # automl
 
+# routing conf
 routing = {'service': 'route_streetmap', 'foo': 'bar'}
 #routing = {'service': 'route_openroute'}
 #routing = {'service': 'route_googlemaps'}
 
-conf = {'version': 0.27,
+conf = {'version': 0.28,
         'app_ip': '0.0.0.0',
         'app_port': 3333,
         'schema': schema_api,
@@ -53,7 +55,7 @@ log.basicConfig(format='%(asctime)s, %(name)s, %(levelname)s, \
                 %(funcName)s:%(lineno)s, %(message)s', level=lv)
 #log.basicConfig(format='%(asctime)s, %(levelname)s, %(message)s', level=lv)
 
-dp = pd.read_csv("./nuts.csv")
+dp = pd.read_csv("./nuts.csv") # data for lite-models
 dd = pd.read_csv("./nuts_centroid.csv")
 
 #log.INFO('data read')
@@ -89,8 +91,7 @@ def eta_est(d, mod):
         case 'eta_simple':
             t, t_lo, t_hi, meta = eta_simple(d)
         case 'eta_lite':
-            t, t_lo, t_hi, meta = 0, 0, 0, 0
-            #t, t_lo, t_hi, meta = eta_lite(d)
+            t, t_lo, t_hi, meta = eta_lite(d)
         case 'eta_gam':
             t, t_lo, t_hi, meta = 0, 0, 0, 0
             #t, t_lo, t_hi, meta = eta_gam(d)
@@ -155,6 +156,7 @@ def region(lat, lon):
 
     return reg
 
+
 def dist(d):
     """
     Distance [km] between two (lat, lon) -coordinates
@@ -218,12 +220,11 @@ def price_simple(d, price_km=2, price_min=50, err=0.1):
 
 def price_lite(d, price_km=2, price_min=50, err=0.1):
     """
-    Lite transportation price estimate using EU transportation data for NUTS regions
-    price, p [EUR] =  straight_line(length, l [km], price/km [EUR/km], price_min [EUR])
+    Lite transportation price [EUR] estimate
+    using EU transportation data for NUTS regions.
     """
-
     r = nuts_intel(dd, dp, d["lat1"], d["lon1"], d["lat2"], d["lon2"])
-    p, p_hi, p_lo, meta = price_nuts(r)
+    p, p_lo, p_hi, meta = price_nuts(r)
 
     return round(p), round(p_lo), round(p_hi), meta
 
@@ -240,6 +241,35 @@ def eta_simple(d, v=80, err=0.1):
 
     meta = 0
     return round(t, 1), round(t_lo, 1), round(t_hi, 1), meta
+
+
+def eta_lite(d, v=80, err=0.1):
+    """
+    Lite transportation time [h] estimate
+    using EU transportation data for NUTS regions.
+    """
+    r = nuts_intel(dd, dp, d["lat1"], d["lon1"], d["lat2"], d["lon2"])
+    t, t_lo, t_hi, meta = eta_nuts(r)
+
+    return round(t, 1), round(t_lo, 1), round(t_hi, 1), meta
+
+
+def co_simple(d, c=100, err=0.2):
+    """
+    Simplistic transportation CO2 [g] estimate
+    distance d [km], CO2/km c [g/km]
+    """
+    ln = dist(d)
+
+    c = d.get('co', c) # get co from the dict d, or use the default value c
+
+    co = c * ln
+    co_lo = co - co * err
+    co_hi = co + co * err
+
+    meta = 0
+
+    return round(co), round(co_lo), round(co_hi), meta
 
 
 def co_simple(d, c=100, err=0.2):
@@ -308,8 +338,16 @@ def nuts_intel(dd, dp, lat1, lon1, lat2, lon2):
   n1 = nc1['id_nuts'].values[0][0:4]  # NUTS3 nuts NUTS2 conversion
   n2 = nc2['id_nuts'].values[0][0:4]  # pick 4 first letters
   dp1 = dp[dp['start_nuts'] == n1 ] # filter
-  dp2 = dp1[dp1['end_nuts'] == n2]
-  return dp2
+  r = dp1[dp1['end_nuts'] == n2].copy()
+
+  d1 = nc1['dist'].values[0]
+  d2 = nc2['dist'].values[0]
+
+  r['lane_err1'] = d1 # add metadata
+  r['lane_err2'] = d2
+  r['lane_dist'] = dist({'lat1': lat1, 'lon1': lon1, 'lat2':lat2, 'lon2':lon2})
+
+  return r
 
 
 def round_base(x, base=5):
@@ -328,7 +366,6 @@ def price_nuts(r, err_p=0.15, base=10):
   p_lo = p - err_p * p
   p_hi = p + err_p * p
 
-  #r = r.reset_index(drop=True)
   meta = r.to_dict("records")
 
   return round_base(p, base), round_base(p_lo, base), round_base(p_hi, base), meta
@@ -342,6 +379,6 @@ def eta_nuts(r, err_p=0.15):
   t_lo = t - err_p * t
   t_hi = t + err_p * t
 
-  meta = 0
+  meta = r.to_dict("records")
 
   return round(t, 1), round(t_lo, 1), round(t_hi, 1), meta
