@@ -2,6 +2,8 @@
 # Usage: first lauch the API server, see api.sh 
 #        then run $make test, see Makefile
 
+import pandas as pd
+import numpy as np
 import json # built-in module, no need to install
 import requests # https://requests.readthedocs.io/en/latest/user/quickstart/
 
@@ -22,6 +24,32 @@ ct = {'Content-type': 'application/json'}
 #                   (lat, lon) with 5 decimals, or ~1 meter accuracy
 # defaults: co=100, seg=1, (db,ta,tb)=(da,00:00,24:00)  
 
+# test data
+dt = pd.DataFrame(np.array([
+    ["helsinki",     60.19205,   24.94583],
+    ["lahti",        60.98267,   25.66121],
+    ['oulu',         65.02154,   25.46988],
+    ["tallinn",      59.43696,   23.75357],
+    ['stockholm',    59.33459,   18.06324],
+    ['warsaw',       52.237049,  21.01753],
+    ['paris',        48.86471,    2.34901],
+    ['berlin',       52.52000,   13.40495]]),
+    columns=['town', 'lat', 'lon'])
+
+dt['town'] = dt['town'].astype('string') # types
+dt['lat'] = dt['lat'].astype('float')
+dt['lon'] = dt['lon'].astype('float')
+
+dt, dt.info() # final
+
+lat1 = dt[dt['town']=='paris']['lat'].values[0]
+lon1 = dt[dt['town']=='paris']['lon'].values[0]
+
+lat2 = dt[dt['town']=='warsaw']['lat'].values[0]
+lon2 = dt[dt['town']=='warsaw']['lon'].values[0]
+
+
+d0 = {"id":"230710-001",                 "da":"23-07-10",                                          "lat1":lat1,    "lon1":lon1,    "lat2":lat2,    "lon2":lon2}
 
 d1 = {"id":"230701-001",                 "da":"23-07-01",                                          "lat1":60.19205,"lon1":24.94583,"lat2":60.10549,"lon2":24.15589}
 d2 = {"id":"230701-001",        "co":100,"da":"23-07-01",                                          "lat1":60.19205,"lon1":24.94583,"lat2":60.10549,"lon2":24.15589}
@@ -53,15 +81,24 @@ print(r.json())
 #   d=$(echo ${!di}) # evaluated
 # print(d1)
 
-rp = requests.get(url + '/api/price', headers=ct, data=json.dumps(d1))
-re = requests.get(url + '/api/eta',   headers=ct, data=json.dumps(d1))
-rc = requests.get(url + '/api/co',    headers=ct, data=json.dumps(d1))
-rr = requests.get(url + '/api/route', headers=ct, data=json.dumps(d1))
+d = d0
+#d = d1
+
+rp = requests.get(url + '/api/price', headers=ct, data=json.dumps(d))
+re = requests.get(url + '/api/eta',   headers=ct, data=json.dumps(d))
+rc = requests.get(url + '/api/co',    headers=ct, data=json.dumps(d))
+rr = requests.get(url + '/api/route', headers=ct, data=json.dumps(d))
 
 print(rp.json())
 print(re.json())
 print(rc.json())
 print(rr.json())
+
+rpj = json.dumps(rp.json(), indent=3)
+print(rpj)
+
+rej = json.dumps(re.json(), indent=3)
+print(rej)
 
 #print(rp.headers); print(rp.text)
 #dp = json.loads(rp.content); print(dp)
