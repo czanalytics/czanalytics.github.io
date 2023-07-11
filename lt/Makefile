@@ -5,6 +5,10 @@ BROWSER  := google-chrome
 BROWSER0 := explorer.exe
 URL      := http://0.0.0.0:8000
 
+# make str=cza grep
+grep: 
+	grep -r $(str) *
+
 test:
 	python3 test.py
 
