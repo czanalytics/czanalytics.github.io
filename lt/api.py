@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify  # , make_response
+from flask import Flask, request, jsonify, abort  # , make_response
 from flask_restful import Resource, Api
 #from flask_expects_json import expects_json
 
@@ -12,14 +12,36 @@ app = Flask(__name__)
 
 api = Api(app)
 
+def key_check(req):
+    """
+    Permission denied if the request header key is not correct
+    """
+    key = req.headers.get('api_key')
+
+    secret_key = "" # TBD
+
+    if key == secret_key:
+        key_ok = True
+    else:
+        key_ok = False
+
+    key_ok = True   # testing
+    #key_ok = False
+
+    if not key_ok:
+        abort(403) # permission denied
+
+    return 1
+
+
 class intro(Resource):
     """
     api description
     """
     def get(self):
-       # req = request.json
+       key_check(request)
 
-        msg = {
+       msg = {
             'api': 'lane',
             'version': conf["version"],
             'endpoints': ['price', 'eta', 'co'],
@@ -27,13 +49,15 @@ class intro(Resource):
             'datetime': datetime.now()
         }
         # status_code such as 200 is set automatically 
-        return jsonify(msg)
+       return jsonify(msg)
 
 class price(Resource):
     """
     Lane price estimate
     """
     def get(self):
+        key_check(request)
+
         req = request.json
         mod = conf["model"]["price"]
         p, p_lo, p_hi, meta = price_est(req, mod) # !
@@ -56,6 +80,8 @@ class eta(Resource):
     Lane ETA estimate
     """
     def get(self):
+        key_check(request)
+
         req = request.json
         mod = conf["model"]["eta"]
         t, t_lo, t_hi, meta = eta_est(req, mod) # !
@@ -74,6 +100,8 @@ class co(Resource):
     Lane CO2 estimate
     """
     def get(self):
+        key_check(request)
+
         req = request.json
         mod = conf["model"]["co"]
         co, co_lo, co_hi, meta = co_est(req, mod) # !
@@ -92,6 +120,8 @@ class route(Resource):
     Route estimated
     """
     def get(self):
+        key_check(request)
+
         req = request.json
         cnf = conf["routing"]
         route = route_est(req, cnf) # !

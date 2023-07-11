@@ -14,6 +14,7 @@ api() {
  url="http://$ip:$p"
  pp="json_pp" # prettyprinter
  ct="Content-type: application/json"
+ key="api_key: "`cat .secret_key`
 
  # test payload 
  # required: id, da, lat1, lon2, lat2, lon2, 
@@ -37,7 +38,7 @@ api() {
  docker run -d -p $p:$p --name $cn $ci  # -d for detached mode in bg
  sleep 3
 
- curl -s "$url"/api | "$pp" # request pp with silent -s
+ curl -H "$key" -s "$url"/api | "$pp" # request pp with silent -s
 
  for i in {1..7}
  do
