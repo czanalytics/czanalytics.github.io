@@ -1,6 +1,37 @@
-# api.sh
-# usage: source api.sh && api 2>&1 | tee ./tmp/log.txt
-api() { 
+# api.sh for managing API service
+
+api_data() {
+ # prepare data for api container
+ echo "fn:"${FUNCNAME[*]}
+ echo $(date)
+ t0=$(date +%s)
+ set -x
+
+ echo "TDB"
+
+ set +x
+ echo $(date)
+ t1=$(date +%s)
+ echo "time elapsed `expr $t1 - $t0` sec."
+}
+
+
+api_model() {
+ # prepare models for api container
+ echo "fn:"${FUNCNAME[*]}
+ echo $(date)
+ t0=$(date +%s)
+ set -x
+
+ echo "TDB"
+ 
+ set +x
+ echo $(date)
+ t1=$(date +%s)
+ echo "time elapsed `expr $t1 - $t0` sec."
+}
+
+api_local() { 
  # test api functionality
  echo "fn:"${FUNCNAME[*]}
  echo $(date)
@@ -18,7 +49,8 @@ api() {
 
  # test payload 
  # required: id, da, lat1, lon2, lat2, lon2, 
- #                   (lat, lon) with 5 decimals, or ~1 meter accuracy
+ #                   (lat, lon) with 5 decimal provides ~1 meter accuracy
+ # optional: co for vehicle CO2 [g/km t], db for dat window, (ta,tb) for time window
  # defaults: co=100, seg=1, (db,ta,tb)=(da,00:00,24:00)  
  d1='{"id":"230701-001",                 "da":"23-07-01",                                          "lat1":60.19205,"lon1":24.94583,"lat2":60.10549,"lon2":24.15589}'
  d2='{"id":"230701-001",        "co":100,"da":"23-07-01",                                          "lat1":60.19205,"lon1":24.94583,"lat2":60.10549,"lon2":24.15589}'
@@ -54,6 +86,70 @@ api() {
  set +x
  docker logs -t $cn
 
+ echo $(date)
+ t1=$(date +%s)
+ echo "time elapsed `expr $t1 - $t0` sec."
+}
+
+
+api_deploy() {
+ # deploy api container
+ echo "fn:"${FUNCNAME[*]}
+ echo $(date)
+ t0=$(date +%s)
+ set -x
+
+ echo "TDB"
+ 
+ set +x
+ echo $(date)
+ t1=$(date +%s)
+ echo "time elapsed `expr $t1 - $t0` sec."
+}
+
+
+api_cloud() {
+ # test deployed api
+ echo "fn:"${FUNCNAME[*]}
+ echo $(date)
+ t0=$(date +%s)
+ set -x
+
+ echo "TDB"
+ 
+ set +x
+ echo $(date)
+ t1=$(date +%s)
+ echo "time elapsed `expr $t1 - $t0` sec."
+}
+
+
+api_status() {
+ # inspect the status of api service
+ echo "fn:"${FUNCNAME[*]}
+ echo $(date)
+ t0=$(date +%s)
+ set -x
+
+ echo "TDB"
+ 
+ set +x
+ echo $(date)
+ t1=$(date +%s)
+ echo "time elapsed `expr $t1 - $t0` sec."
+}
+
+
+api_report() {
+ # prepare service reports
+ echo "fn:"${FUNCNAME[*]}
+ echo $(date)
+ t0=$(date +%s)
+ set -x
+
+ echo "TDB"
+ 
+ set +x
  echo $(date)
  t1=$(date +%s)
  echo "time elapsed `expr $t1 - $t0` sec."
