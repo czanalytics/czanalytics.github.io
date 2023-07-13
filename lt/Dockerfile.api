@@ -2,14 +2,18 @@
 # run api_data.sh first to populate tmp-directory 
 FROM python:3
 
+ARG D=tmp # data dir
+
 ADD api.py /
 ADD lane.py /
+ADD .secret_key /
 
-ADD tmp/ODMatrix2021_N2.csv /
-ADD tmp/nuts-names-21.csv /
+ADD ${D}/ODMatrix2021_N2.csv /
+ADD ${D}/nuts-names-21.csv /
 ADD tmp/nuts.csv /
 ADD tmp/nuts3.json /
 ADD tmp/nuts_centroid.csv /
+
 # ADD tmp/<models>
 
 RUN pip install flask

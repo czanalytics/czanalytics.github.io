@@ -12,20 +12,21 @@ app = Flask(__name__)
 
 api = Api(app)
 
-def key_check(req):
+def key_check(key):
     """
     Permission denied if the request header key is not correct
     """
-    key = req.headers.get('api_key')
+    with open('./.secret_key') as f:
+        k = f.read()
 
-    secret_key = "" # TBD
+    secret_key = k.replace('\n', '')
 
     if key == secret_key:
         key_ok = True
     else:
         key_ok = False
 
-    key_ok = True   # testing
+    #key_ok = True   # testing
     #key_ok = False
 
     if not key_ok:
@@ -39,10 +40,9 @@ class intro(Resource):
     api description
     """
     def get(self):
-       key_check(request)
+       key_check(request.headers.get('Api-Key'))
 
-       msg = {
-            'api': 'lane',
+       msg = {'api': 'lane',
             'version': conf["version"],
             'endpoints': ['price', 'eta', 'co'],
             'schema_expected': conf["schema"],
@@ -56,7 +56,7 @@ class price(Resource):
     Lane price estimate
     """
     def get(self):
-        key_check(request)
+        key_check(request.headers.get('Api-Key'))
 
         req = request.json
         mod = conf["model"]["price"]
@@ -80,7 +80,7 @@ class eta(Resource):
     Lane ETA estimate
     """
     def get(self):
-        key_check(request)
+        key_check(request.headers.get('Api-Key'))
 
         req = request.json
         mod = conf["model"]["eta"]
@@ -100,7 +100,7 @@ class co(Resource):
     Lane CO2 estimate
     """
     def get(self):
-        key_check(request)
+        key_check(request.headers.get('Api-Key'))
 
         req = request.json
         mod = conf["model"]["co"]
@@ -120,7 +120,7 @@ class route(Resource):
     Route estimated
     """
     def get(self):
-        key_check(request)
+        key_check(request.headers.get('Api-Key'))
 
         req = request.json
         cnf = conf["routing"]
