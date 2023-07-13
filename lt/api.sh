@@ -124,6 +124,22 @@ api_cloud() {
 }
 
 
+api_config() {
+ # configure the api service
+ echo "fn:"${FUNCNAME[*]}
+ echo $(date)
+ t0=$(date +%s)
+ set -x
+
+ echo "TDB"
+ 
+ set +x
+ echo $(date)
+ t1=$(date +%s)
+ echo "time elapsed `expr $t1 - $t0` sec."
+}
+
+
 api_status() {
  # inspect the status of api service
  echo "fn:"${FUNCNAME[*]}

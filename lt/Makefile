@@ -22,11 +22,17 @@ api_deploy:
 api_cloud:
 	source api.sh && api_cloud  2>&1 | tee ./tmp/log-cloud.txt
 
+api_config:
+	source api.sh && api_config 2>&1 | tee ./tmp/log-config.txt
+
 api_status:
 	source api.sh && api_status 2>&1 | tee ./tmp/log-status.txt
 
 api_report:
 	source api.sh && api_report 2>&1 | tee ./tmp/log-report.txt
+
+# local targets
+all_local: api_data api_model api_local api_config api_status api_report
 
 # make str=cza grep
 grep: 
