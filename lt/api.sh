@@ -53,11 +53,9 @@ api_local() {
 
  ci="api"     # image
  cn="$ci"_con # container name
- ip="0.0.0.0"
- p="3333"
- 
- url="http://$ip:$p"
- key="Api-Key: "`cat .secret_key`
+
+ key="Api-Key: "`cat .key`
+ ip="0.0.0.0"; p="3333"; url="http://$ip:$p"
  
  ct="Content-type: application/json"
  pp="json_pp" # prettyprinter
@@ -118,8 +116,8 @@ api_cloud() {
  t0=$(date +%s)
  set -x
 
- url=`cat .url`
- key="Api-Key: "`cat .secret_key`
+ url=`cat .url_api`
+ key="Api-Key: "`cat .key`
  
  ct="Content-type: application/json"
  pp="json_pp"
@@ -152,7 +150,27 @@ api_config() {
  t0=$(date +%s)
  set -x
 
- echo "TDB"
+ key="Api-Key: "`cat .key_conf` # notice unique key
+ ip="0.0.0.0"; p="3333"; url="http://$ip:$p"
+
+ ct="Content-type: application/json"
+ pp="json_pp"
+
+ # data config
+ dc1='{"id":"230701-001",                 "da":"23-07-01",                                          "lat1":60.19205,"lon1":24.94583,"lat2":60.10549,"lon2":24.15589}'
+ dc2='{"id":"230701-001",        "co":100,"da":"23-07-01",                                          "lat1":60.19205,"lon1":24.94583,"lat2":60.10549,"lon2":24.15589}'
+ dc3='{"id":"230701-001","seg":1,"co":100,"da":"23-07-01","ta":"10:00","db":"23-07-01","tb":"12:00","lat1":60.19205,"lon1":24.94583,"lat2":60.10549,"lon2":24.15589}'
+ dc4='{"id":"230702-001","seg":1,"co":100,"da":"23-07-02","ta":"10:00","db":"23-07-02","tb":"12:00","lat1":60.19205,"lon1":24.94583,"lat2":60.30549,"lon2":24.35589}'
+
+ curl -H "$key" -s "$url"/api/config | "$pp" 
+
+ for i in {1..2}
+ do
+   di="dc$i"        # test selected
+   d=$(echo ${!di}) # evaluated
+   
+   curl -s -X GET -H "$ct" -H "$key" $url/api/config --data "$d" | "$pp"
+ done
  
  set +x
  echo $(date)
@@ -168,8 +186,28 @@ api_status() {
  t0=$(date +%s)
  set -x
 
- echo "TDB"
- 
+ key="Api-Key: "`cat .key`
+ ip="0.0.0.0"; p="3333"; url="http://$ip:$p"
+
+ ct="Content-type: application/json"
+ pp="json_pp"
+
+ # data status
+ ds1='{"id":"230701-001",                 "da":"23-07-01",                                          "lat1":60.19205,"lon1":24.94583,"lat2":60.10549,"lon2":24.15589}'
+ ds2='{"id":"230701-001",        "co":100,"da":"23-07-01",                                          "lat1":60.19205,"lon1":24.94583,"lat2":60.10549,"lon2":24.15589}'
+ ds3='{"id":"230701-001","seg":1,"co":100,"da":"23-07-01","ta":"10:00","db":"23-07-01","tb":"12:00","lat1":60.19205,"lon1":24.94583,"lat2":60.10549,"lon2":24.15589}'
+ ds4='{"id":"230702-001","seg":1,"co":100,"da":"23-07-02","ta":"10:00","db":"23-07-02","tb":"12:00","lat1":60.19205,"lon1":24.94583,"lat2":60.30549,"lon2":24.35589}'
+
+ curl -H "$key" -s "$url"/api/status | "$pp" 
+
+ for i in {1..2}
+ do
+   di="ds$i"        # test selected
+   d=$(echo ${!di}) # evaluated
+   
+   curl -s -X GET -H "$ct" -H "$key" $url/api/status --data "$d" | "$pp"
+ done
+
  set +x
  echo $(date)
  t1=$(date +%s)
@@ -183,9 +221,29 @@ api_report() {
  echo $(date)
  t0=$(date +%s)
  set -x
-
- echo "TDB"
  
+ key="Api-Key: "`cat .key`
+ ip="0.0.0.0"; p="3333"; url="http://$ip:$p"
+
+ ct="Content-type: application/json"
+ pp="json_pp"
+
+ # data report
+ dr1='{"id":"230701-001",                 "da":"23-07-01",                                          "lat1":60.19205,"lon1":24.94583,"lat2":60.10549,"lon2":24.15589}'
+ dr2='{"id":"230701-001",        "co":100,"da":"23-07-01",                                          "lat1":60.19205,"lon1":24.94583,"lat2":60.10549,"lon2":24.15589}'
+ dr3='{"id":"230701-001","seg":1,"co":100,"da":"23-07-01","ta":"10:00","db":"23-07-01","tb":"12:00","lat1":60.19205,"lon1":24.94583,"lat2":60.10549,"lon2":24.15589}'
+ dr4='{"id":"230702-001","seg":1,"co":100,"da":"23-07-02","ta":"10:00","db":"23-07-02","tb":"12:00","lat1":60.19205,"lon1":24.94583,"lat2":60.30549,"lon2":24.35589}'
+
+ curl -H "$key" -s "$url"/api/report | "$pp" 
+
+ for i in {1..2}
+ do
+   di="dr$i"        # test selected
+   d=$(echo ${!di}) # evaluated
+   
+   curl -s -X GET -H "$ct" -H "$key" $url/api/report --data "$d" | "$pp"
+ done
+
  set +x
  echo $(date)
  t1=$(date +%s)

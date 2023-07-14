@@ -13,7 +13,7 @@ import logging as log # log.debug/info/warning
 import pandas as pd
 #from geopy.distance import geodesic
 
-schema_api = {'type': 'object', 'properties': {
+conf_schema = {'type': 'object', 'properties': {
     'id': {'type': 'string'},
     'seg': {'type': 'integer'}, # voyage segment 1,2, ...
     'co': {'type': 'integer'},  # co2 g/km 
@@ -28,25 +28,36 @@ schema_api = {'type': 'object', 'properties': {
     'required': ['id', 'seg', 'co', 'da', 'lat1', 'lon1', 'lat2', 'lon2']
           }
 
+conf_data = {'data', 'foo'}
+
 # model conf simple/lite/gam/autom
-mods = {'price': 'price_lite', 'eta': 'eta_lite','co': 'co_simple' }      # lite
-#mods = {'price': 'price_lite', 'eta': 'eta_simple','co': 'co_simple' }
-#mods = {'price': 'price_simple', 'eta': 'eta_simple','co': 'co_simple' } # simple
-#mods = {'price': 'price_lite', 'eta': 'eta_lite','co': 'co_lite' }
-#mods = {'price': 'price_gam', 'eta': 'eta_gam','co': 'co_gam' }          # gam
-#mods = {'price': 'price_automl', 'eta': 'eta_automl','co': 'co_automl' } # automl
+conf_model = {'price': 'price_lite', 'eta': 'eta_lite','co': 'co_simple'}      # lite
+#conf_model = {'price': 'price_lite', 'eta': 'eta_simple','co': 'co_simple'}
+#conf_model = {'price': 'price_simple', 'eta': 'eta_simple','co': 'co_simple'} # simple
+#conf_model = {'price': 'price_lite', 'eta': 'eta_lite','co': 'co_lite'}
+#conf_model = {'price': 'price_gam', 'eta': 'eta_gam','co': 'co_gam'}          # gam
+#conf_model = {'price': 'price_automl', 'eta': 'eta_automl','co': 'co_automl'} # automl
 
 # routing conf
-routing = {'service': 'route_streetmap', 'foo': 'bar'}
-#routing = {'service': 'route_openroute'}
-#routing = {'service': 'route_googlemaps'}
+conf_routing = {'service': 'route_streetmap', 'foo': 'bar'}
+#conf_routing = {'service': 'route_openroute'}
+#conf_routing = {'service': 'route_googlemaps'}
 
-conf = {'version': 0.28,
-        'app_ip': '0.0.0.0',
+# management confs
+conf_config = {'config': 'foo'}
+conf_status = {'status': 'foo'}
+conf_report = {'report': 'foo'}
+
+conf = {'version':  0.28,
+        'app_ip':   '0.0.0.0',
         'app_port': 3333,
-        'schema': schema_api,
-        'model': mods,
-        'routing': routing
+        'schema':   conf_schema,
+        'data':     conf_data,
+        'model':    conf_model,
+        'routing':  conf_routing,
+        'config':   conf_config,
+        'status':   conf_status,
+        'report':   conf_report
         }
 
 lv = log.DEBUG
@@ -137,6 +148,33 @@ def route_est(d, conf):
             route = 0
 
     return route
+
+
+def config_lane(d, cnf):
+    """
+    Dispatch service configuration
+    """
+
+    r = {"new_conf": "yeah!"}
+    return r
+
+
+def status_lane(d, cnf):
+    """
+    Service status
+    """
+
+    r = {"status": "yeah!"}
+    return r
+
+
+def report_lane(d, cnf):
+    """
+    Report generation
+    """
+
+    r = {"report": "yeah!"}
+    return r
 
 
 def region(lat, lon):
