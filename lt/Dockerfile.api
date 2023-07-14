@@ -1,20 +1,22 @@
-# flask api for transportation (price, eta, co2) estimates
-# run api_data.sh first to populate tmp-directory 
+# flask api for lane microservice
+# run 'make api_data' target 1st to populate D-directory 
 FROM python:3
+
+ADD .key /
+ADD .key_conf /
 
 ARG D=tmp # data dir
 
-ADD api.py /
-ADD lane.py /
-ADD .secret_key /
-
 ADD ${D}/ODMatrix2021_N2.csv /
 ADD ${D}/nuts-names-21.csv /
-ADD tmp/nuts.csv /
-ADD tmp/nuts3.json /
-ADD tmp/nuts_centroid.csv /
+ADD ${D}/nuts.csv /
+ADD ${D}/nuts3.json /
+ADD ${D}/nuts_centroid.csv /
 
 # ADD tmp/<models>
+
+ADD api.py /
+ADD lane.py /
 
 RUN pip install flask
 RUN pip install flask_restful
@@ -22,9 +24,6 @@ RUN pip install flask-expects-json
 RUN pip install pandas
 RUN pip install numpy
 RUN pip install geopy
-#import pandas as pd
-#import numpy as np
-#from geopy.distance import geodesic
 
 EXPOSE 3333
 
