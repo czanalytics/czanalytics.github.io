@@ -229,7 +229,18 @@ api_report() {
  pp="json_pp"
 
  # data report
- dr1='{"id":"230701-001",                 "da":"23-07-01",                                          "lat1":60.19205,"lon1":24.94583,"lat2":60.10549,"lon2":24.15589}'
+ 
+ id="230701-001"
+ da="23-07-01"
+ lat1=60.19205
+ lon1=24.94583
+ lat2=60.10549
+ lon2=24.15589
+ template='{"id":"%s", "da":"%s", "lat1":%s, "lon1":%s, "lat2":%s, "lon2":%s}\n' # careful
+
+ dr1=$(printf "$template" "$id" "$da" "$lat1" "$lon1" "$lat2" "$lon2")
+ #dr1='{"id":"230701-001",                 "da":"23-07-01",                                          "lat1":60.19205,"lon1":24.94583,"lat2":60.10549,"lon2":24.15589}'
+ 
  dr2='{"id":"230701-001",        "co":100,"da":"23-07-01",                                          "lat1":60.19205,"lon1":24.94583,"lat2":60.10549,"lon2":24.15589}'
  dr3='{"id":"230701-001","seg":1,"co":100,"da":"23-07-01","ta":"10:00","db":"23-07-01","tb":"12:00","lat1":60.19205,"lon1":24.94583,"lat2":60.10549,"lon2":24.15589}'
  dr4='{"id":"230702-001","seg":1,"co":100,"da":"23-07-02","ta":"10:00","db":"23-07-02","tb":"12:00","lat1":60.19205,"lon1":24.94583,"lat2":60.30549,"lon2":24.35589}'
@@ -248,4 +259,48 @@ api_report() {
  echo $(date)
  t1=$(date +%s)
  echo "time elapsed `expr $t1 - $t0` sec."
+}
+
+# usage: source api.sh && loc_dict 1.1 1.2 2.2 2.3
+loc_dict() {
+  echo "testing dictionary and fn anguments"
+  
+  echo "lat1 $1 lon1 $2 lat2 $3 lon2 $4"
+
+  declare -A co=(
+    [name]="Acme Corp."
+    [loc]="New York City, NY"
+    [lat]=$1
+    [lon]=$2
+    [industry]="Finance"
+    [size]="Large"
+    [founded]="1920"
+  )
+
+  printf "Company details:\n"
+  for key in "${!co[@]}"; do
+    printf "%s: %s\n" "$key" "${co[$key]}"
+  done
+
+  co["loc"]="Los Angeles, CA"
+
+  printf "\nUpdated details:\n"
+  for key in "${!co[@]}"; do
+    printf "%s: %s\n" "$key" "${co[$key]}"
+  done
+
+  key=lat
+  echo "${co[$key]}"
+  echo "${co['lat']}"
+  echo "${co['lon']}"
+  lat1=${co['lat']}
+  lon1=${co['lon']}
+  echo $lat1
+
+  id="230601-001"
+  da="23-07-01"
+
+  template='{"id":"%s", "da":"%s", "lat1":%s, "lon1":%s}\n'
+  dr=$(printf "$template" "$id" "$da" "$lat1" "$lon1")
+  echo $dr
 }

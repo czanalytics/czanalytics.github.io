@@ -34,6 +34,12 @@ api_report:
 # local targets
 all_local: api_data api_model api_local api_config api_status api_report
 
+api_loc1: 
+	source api.sh && loc_dict 1.1  1.2  2.2  2.3
+
+api_loc2: 
+	source api.sh && loc_dict 1.11 1.22 2.22 2.33
+
 # make str=cza grep
 grep: 
 	grep -r $(str) *
