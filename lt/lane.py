@@ -404,6 +404,30 @@ def price_nuts(r, err_p=0.15, base=10):
   p_lo = p - err_p * p
   p_hi = p + err_p * p
 
+  dr = r['distance_road'].values[0]
+  d = r['distance_geodesic'].values[0]
+  dd = r['lane_dist'].values[0]
+  e1 = r['lane_err1'].values[0]
+  e2 = r['lane_err2'].values[0]
+
+  corr_dist  = dd/d
+  corr_fuel  = 0
+  corr_index = 0
+
+  err_dist   = corr_dist*err_p
+  err_loc    =  (e1+e2)/(2*dd)
+  err_future = 0
+
+  r['lane_corr']="['corr_dist', 'corr_fuel', 'corr_index']"
+  r['lane_corr_dist'] = corr_dist
+  r['lane_corr_fuel'] = corr_fuel
+  r['lane_corr_index'] = corr_index
+
+  r['lane_err'] = "['err_dist', 'err_loc', 'err_future']"
+  r['lane_err_dist'] = err_dist
+  r['lane_err_loc'] = err_loc
+  r['lane_err_future'] = err_future
+
   meta = r.to_dict("records")
 
   return round_base(p, base), round_base(p_lo, base), round_base(p_hi, base), meta

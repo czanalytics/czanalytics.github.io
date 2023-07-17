@@ -36,7 +36,22 @@ api_model() {
 #                   (lat, lon) with 5 decimal provides ~1 meter accuracy
 # optional: co for vehicle CO2 [g/km t], db for dat window, (ta,tb) for time window
 # defaults: co=100, seg=1, (db,ta,tb)=(da,00:00,24:00)  
-d1='{"id":"230701-001",                 "da":"23-07-01",                                          "lat1":60.19205,"lon1":24.94583,"lat2":60.10549,"lon2":24.15589}'
+
+ id="230720-001"
+ da="23-07-20"
+ lat1=48.86471 # paris 
+ lon1=2.23901
+ lat2=52.23704 # warsaw
+ lon2=21.01753
+ latb=52.52000 # berlin
+ lonb=13.40495
+ meta="paris-warsaw"
+
+ template='{"id":"%s", "da":"%s", "lat1":%s, "lon1":%s, "lat2":%s, "lon2":%s, "meta":"%s"}\n' # careful
+
+ d1=$(printf "$template" "$id" "$da" "$lat1" "$lon1" "$lat2" "$lon2" "$meta")
+
+#d1='{"id":"230701-001",                 "da":"23-07-01",                                          "lat1":60.19205,"lon1":24.94583,"lat2":60.10549,"lon2":24.15589}'
 d2='{"id":"230701-001",        "co":100,"da":"23-07-01",                                          "lat1":60.19205,"lon1":24.94583,"lat2":60.10549,"lon2":24.15589}'
 d3='{"id":"230701-001","seg":1,"co":100,"da":"23-07-01","ta":"10:00","db":"23-07-01","tb":"12:00","lat1":60.19205,"lon1":24.94583,"lat2":60.10549,"lon2":24.15589}'
 d4='{"id":"230702-001","seg":1,"co":100,"da":"23-07-02","ta":"10:00","db":"23-07-02","tb":"12:00","lat1":60.19205,"lon1":24.94583,"lat2":60.30549,"lon2":24.35589}'
@@ -73,7 +88,7 @@ api_local() {
  curl -H "$key" -s "$url"     | "$pp" # request pp with silent -s
  curl -H "$key" -s "$url"/api | "$pp" 
 
- for i in {1..7}
+ for i in {1..2}
  do
    di="d$i"         # test selected
    d=$(echo ${!di}) # evaluated
