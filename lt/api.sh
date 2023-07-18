@@ -66,9 +66,9 @@ api_model() {
  d3=$(printf "$dtemp" "$id" "$da" "$labe" "$lobe" "$lawa" "$lowa" "$mebewa")
  d4=$(printf "$dtemp" "$id" "$da" "$lahe" "$lohe" "$lala" "$lola" "$mehela")
  d5=$(printf "$dtemp" "$id" "$da" "$lahe" "$lohe" "$laou" "$loou" "$meheou")
- d7=$(printf "$dtemp" "$id" "$da" "$lahe" "$lohe" "$last" "$lost" "$mehest")
- d8=$(printf "$dtemp" "$id" "$da" "$lahe" "$lohe" "$lata" "$lota" "$meheta")
- d9=$(printf "$dtemp" "$id" "$da" "$lahe" "$lohe" "$labe" "$lobe" "$mehebe")
+ d6=$(printf "$dtemp" "$id" "$da" "$lahe" "$lohe" "$last" "$lost" "$mehest")
+ d7=$(printf "$dtemp" "$id" "$da" "$lahe" "$lohe" "$lata" "$lota" "$meheta")
+ d8=$(printf "$dtemp" "$id" "$da" "$lahe" "$lohe" "$labe" "$lobe" "$mehebe")
  
 #d1='{"id":"230701-001",                 "da":"23-07-01",                                          "lat1":60.19205,"lon1":24.94583,"lat2":60.10549,"lon2":24.15589}'
 #d2='{"id":"230701-001",        "co":100,"da":"23-07-01",                                          "lat1":60.19205,"lon1":24.94583,"lat2":60.10549,"lon2":24.15589}'
@@ -107,7 +107,7 @@ api_local() {
  curl -H "$key" -s "$url"     | "$pp" # request pp with silent -s
  curl -H "$key" -s "$url"/api | "$pp" 
  
- for i in {1..9}
+ for i in {1..8}
  do
    di="d$i"         # test selected
    d=$(echo ${!di}) # evaluated

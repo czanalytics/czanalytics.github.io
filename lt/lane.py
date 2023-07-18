@@ -266,6 +266,7 @@ def price_lite(d, price_km=2, price_min=50, err=0.1):
 
     return round(p), round(p_lo), round(p_hi), meta
 
+
 def eta_simple(d, v=80, err=0.1):
     """
     Simplistic transportation time estimate.
@@ -385,6 +386,18 @@ def nuts_intel(dd, dp, lat1, lon1, lat2, lon2):
   r['lane_err2'] = d2
   r['lane_dist'] = dist({'lat1': lat1, 'lon1': lon1, 'lat2':lat2, 'lon2':lon2})
 
+  # round response data
+  r['all_distancecosts'] = round_base(r['all_distancecosts'])
+  r['all_timecosts'] =  round_base(r['all_timecosts'])
+  r['distance_geodesic'] = round(r['distance_geodesic'])
+  r['distance_road'] = round(r['distance_road'])
+  r['fuel'] = round(r['fuel'])
+  r['taxes'] = round_base(r['taxes'])
+  r['tolls'] = round_base(r['tolls'])
+  r['total_cost'] = round_base(r['total_cost'])
+  r['vignettecost'] = round_base(r['vignettecost'])
+  r['wages'] = round_base(r['wages'], 5)
+
   return r
 
 
@@ -396,44 +409,68 @@ def round_base(x, base=5):
   return base * round(x / base)
 
 
-def price_nuts(r, err_p=0.15, base=10):
+def price_nuts(r, err_p=0.10, base=10, price_min=20):
   """
   Estimate price [EUR] from NUT2 region to other
   """
-  p = r['total_cost'].values[0]
-  p_lo = p - err_p * p
-  p_hi = p + err_p * p
 
   dr = r['distance_road'].values[0]
-  d = r['distance_geodesic'].values[0]
+  d  = r['distance_geodesic'].values[0]
   dd = r['lane_dist'].values[0]
   e1 = r['lane_err1'].values[0]
   e2 = r['lane_err2'].values[0]
+  fu = r['fuel'].values[0]
+  tot = r['total_cost'].values[0]
 
-  corr_dist  = dd/d
-  corr_fuel  = 0
-  corr_index = 0
+  # corrections - 1 meand no correction, 1.1 meand +10%, and 0.90 -10%
+  corr_dist  = dd / d
+  corr_fuel  = 1.0
+  corr_wages = 1.0 # TBD
+  corr_index = 1.0
+  corr_environment = 1.0 # TBD weather, for ETA estimates too!
 
-  err_dist   = corr_dist*err_p
-  err_loc    =  (e1+e2)/(2*dd)
-  err_future = 0
+  err_dist   = abs(corr_dist - 1.0) * err_p
+  err_loc    = (e1 + e2) / (2 * dd) * err_p
+  err_future = 0 * err_p # weeks in future
 
-  r['lane_corr']="['corr_dist', 'corr_fuel', 'corr_index']"
-  r['lane_corr_dist'] = corr_dist
-  r['lane_corr_fuel'] = corr_fuel
-  r['lane_corr_index'] = corr_index
+  n=3 # decimals
 
-  r['lane_err'] = "['err_dist', 'err_loc', 'err_future']"
-  r['lane_err_dist'] = err_dist
-  r['lane_err_loc'] = err_loc
-  r['lane_err_future'] = err_future
+  r['lane_corr']       = "['corr_dist', 'corr_fuel', 'corr_index']"
+  r['lane_corr_dist']  = round(dr * (corr_dist - 1.0))
+  r['lane_corr_fuel']  = round(fu * (corr_fuel - 1.0))
+  r['lane_corr_index'] = round(tot * (corr_index - 1.0))
+
+  p = r['total_cost'].values[0]
+
+  corr_tot = r['lane_corr_dist'].values[0] + r['lane_corr_fuel'].values[0] + r['lane_corr_index'].values[0]
+
+  r['lane_corr_tot'] = round_base(corr_tot)
+
+  p = p + corr_tot
+
+  p = max(price_min, p)
+
+  # error components
+  # TBD weather and remaining uncertainties
+  r['lane_err']        = "['err_base', 'err_dist', 'err_loc', 'err_future']"
+  r['lane_err_base']   = round_base(p * err_p)
+  r['lane_err_dist']   = round_base(p * err_dist)
+  r['lane_err_loc']    = round_base(p * err_loc) 
+  r['lane_err_future'] = round_base(p * err_future)
+
+  err = r['lane_err_base'].values[0] + r['lane_err_dist'].values[0] + r['lane_err_loc'].values[0] + r['lane_err_future'].values[0]
+
+  r['lane_err_tot'] = round_base(err)
+
+  p_lo = max(price_min, p - err)
+  p_hi = p + err 
 
   meta = r.to_dict("records")
 
   return round_base(p, base), round_base(p_lo, base), round_base(p_hi, base), meta
 
 
-def eta_nuts(r, err_p=0.15):
+def eta_nuts(r, err_p = 0.15):
   """
   Estimate time on road [h] from NUTS2 region to other
   """
