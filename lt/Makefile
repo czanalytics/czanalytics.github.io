@@ -1,5 +1,6 @@
-# On unique WSL cd <html project>
-# make server > make browse 
+# Makefile for WSL2 Ubuntu bash-shell 
+# 
+# Example: cd <project> make server > make browse 
 # 
 BROWSER  := google-chrome
 BROWSER0 := explorer.exe

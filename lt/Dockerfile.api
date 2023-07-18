@@ -1,5 +1,5 @@
-# flask api for lane microservice
-# run 'make api_data' target 1st to populate D-directory 
+# Dockerfile.api for flask api
+# run 'make api_data' target 1st to prepare files in D-directory 
 FROM python:3
 
 ADD .key /
@@ -13,7 +13,7 @@ ADD ${D}/nuts.csv /
 ADD ${D}/nuts3.json /
 ADD ${D}/nuts_centroid.csv /
 
-# ADD tmp/<models>
+# ADD ${D}/<models> /
 
 ADD api.py /
 ADD lane.py /

@@ -1,4 +1,5 @@
-# api.sh for managing API service
+# api.sh for testing API service
+
 
 api_data() {
  echo "prepare data for api container"
@@ -31,6 +32,7 @@ api_model() {
  echo "time elapsed `expr $t1 - $t0` sec."
 }
 
+
 # test payload 
 # required: id, da, lat1, lon2, lat2, lon2, 
 #                   (lat, lon) with 5 decimal provides ~1 meter accuracy
@@ -39,25 +41,39 @@ api_model() {
 
  id="230720-001"
  da="23-07-20"
- lat1=48.86471 # paris 
- lon1=2.23901
- lat2=52.23704 # warsaw
- lon2=21.01753
- latb=52.52000 # berlin
- lonb=13.40495
- meta="paris-warsaw"
+ lapa=48.86471; lopa=2.23901  # paris
+ lawa=52.23704; lowa=21.01753 # warsaw
+ labe=52.52000; lobe=13.40495 # berlin
+ last=59.33459; lost=18.06324 # stockholm
+ lahe=60.19205; lohe=24.94583 # helsinki
+ lata=59.43696; lota=23.75357 # tallinn
+ lala=60.98267; lola=25.66121 # lahti
+ laou=65.02154; loou=25.46988 # oulu
 
- template='{"id":"%s", "da":"%s", "lat1":%s, "lon1":%s, "lat2":%s, "lon2":%s, "meta":"%s"}\n' # careful
+ mepawa="paris-warsaw"
+ mepabe="paris-berlin"
+ mebewa="berlin-warsaw"
+ mehela="helsinki-lahti"
+ meheou="helsinki-oulu"
+ mehest="helsinki-stockholm"
+ meheta="helsinki-tallinn"
+ mehebe="helsinki-berlin"
 
- d1=$(printf "$template" "$id" "$da" "$lat1" "$lon1" "$lat2" "$lon2" "$meta")
+ dtemp='{"id":"%s", "da":"%s", "lat1":%s, "lon1":%s, "lat2":%s, "lon2":%s, "meta":"%s"}\n' # careful
 
+ d1=$(printf "$dtemp" "$id" "$da" "$lapa" "$lopa" "$lawa" "$lowa" "$mepawa")
+ d2=$(printf "$dtemp" "$id" "$da" "$lapa" "$lopa" "$labe" "$lobe" "$mepabe")
+ d3=$(printf "$dtemp" "$id" "$da" "$labe" "$lobe" "$lawa" "$lowa" "$mebewa")
+ d4=$(printf "$dtemp" "$id" "$da" "$lahe" "$lohe" "$lala" "$lola" "$mehela")
+ d5=$(printf "$dtemp" "$id" "$da" "$lahe" "$lohe" "$laou" "$loou" "$meheou")
+ d7=$(printf "$dtemp" "$id" "$da" "$lahe" "$lohe" "$last" "$lost" "$mehest")
+ d8=$(printf "$dtemp" "$id" "$da" "$lahe" "$lohe" "$lata" "$lota" "$meheta")
+ d9=$(printf "$dtemp" "$id" "$da" "$lahe" "$lohe" "$labe" "$lobe" "$mehebe")
+ 
 #d1='{"id":"230701-001",                 "da":"23-07-01",                                          "lat1":60.19205,"lon1":24.94583,"lat2":60.10549,"lon2":24.15589}'
-d2='{"id":"230701-001",        "co":100,"da":"23-07-01",                                          "lat1":60.19205,"lon1":24.94583,"lat2":60.10549,"lon2":24.15589}'
-d3='{"id":"230701-001","seg":1,"co":100,"da":"23-07-01","ta":"10:00","db":"23-07-01","tb":"12:00","lat1":60.19205,"lon1":24.94583,"lat2":60.10549,"lon2":24.15589}'
-d4='{"id":"230702-001","seg":1,"co":100,"da":"23-07-02","ta":"10:00","db":"23-07-02","tb":"12:00","lat1":60.19205,"lon1":24.94583,"lat2":60.30549,"lon2":24.35589}'
-d5='{"id":"230703-001","seg":1,"co":100,"da":"23-07-03","ta":"10:00","db":"23-07-03","tb":"12:00","lat1":60.19205,"lon1":24.94583,"lat2":60.50549,"lon2":24.55589}'
-d6='{"id":"230703-001","seg":2,"co":100,"da":"23-07-03","ta":"15:00","db":"23-07-03","tb":"17:00","lat1":60.19205,"lon1":24.94583,"lat2":60.70549,"lon2":24.75589}'
-d7='{"id":"230703-002","seg":1,"co":100,"da":"23-07-03","ta":"10:00","db":"23-07-03","tb":"12:00","lat1":60.19205,"lon1":24.94583,"lat2":60.90549,"lon2":24.95589}'
+#d2='{"id":"230701-001",        "co":100,"da":"23-07-01",                                          "lat1":60.19205,"lon1":24.94583,"lat2":60.10549,"lon2":24.15589}'
+#d3='{"id":"230701-001","seg":1,"co":100,"da":"23-07-01","ta":"10:00","db":"23-07-01","tb":"12:00","lat1":60.19205,"lon1":24.94583,"lat2":60.10549,"lon2":24.15589}'
+#d4='{"id":"230702-001","seg":1,"co":100,"da":"23-07-02","ta":"10:00","db":"23-07-02","tb":"12:00","lat1":60.19205,"lon1":24.94583,"lat2":60.30549,"lon2":24.35589}'
 
 api_local() { 
  echo "test api functionality"
@@ -65,6 +81,9 @@ api_local() {
  echo $(date)
  t0=$(date +%s)
  set -x # shell echo, set +x unsets
+ 
+ #ia=$1; ib=$2 # select the test data range [d$ia, d$ib]
+ ia=1; ib=8
 
  ci="api"     # image
  cn="$ci"_con # container name
@@ -87,8 +106,8 @@ api_local() {
 
  curl -H "$key" -s "$url"     | "$pp" # request pp with silent -s
  curl -H "$key" -s "$url"/api | "$pp" 
-
- for i in {1..2}
+ 
+ for i in {1..9}
  do
    di="d$i"         # test selected
    d=$(echo ${!di}) # evaluated
