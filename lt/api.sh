@@ -39,8 +39,8 @@ api_model() {
 # optional: co for vehicle CO2 [g/km t], db for dat window, (ta,tb) for time window
 # defaults: co=100, seg=1, (db,ta,tb)=(da,00:00,24:00)  
 
- id="230720-001"
- da="23-07-20"
+ id="230801-001"
+ da="23-08-01"
  lapa=48.86471; lopa=2.23901  # paris
  lawa=52.23704; lowa=21.01753 # warsaw
  labe=52.52000; lobe=13.40495 # berlin

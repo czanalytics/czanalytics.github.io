@@ -24,6 +24,7 @@ RUN pip install flask-expects-json
 RUN pip install pandas
 RUN pip install numpy
 RUN pip install geopy
+RUN pip install datetime
 
 EXPOSE 3333
 

@@ -12,17 +12,18 @@ import logging as log # log.debug/info/warning
 #import numpy as np
 import pandas as pd
 #from geopy.distance import geodesic
+import datetime
 
 conf_schema = {'type': 'object', 'properties': {
-    'id': {'type': 'string'},
-    'seg': {'type': 'integer'}, # voyage segment 1,2, ...
-    'co': {'type': 'integer'},  # co2 g/km 
-    'da': {'type': 'string'},   # date, time [a, b] -range
-    'ta': {'type': 'string'},
-    'db': {'type': 'string'},
-    'tb': {'type': 'string'},
-    'lat1': {'type': 'float'},  # latitude, longitude [1, 2] from, to - coordinates 
-    'lon1': {'type': 'float'},  # format D.ddddd with 5 decimals has ~1 m accuracy
+    'id':   {'type': 'string'},
+    'seg':  {'type': 'integer'}, # voyage segment 1,2, ...
+    'co':   {'type': 'integer'}, # co2 g/km 
+    'da':   {'type': 'string'},  # date, time [a, b] -range
+    'ta':   {'type': 'string'},
+    'db':   {'type': 'string'},
+    'tb':   {'type': 'string'},
+    'lat1': {'type': 'float'},   # latitude, longitude [1, 2] from, to - coordinates 
+    'lon1': {'type': 'float'},   # format D.ddddd with 5 decimals has ~1 m accuracy
     'lat2': {'type': 'float'},
     'lon2': {'type': 'float'}},
     'required': ['id', 'seg', 'co', 'da', 'lat1', 'lon1', 'lat2', 'lon2']
@@ -61,7 +62,6 @@ conf = {'version':  0.28,
         }
 
 lv = log.DEBUG
-#l = log.ERROR
 log.basicConfig(format='%(asctime)s, %(name)s, %(levelname)s, \
                 %(funcName)s:%(lineno)s, %(message)s', level=lv)
 #log.basicConfig(format='%(asctime)s, %(levelname)s, %(message)s', level=lv)
@@ -240,12 +240,13 @@ def price_gam(d, price_km=2, price_min=50, err=0.1):
     return round(p), round(p_lo), round(p_hi), meta
 
 
-def price_simple(d, price_km=2, price_min=50, err=0.1):
+def price_simple(d, price_km=2, to_road_dist=1.2, price_min=20, err=0.15):
     """
     Simplistic transportation price estimate
     price, p [EUR] =  straight_line(length, ln [km], price/km [EUR/km], price_min [EUR])
+    road distance = gps-distance * to_road_dist = 1.2 by default
     """
-    ln = dist(d)
+    ln = dist(d) * to_road_dist
 
     p = price_km * ln + price_min
     p_lo = p - p * err
@@ -261,18 +262,19 @@ def price_lite(d, price_km=2, price_min=50, err=0.1):
     Lite transportation price [EUR] estimate
     using EU transportation data for NUTS regions.
     """
-    r = nuts_intel(dd, dp, d["lat1"], d["lon1"], d["lat2"], d["lon2"])
+    r = nuts_intel(d, dd, dp)
+
     p, p_lo, p_hi, meta = price_nuts(r)
 
     return round(p), round(p_lo), round(p_hi), meta
 
 
-def eta_simple(d, v=80, err=0.1):
+def eta_simple(d, v=80, to_road_dist=1.2, err=0.15):
     """
     Simplistic transportation time estimate.
     time t [h], lane length ln [km], and speed v [km/h]
     """
-    ln = dist(d)
+    ln = dist(di) * to_road_dist
 
     t = ln / v
     t_lo = t - t * err
@@ -282,23 +284,23 @@ def eta_simple(d, v=80, err=0.1):
     return round(t, 1), round(t_lo, 1), round(t_hi, 1), meta
 
 
-def eta_lite(d, v=80, err=0.1):
+def eta_lite(d, v=80, err=0.10):
     """
     Lite transportation time [h] estimate
     using EU transportation data for NUTS regions.
     """
-    r = nuts_intel(dd, dp, d["lat1"], d["lon1"], d["lat2"], d["lon2"])
+    r = nuts_intel(d, dd, dp)
     t, t_lo, t_hi, meta = eta_nuts(r)
 
     return round(t, 1), round(t_lo, 1), round(t_hi, 1), meta
 
 
-def co_simple(d, c=100, err=0.2):
+def co_simple(d, c=100, to_road_dist=1.2, err=0.2):
     """
     Simplistic transportation CO2 [g] estimate
     distance d [km], CO2/km c [g/km]
     """
-    ln = dist(d)
+    ln = dist(d) * to_road_dist
 
     c = d.get('co', c) # get co from the dict d, or use the default value c
 
@@ -347,6 +349,7 @@ def closest_nuts(d, lat, lon):
   #from scipy.spatial.distance import pdist
   from geopy.distance import geodesic
   #import numpy as np
+
   la = lat
   lo = lon
 
@@ -360,20 +363,21 @@ def closest_nuts(d, lat, lon):
 
     return ds
 
-  print(la, lo)
+  #print(la, lo)
+
   d['dist'] = d.apply(lambda r: dist(r, la, lo), axis = 1)
   d = d.round({'dist':0})
   dd = d.sort_values(by = ['dist'])
   return dd[:1] # dd[1:6]
 
 
-def nuts_intel(dd, dp, lat1, lon1, lat2, lon2):
+def nuts_intel(d, dd, dp):
   """
   Access price data using closest NUTS2-region, dd.
   1st NUTS3 (from, to) regions are determined from (lat, lon)
   """
-  nc1 = closest_nuts(dd, lat=lat1, lon=lon1) # NUTS3
-  nc2 = closest_nuts(dd, lat=lat2, lon=lon2)
+  nc1 = closest_nuts(dd, lat=d["lat1"], lon=d["lon1"]) # NUTS3
+  nc2 = closest_nuts(dd, lat=d["lat2"], lon=d["lon2"])
   n1 = nc1['id_nuts'].values[0][0:4]  # NUTS3 nuts NUTS2 conversion
   n2 = nc2['id_nuts'].values[0][0:4]  # pick 4 first letters
   dp1 = dp[dp['start_nuts'] == n1 ] # filter
@@ -382,9 +386,13 @@ def nuts_intel(dd, dp, lat1, lon1, lat2, lon2):
   d1 = nc1['dist'].values[0]
   d2 = nc2['dist'].values[0]
 
+  r['lane_da'] = d.get('da')
+  r['lane_db'] = d.get('da', d.get('da'))
+  r['lane_ta'] = d.get('ta', '00:00')
+  r['lane_tb'] = d.get('tb', '24:00')
   r['lane_err1'] = d1 # add metadata
   r['lane_err2'] = d2
-  r['lane_dist'] = dist({'lat1': lat1, 'lon1': lon1, 'lat2':lat2, 'lon2':lon2})
+  r['lane_dist'] = dist({'lat1': d["lat1"], 'lon1': d["lon1"], 'lat2':d["lat2"], 'lon2':d["lon2"]})
 
   # round response data
   r['all_distancecosts'] = round_base(r['all_distancecosts'])
@@ -413,57 +421,37 @@ def price_nuts(r, err_p=0.10, base=10, price_min=20):
   """
   Estimate price [EUR] from NUT2 region to other
   """
+  c = corr_price(r) # correction components
 
-  dr = r['distance_road'].values[0]
-  d  = r['distance_geodesic'].values[0]
-  dd = r['lane_dist'].values[0]
-  e1 = r['lane_err1'].values[0]
-  e2 = r['lane_err2'].values[0]
-  fu = r['fuel'].values[0]
-  tot = r['total_cost'].values[0]
+  r['lane_corr']       = "['corr_dist', 'corr_fuel', 'corr_index', 'corr_tight']"
 
-  # corrections - 1 meand no correction, 1.1 meand +10%, and 0.90 -10%
-  corr_dist  = dd / d
-  corr_fuel  = 1.0
-  corr_wages = 1.0 # TBD
-  corr_index = 1.0
-  corr_environment = 1.0 # TBD weather, for ETA estimates too!
+  r['lane_corr_dist']  = round(r.get('distance_road') * (c.get('corr_dist')  - 1.00))
+  r['lane_corr_fuel']  = round(r.get('fuel')          * (c.get('corr_fuel')  - 1.00))
+  r['lane_corr_index'] = round(r.get('total_cost')    * (c.get('corr_index') - 1.00))
+  r['lane_corr_rush']  = round(r.get('total_cost')    * (c.get('corr_rush')  - 1.00))
 
-  err_dist   = abs(corr_dist - 1.0) * err_p
-  err_loc    = (e1 + e2) / (2 * dd) * err_p
-  err_future = 0 * err_p # weeks in future
-
-  n=3 # decimals
-
-  r['lane_corr']       = "['corr_dist', 'corr_fuel', 'corr_index']"
-  r['lane_corr_dist']  = round(dr * (corr_dist - 1.0))
-  r['lane_corr_fuel']  = round(fu * (corr_fuel - 1.0))
-  r['lane_corr_index'] = round(tot * (corr_index - 1.0))
-
-  p = r['total_cost'].values[0]
-
-  corr_tot = r['lane_corr_dist'].values[0] + r['lane_corr_fuel'].values[0] + r['lane_corr_index'].values[0]
-
+  corr_tot = float(r.get('lane_corr_dist')) + float(r.get('lane_corr_fuel')) + float(r.get('lane_corr_index')) + float(r.get('lane_corr_rush'))
   r['lane_corr_tot'] = round_base(corr_tot)
 
-  p = p + corr_tot
+  p = float(r.get('total_cost')) + corr_tot
 
   p = max(price_min, p)
 
-  # error components
-  # TBD weather and remaining uncertainties
-  r['lane_err']        = "['err_base', 'err_dist', 'err_loc', 'err_future']"
-  r['lane_err_base']   = round_base(p * err_p)
-  r['lane_err_dist']   = round_base(p * err_dist)
-  r['lane_err_loc']    = round_base(p * err_loc) 
-  r['lane_err_future'] = round_base(p * err_future)
+  e = err_price(r) # error components
 
-  err = r['lane_err_base'].values[0] + r['lane_err_dist'].values[0] + r['lane_err_loc'].values[0] + r['lane_err_future'].values[0]
+  r['lane_err']        = "['err_base', 'err_dist', 'err_loc', 'err_future']"
+
+  r['lane_err_base']   = round_base(p * e.get('err_base'))
+  r['lane_err_dist']   = round_base(p * e.get('err_dist') / r.get('distance_road'))
+  r['lane_err_loc']    = round_base(p * e.get('err_loc')  / r.get('distance_road'))
+  r['lane_err_future'] = round_base(p * e.get('err_future'))
+
+  err = float(r.get('lane_err_base')) + float(r.get('lane_err_dist')) + float(r.get('lane_err_loc'))  + float(r.get('lane_err_future'))
 
   r['lane_err_tot'] = round_base(err)
 
   p_lo = max(price_min, p - err)
-  p_hi = p + err 
+  p_hi = p + err
 
   meta = r.to_dict("records")
 
@@ -481,3 +469,84 @@ def eta_nuts(r, err_p = 0.15):
   meta = r.to_dict("records")
 
   return round(t, 1), round(t_lo, 1), round(t_hi, 1), meta
+
+
+def corr_price(r):
+  """
+  Corrections for tuning price calculation.
+  The approach is simplistic, heuristic, and qualitative, at best,
+  so evidence-based approach should be used when possible.
+  For each component, the correction is 0% by default.
+  Correction 1.05 mean 5% price increase, and 0.90 means -10% reduction.
+  """
+  import datetime
+  from datetime import date
+  from datetime import datetime
+
+  current_date = date.today()
+
+  da = r['lane_da'].values[0] # ok
+
+  yyyy = int("20" + da[0:2]); mm = int(da[3:5]); dd = int(da[6:8])
+  day = date(yyyy, mm, dd)
+
+  dur = current_date - day
+
+  corr_dist  =  r.get('lane_dist') / r.get('distance_geodesic')
+  corr_fuel  = 1.00
+  corr_wages = 1.00
+  corr_index = 0.90
+  corr_hist  = 1.00
+  corr_month = 1.00
+  corr_day   = 1.00
+  corr_rush  = 1.00 + 0.05 / dur.days**2 # 1 day adds 5%, 2 days 1%, and 3- ~0% 
+  corr_tight = 1.00
+
+  corrs = {
+      "corr_dist":corr_dist, "corr_fuel":corr_fuel,
+      "corr_wages":corr_wages, "corr_index":corr_index,
+      "corr_hist":corr_hist, "corr_month":corr_month, "corr_day":corr_day,
+      "corr_rush":corr_rush, "corr_tight":corr_tight}
+
+  return corrs
+
+
+def err_price(r):
+  """
+  Error estimation for price calculation.
+  The approach is simplistic, heuristic, and qualitative, at best,
+  so proper statistical approach should be used when possible.
+  By default the error component is 0.00, meaning no error, while 0.10 means 10% price error.
+  """
+  import datetime
+  from datetime import date
+  from datetime import datetime
+
+  current_date = date.today()
+
+  da = r['lane_da'].values[0] # ok
+
+  log.debug('xxxxxxxx da = %s', da)
+
+  yyyy = int("20" + da[0:2]); mm = int(da[3:5]); dd = int(da[6:8])
+  day = date(yyyy, mm, dd)
+  day = date(2020, 1, 1) # db age
+
+  dur = current_date - day
+  dur_days = dur.days
+  dur_weeks  = round(dur_days/7, 1)
+
+  corr_dist  =  r.get('lane_dist') / r.get('distance_geodesic')
+
+  err_base   = 0.10 + dur_weeks * 0.0001 # default
+  err_dist   = abs(corr_dist - 1.00) * r.get('distance_road')  # km
+  err_loc    = (r.get('lane_err1') + r.get('lane_err2')) / 2   # km 
+  err_prior  = 0.00
+  err_env    = 0.00 # TBD weather, for ETA estimates too!
+  err_future = 0.00 # weeks in future
+
+  errs = {
+      "err_base":err_base, "err_dist":err_dist, "err_loc": err_loc,
+      "err_prior":err_prior, "err_env":err_env, "err_future":err_future}
+
+  return errs
