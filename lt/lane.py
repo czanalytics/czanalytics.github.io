@@ -8,7 +8,7 @@
 # https://www.toptal.com/python/in-depth-python-logging
 
 import logging as log # log.debug/info/warning 
-#import json
+import json
 #import numpy as np
 import pandas as pd
 #from geopy.distance import geodesic
@@ -70,6 +70,14 @@ dp = pd.read_csv("./nuts.csv") # data for lite-models
 dd = pd.read_csv("./nuts_centroid.csv")
 
 #log.INFO('data read')
+
+def get_conf():
+ with open('./conf_lite.json', 'r') as JSON:
+       dic = json.load(JSON)
+ #key = str(2); print(dic); print(dic["1"]); print(dic[key]); print(dic["3"]**2)
+ return dic
+
+#con = get_conf()
 
 def price_est(d, mod):
     """
@@ -428,6 +436,8 @@ def price_nuts(r, err_p=0.10, base=10, price_min=20):
   r['lane_corr_dist']  = round(r.get('distance_road') * (c.get('corr_dist')  - 1.00))
   r['lane_corr_fuel']  = round(r.get('fuel')          * (c.get('corr_fuel')  - 1.00))
   r['lane_corr_index'] = round(r.get('total_cost')    * (c.get('corr_index') - 1.00))
+  r['lane_corr_month'] = round(r.get('total_cost')    * (c.get('corr_month')  - 1.00))
+  r['lane_corr_day']   = round(r.get('total_cost')    * (c.get('corr_day')  - 1.00))
   r['lane_corr_rush']  = round(r.get('total_cost')    * (c.get('corr_rush')  - 1.00))
 
   corr_tot = float(r.get('lane_corr_dist')) + float(r.get('lane_corr_fuel')) + float(r.get('lane_corr_index')) + float(r.get('lane_corr_rush'))
@@ -492,13 +502,17 @@ def corr_price(r):
 
   dur = current_date - day
 
+  conf_lite = get_conf()
+  key_day = 4 # TBD
+  key_month = 7
+
   corr_dist  =  r.get('lane_dist') / r.get('distance_geodesic')
   corr_fuel  = 1.00
   corr_wages = 1.00
   corr_index = 0.90
   corr_hist  = 1.00
-  corr_month = 1.00
-  corr_day   = 1.00
+  corr_month = conf_lite["corr_month"][key_month]
+  corr_day   = conf_lite["corr_day"][key_day]
   corr_rush  = 1.00 + 0.05 / dur.days**2 # 1 day adds 5%, 2 days 1%, and 3- ~0% 
   corr_tight = 1.00
 

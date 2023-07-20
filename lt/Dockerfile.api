@@ -15,6 +15,7 @@ ADD ${D}/nuts_centroid.csv /
 
 # ADD ${D}/<models> /
 
+ADD conf_lite.json /
 ADD api.py /
 ADD lane.py /
 
