@@ -6,7 +6,8 @@ from datetime import datetime  # date
 #import json
 
 from lane import conf
-from lane import price_est, eta_est, co_est, route_est, config_lane, status_lane, report_lane
+from lane import price_est, eta_est, co_est, route_est
+from lane import routing_lane, config_lane, status_lane, report_lane
 
 app = Flask(__name__)
 
@@ -128,12 +129,32 @@ class route(Resource):
         key_check(request.headers.get('Api-Key'))
 
         req = request.json
-        cnf = conf["routing"]
+        cnf = conf["route"]
         route = route_est(req, cnf) # !
 
         msg = {
-            'route': route,
-            'routing': cnf,
+            'route_conf': route,
+            'route': cnf,
+            'datetime': datetime.now(),
+            'req': req
+        }
+        return jsonify(msg)
+
+
+class routing(Resource):
+    """
+    Routing optimation
+    """
+    def get(self):
+        key_check(request.headers.get('Api-Key'))
+
+        req = request.json
+        cnf = conf["routing"]
+        r = routing_lane(req, cnf) # !
+
+        msg = {
+            'routing_conf': cnf,
+            'routing': r,
             'datetime': datetime.now(),
             'req': req
         }
@@ -150,7 +171,9 @@ class config(Resource):
         req = request.json
         cnf = conf["config"]
         r = config_lane(req, cnf) # !
+
         msg = {
+            'config_conf': cnf,
             'config': r,
             'datetime': datetime.now(),
             'req': req
@@ -196,17 +219,18 @@ class report(Resource):
         return jsonify(msg)
 
 
-api.add_resource(intro, '/',            endpoint='/')
-api.add_resource(intro, '/api',         endpoint='/api')
+api.add_resource(intro,   '/',            endpoint='/')
+api.add_resource(intro,   '/api',         endpoint='/api')
 
-api.add_resource(price, '/api/price',   endpoint='/api/price')
-api.add_resource(eta,   '/api/eta',     endpoint='/api/eta')
-api.add_resource(co,    '/api/co',      endpoint='/api/co')
-api.add_resource(route, '/api/route',   endpoint='/api/route')
+api.add_resource(price,   '/api/price',   endpoint='/api/price')
+api.add_resource(eta,     '/api/eta',     endpoint='/api/eta')
+api.add_resource(co,      '/api/co',      endpoint='/api/co')
+api.add_resource(route,   '/api/route',   endpoint='/api/route')
+api.add_resource(routing, '/api/routing', endpoint='/api/routing')
 
-api.add_resource(config, '/api/config', endpoint='/api/config')
-api.add_resource(status, '/api/status', endpoint='/api/status')
-api.add_resource(report, '/api/report', endpoint='/api/report')
+api.add_resource(config,  '/api/config',  endpoint='/api/config')
+api.add_resource(status,  '/api/status',  endpoint='/api/status')
+api.add_resource(report,  '/api/report',  endpoint='/api/report')
 
 if __name__ == '__main__':
     app.run(conf["app_ip"], conf["app_port"])

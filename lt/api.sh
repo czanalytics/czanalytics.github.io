@@ -186,6 +186,52 @@ api_cloud() {
 }
 
 
+api_routing() {
+ echo "optimized routing"
+ echo "fn:"${FUNCNAME[*]}
+ echo $(date)
+ t0=$(date +%s)
+ set -x
+ 
+ key="Api-Key: "`cat .key`
+ ip="0.0.0.0"; p="3333"; url="http://$ip:$p"
+
+ ct="Content-type: application/json"
+ pp="json_pp"
+
+ # routing network
+ 
+ id="230701-001"
+ da="23-07-01"
+ lat1=60.19205
+ lon1=24.94583
+ lat2=60.10549
+ lon2=24.15589
+ template='{"id":"%s", "da":"%s", "lat1":%s, "lon1":%s, "lat2":%s, "lon2":%s}\n' # careful
+
+ dr1=$(printf "$template" "$id" "$da" "$lat1" "$lon1" "$lat2" "$lon2")
+ #dr1='{"id":"230701-001",                 "da":"23-07-01",                                          "lat1":60.19205,"lon1":24.94583,"lat2":60.10549,"lon2":24.15589}'
+ 
+ dr2='{"id":"230701-001",        "co":100,"da":"23-07-01",                                          "lat1":60.19205,"lon1":24.94583,"lat2":60.10549,"lon2":24.15589}'
+ dr3='{"id":"230701-001","seg":1,"co":100,"da":"23-07-01","ta":"10:00","db":"23-07-01","tb":"12:00","lat1":60.19205,"lon1":24.94583,"lat2":60.10549,"lon2":24.15589}'
+
+ curl -H "$key" -s "$url"/api/routing | "$pp" 
+
+ for i in {1..2}
+ do
+   di="dr$i"        # test selected
+   d=$(echo ${!di}) # evaluated
+   
+   curl -s -X GET -H "$ct" -H "$key" $url/api/routing --data "$d" | "$pp"
+ done
+
+ set +x
+ echo $(date)
+ t1=$(date +%s)
+ echo "time elapsed `expr $t1 - $t0` sec."
+}
+
+
 api_config() {
  echo "configure the api service"
  echo "fn:"${FUNCNAME[*]}

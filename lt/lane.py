@@ -39,27 +39,35 @@ conf_model = {'price': 'price_lite', 'eta': 'eta_lite','co': 'co_simple'}      #
 #conf_model = {'price': 'price_gam', 'eta': 'eta_gam','co': 'co_gam'}          # gam
 #conf_model = {'price': 'price_automl', 'eta': 'eta_automl','co': 'co_automl'} # automl
 
+# route conf
+conf_route = {'service': 'route_streetmap', 'foo': 'bar'}
+#conf_route = {'service': 'route_openroute'}
+#conf_route = {'service': 'route_googlemaps'}
+
 # routing conf
-conf_routing = {'service': 'route_streetmap', 'foo': 'bar'}
-#conf_routing = {'service': 'route_openroute'}
-#conf_routing = {'service': 'route_googlemaps'}
+conf_routing = {'service': 'routing_consolidate', 'foo': 'bar'}
+#conf_routing = {'service': 'routing_multimodal'}
+#conf_routing = {'service': 'routing_fleet'}
+
 
 # management confs
-conf_config = {'config': 'foo'}
+conf_config = {'config': 'foo'} # manage (multiple)config files, pricing
 conf_status = {'status': 'foo'}
 conf_report = {'report': 'foo'}
 
-conf = {'version':  0.28,
+conf = {'version':  0.31,
         'app_ip':   '0.0.0.0',
         'app_port': 3333,
         'schema':   conf_schema,
         'data':     conf_data,
         'model':    conf_model,
+        'route':    conf_route,
         'routing':  conf_routing,
         'config':   conf_config,
         'status':   conf_status,
         'report':   conf_report
         }
+
 
 lv = log.DEBUG
 log.basicConfig(format='%(asctime)s, %(name)s, %(levelname)s, \
@@ -158,12 +166,35 @@ def route_est(d, conf):
     return route
 
 
+def routing_lane(d, cnf):
+    """
+    Dispatch selected routing service
+    """
+    match cnf["service"]:
+        case 'routing_consolidate':
+            r = routing_consolidate(d, cnf)
+        case 'routing_multimodal':
+            r = 0
+            #routing = routing_multimodal(d, cnf)
+        case 'routing_fleet':
+            r = 0
+            #r = routing_fleet(d, cnf)
+        case _:
+            r = 0
+
+    return r
+
+
 def config_lane(d, cnf):
     """
-    Dispatch service configuration
+    Configuration management. List and adjust configuration.
     """
+    # TBD read conf-file. List/edit, and save/export conf.
+    # add pricing section
 
     r = {"new_conf": "yeah!"}
+    r = cnf
+
     return r
 
 
@@ -348,6 +379,17 @@ def route_streetmap(d, conf):
     route = 0
 
     return route
+
+
+def routing_consolidate(d, cnf):
+    """
+    Consolidate is a car relocation task.
+    Car-carriers, in coordination, collect/deliver cars.
+    """
+
+    r = 0
+
+    return r
 
 
 def closest_nuts(d, lat, lon):
