@@ -43,7 +43,7 @@ api_model() {
  da="23-08-01"
  
  laam=52.36760; loam=4.90410  # amsterdam
- lalo=51.50720; lolo=0.12760  # london
+ lalo=51.50720; lolo=0.12760  # london ?NUTS-error?
  laco=55.67610; loco=12.56830 # copenhagen
  lapa=48.86471; lopa=2.23901  # paris
  lawa=52.23704; lowa=21.01753 # warsaw
@@ -210,10 +210,7 @@ api_routing() {
  template='{"id":"%s", "da":"%s", "lat1":%s, "lon1":%s, "lat2":%s, "lon2":%s}\n' # careful
 
  dr1=$(printf "$template" "$id" "$da" "$lat1" "$lon1" "$lat2" "$lon2")
- #dr1='{"id":"230701-001",                 "da":"23-07-01",                                          "lat1":60.19205,"lon1":24.94583,"lat2":60.10549,"lon2":24.15589}'
- 
- dr2='{"id":"230701-001",        "co":100,"da":"23-07-01",                                          "lat1":60.19205,"lon1":24.94583,"lat2":60.10549,"lon2":24.15589}'
- dr3='{"id":"230701-001","seg":1,"co":100,"da":"23-07-01","ta":"10:00","db":"23-07-01","tb":"12:00","lat1":60.19205,"lon1":24.94583,"lat2":60.10549,"lon2":24.15589}'
+ dr2=$d2 # testing price-calculator payload 
 
  curl -H "$key" -s "$url"/api/routing | "$pp" 
 
