@@ -84,10 +84,11 @@ print(r.json())
 d = d0
 #d = d1
 
-rp = requests.get(url + '/api/price', headers=ct, data=json.dumps(d))
-re = requests.get(url + '/api/eta',   headers=ct, data=json.dumps(d))
-rc = requests.get(url + '/api/co',    headers=ct, data=json.dumps(d))
-rr = requests.get(url + '/api/route', headers=ct, data=json.dumps(d))
+rp = requests.get(url + '/api/price',   headers=ct, data=json.dumps(d))
+re = requests.get(url + '/api/eta',     headers=ct, data=json.dumps(d))
+rc = requests.get(url + '/api/co',      headers=ct, data=json.dumps(d))
+rr = requests.get(url + '/api/route',   headers=ct, data=json.dumps(d))
+ro = requests.get(url + '/api/routing', headers=ct, data=json.dumps(d))
 
 print(rp.json())
 print(re.json())
@@ -104,4 +105,59 @@ print(rej)
 #dp = json.loads(rp.content); print(dp)
 #   curl -s -X GET -H "$ct" $url/api/price --data "$d" | "$pp"
 # docker logs -t $cn
+
+# example 1 PROTO
+# api/routing paylaod
+# NOTE that instead of town name we will use lat & lon values
+routing1 = {"picks": [["amsterdam", 5], ["utrecht", 3]],
+            "drops": [["lyon", 4], ["valence", 2], ["marseille", 2]],
+            "agents": [["amsterdam", 6, "ag1", "greedy"]]}
+
+# example 2
+# NOTE agent capacity, name and strategy configures
+routing2 = {"picks": [["groningen", 2], ["utrecht", 2], ["hoofddorp", 4]],
+            "drops": [["amsterdam", 4], ["amstelveen", 3], ["hague", 1]],
+            "agents": [["amsterdam", 12, "ag3", "step1"]]}
+
+# Multiple agents with different homebases and strategies
+routing3 = {"picks": [["groningen", 2], ["utrecht", 2], ["hoofddorp", 4]],
+            "drops": [["amsterdam", 4], ["amstelveen", 3], ["hague", 1]],
+            "agents": [["amsterdam", 12, "ag3", "step1"], ["hague", 6, "ag4", "ai"]]}
+
+# routing1 output
+# - each pick and drop action takes 0.1 hours
+# - pu and du are remaining units to be picked and dropped
+#
+#     id     t agent     act  u   location  pu  du  policy  umax       home
+# 0    1   0.0   ag1  policy  0  amsterdam   8   8  greedy     6  amsterdam
+# 1    1   0.5   ag1    pick  5  amsterdam   3   8  greedy     6  amsterdam
+# 2    1  12.7   ag1    move  5       lyon   3   8  greedy     6  amsterdam
+# 3    1  13.1   ag1    drop  1       lyon   3   4  greedy     6  amsterdam
+# 4    1  25.0   ag1    move  1    utrecht   3   4  greedy     6  amsterdam
+# 5    1  25.3   ag1    pick  4    utrecht   0   4  greedy     6  amsterdam
+# 6    1  37.2   ag1    move  4    valence   0   4  greedy     6  amsterdam
+# 7    1  37.4   ag1    drop  2    valence   0   2  greedy     6  amsterdam
+# 8    1  42.3   ag1    move  2  marseille   0   2  greedy     6  amsterdam
+# 9    1  42.5   ag1    drop  0  marseille   0   0  greedy     6  amsterdam
+# 10   1  58.0   ag1    home  0  amsterdam   0   0  greedy     6  amsterdam
+
+# routing2
+#
+#     id     t agent     act  u    location  pu  du policy  umax       home
+# 0    1   0.0   ag3  policy  0   amsterdam   8   8  step1    12  amsterdam
+# 1    1   1.0   ag3    move  0   hoofddorp   8   8  step1    12  amsterdam
+# 2    1   1.4   ag3    pick  4   hoofddorp   4   8  step1    12  amsterdam
+# 3    1   2.4   ag3    move  4   amsterdam   4   8  step1    12  amsterdam
+# 4    1   2.8   ag3    drop  0   amsterdam   4   4  step1    12  amsterdam
+# 5    1   3.8   ag3    move  0  amstelveen   4   4  step1    12  amsterdam
+# 6    1   6.6   ag3    move  0   groningen   4   4  step1    12  amsterdam
+# 7    1   6.8   ag3    pick  2   groningen   2   4  step1    12  amsterdam
+# 8    1   9.6   ag3    move  2  amstelveen   2   4  step1    12  amsterdam
+# 9    1   9.8   ag3    drop  0  amstelveen   2   2  step1    12  amsterdam
+# 10   1  11.1   ag3    move  0     utrecht   2   2  step1    12  amsterdam
+# 11   1  11.3   ag3    pick  2     utrecht   0   2  step1    12  amsterdam
+# 12   1  12.6   ag3    move  2  amstelveen   0   2  step1    12  amsterdam
+# 13   1  12.7   ag3    drop  1  amstelveen   0   1  step1    12  amsterdam
+# 14   1  14.2   ag3    move  1       hague   0   1  step1    12  amsterdam
+# 15   1  14.3   ag3    drop  0       hague   0   0  step1    12  amsterdam
 
