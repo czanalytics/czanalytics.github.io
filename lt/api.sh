@@ -186,8 +186,65 @@ api_cloud() {
 }
 
 
+api_route() {
+ echo "Route between two locations"
+ echo "fn:"${FUNCNAME[*]}
+ echo $(date)
+ t0=$(date +%s)
+ set -x
+ 
+ key="Api-Key: "`cat .key`
+ ip="0.0.0.0"; p="3333"; url="http://$ip:$p"
+
+ ct="Content-type: application/json"
+ pp="json_pp"
+ 
+ id="230701-001"
+ da="23-07-01"
+ lat1=60.19205
+ lon1=24.94583
+ lat2=60.10549
+ lon2=24.15589
+ template='{"id":"%s", "da":"%s", "lat1":%s, "lon1":%s, "lat2":%s, "lon2":%s}\n' # careful
+
+ dr1=$(printf "$template" "$id" "$da" "$lat1" "$lon1" "$lat2" "$lon2")
+ dr2=$d2 # testing price-calculator payload 
+
+ curl -H "$key" -s "$url"/api/route | "$pp" 
+
+ for i in {1..2}
+ do
+   di="dr$i"        # test selected
+   d=$(echo ${!di}) # evaluated
+   
+   curl -s -X GET -H "$ct" -H "$key" $url/api/route --data "$d" | "$pp"
+ done
+
+ set +x
+ echo $(date)
+ t1=$(date +%s)
+ echo "time elapsed `expr $t1 - $t0` sec."
+}
+
+
+# routing conf. for numbered units: 
+# {
+#  'order': {'id': '230824-0', 'da': '23-08-26'}, 
+#  'picks': [(52.3676, 4.9041, [1, 2, 3, 4, 5], 'amsterdam'), 
+#            (52.0907, 5.1214, [6, 7, 8]), 'utrecht'], 
+#  'drops': [(45.764 , 4.8357, [1, 2, 3, 4], 'lyon'), 
+#            (44.9334, 4.8924, [5, 6], 'valence'), (
+#             43.2965, 5.3698, [7, 8], 'marseille')], 
+#  'agents': [(52.3676, 4.9041, 6, 'amsterdam', 'ag1', 'greedy'), 
+#             (45.764 , 4.8357, 3, 'lyon', 'ag2', 'force')]
+# }
+
+order: {'id': '230824-0', 'da': '23-08-26'}
+picks: [(52.3676, 4.9041, [1, 2, 3, 4, 5], 'amsterdam'), (52.0907, 5.1214, [6, 7, 8]), 'utrecht']
+drops: [(45.764, 4.8357, [1, 2, 3, 4], 'lyon'), (44.9334, 4.8924, [5, 6], 'valence'), (43.2965, 5.3698, [7, 8], 'marseille')]
+agents: [(52.3676, 4.9041, 6, 'amsterdam', 'ag1', 'greedy'), (45.764, 4.8357, 3, 'lyon', 'ag2', 'force')]
 api_routing() {
- echo "optimized routing"
+ echo "Routing for cargo (pick, drop)-network."
  echo "fn:"${FUNCNAME[*]}
  echo $(date)
  t0=$(date +%s)

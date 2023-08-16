@@ -143,7 +143,7 @@ class route(Resource):
 
 class routing(Resource):
     """
-    Routing optimation
+    Routing for cargo (pick, drop) -network.
     """
     def get(self):
         key_check(request.headers.get('Api-Key'))

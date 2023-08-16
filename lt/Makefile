@@ -23,6 +23,9 @@ api_deploy:
 api_cloud:
 	source api.sh && api_cloud   2>&1 | tee $(D)/log-cloud.txt
 
+api_route:
+	source api.sh && api_route   2>&1 | tee $(D)/log-route.txt
+
 api_routing:
 	source api.sh && api_routing 2>&1 | tee $(D)/log-routing.txt
 
