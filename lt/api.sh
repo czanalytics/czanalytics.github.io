@@ -238,11 +238,7 @@ api_route() {
 #  'agents': [(52.3676, 4.9041, 6, 'amsterdam', 'ag1', 'greedy'), 
 #             (45.764 , 4.8357, 3, 'lyon', 'ag2', 'force')]
 # }
-
-order: {'id': '230824-0', 'da': '23-08-26'}
-picks: [(52.3676, 4.9041, [1, 2, 3, 4, 5], 'amsterdam'), (52.0907, 5.1214, [6, 7, 8]), 'utrecht']
-drops: [(45.764, 4.8357, [1, 2, 3, 4], 'lyon'), (44.9334, 4.8924, [5, 6], 'valence'), (43.2965, 5.3698, [7, 8], 'marseille')]
-agents: [(52.3676, 4.9041, 6, 'amsterdam', 'ag1', 'greedy'), (45.764, 4.8357, 3, 'lyon', 'ag2', 'force')]
+#
 api_routing() {
  echo "Routing for cargo (pick, drop)-network."
  echo "fn:"${FUNCNAME[*]}
