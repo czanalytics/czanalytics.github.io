@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <title>File System Access API Examples</title>
+    <title>Price calibration</title>
     <script defer src="https://pyscript.net/alpha/pyscript.js"></script>
       <style>
       .button {
@@ -20,9 +20,13 @@
     </style>
   </head>
   <body>
+    <h3>Use custom data to calibrate the price -model</h3> 
+
     <p>
-      This example shows how calibrate prices using your own data.
+    The calibration uses (latitude, longitude) -coordinates, while location names are optional,
+    <a href="https://raw.githubusercontent.com/czanalytics/czanalytics.github.io/master/lt/dat/calibrate-1.csv">csv-example</a>. 
     </p>
+
     <div id="output"></div>
     <br />
     <button class="button" type="button" id="file_select">Read Local File</button>
@@ -49,7 +53,6 @@ async def file_select(event):
 	# Note: print() does not work in event handlers
 
 	clear_data()
-
 
 	try:
 		options = {

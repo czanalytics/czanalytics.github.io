@@ -1,4 +1,4 @@
-lat1    , lon1   , lat2    , lon2    , price , loc1_opt   , loc2_opt
-52.36760, 4.90410, 55.67610, 12.56830,   1500, 'amsterdam', 'copenhagen'
-52.36760, 4.90410, 48.86471,  2.23901,   1600, 'amsterdam', 'paris'
-52.36760, 4.90410, 52.52000, 13.40495,   2000, 'amsterdam', 'berlin'
+price, lat1    , lon1   , lat2    , lon2    , loc1     ,  loc2
+ 1500, 52.36760, 4.90410, 55.67610, 12.56830, amsterdam, copenhagen
+ 1600, 52.36760, 4.90410, 48.86471,  2.23901, amsterdam, paris
+ 2000, 52.36760, 4.90410, 52.52000, 13.40495, amsterdam, berlin
