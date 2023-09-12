@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>File System Access API Examples</title>
+    <script defer src="https://pyscript.net/alpha/pyscript.js"></script>
+      <style>
+      .button {
+        background-color: #4CAF50; /* Green */
+        border: none;
+        color: white;
+        padding: 5px 22px;
+        text-align: center;
+        text-decoration: none;
+        display: inline-block;
+        font-size: 16px;
+      }
+    </style>
+  </head>
+  <body>
+    <p>
+      This example shows how calibrate prices using your own data.
+    </p>
+    <div id="output"></div>
+    <br />
+    <button class="button" type="button" id="file_select">Read Local File</button>
+    <br />
+    <br />
+    <div id="filename"></div>
+    <div id="filesize"></div>
+    <div id="filetype"></div>
+    <div id="filedate"></div>
+    <h4>File Contents:</h4>
+    <iframe id="content" width="700" height="400"></iframe>
+    <py-script output="output">
+import asyncio
+import sys
+from js import alert, document, Object, window
+from pyodide import create_proxy, to_js
+
+def clear_data():
+		document.getElementById("filename").innerHTML = ''
+		document.getElementById("filesize").innerHTML = ''
+		document.getElementById('content').contentDocument.body.innerText = ''
+
+async def file_select(event):
+	# Note: print() does not work in event handlers
+
+	clear_data()
+
+
+	try:
+		options = {
+			"multiple": False,
+			"startIn": "documents"
+		}
+
+		fileHandles = await window.showOpenFilePicker(Object.fromEntries(to_js(options)))
+	except Exception as e:
+		console.log('Exception: ' + str(e))
+		return
+
+	for fileHandle in fileHandles:
+		file = await fileHandle.getFile()
+
+		document.getElementById("filename").innerHTML = 'File Name: ' + file.name
+		document.getElementById("filesize").innerHTML = 'File Size: ' + str(file.size)
+		document.getElementById("filetype").innerHTML = 'File Type: ' + str(file.type)
+		document.getElementById("filedate").innerHTML = 'File date: ' + str(file.lastModifiedDate)
+
+		content = await file.text()
+		document.getElementById('content').contentDocument.body.innerText = content
+
+def setup_button():
+	# Create a Python proxy for the callback function
+	file_select_proxy = create_proxy(file_select)
+
+	# Set the listener to the callback
+	document.getElementById("file_select").addEventListener("click", file_select_proxy, False)
+
+setup_button()
+    </py-script>
+  </body>
+</html>
+
