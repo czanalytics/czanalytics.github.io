@@ -14,6 +14,8 @@ import pandas as pd
 #from geopy.distance import geodesic
 import datetime
 
+import net
+
 conf_schema = {'type': 'object', 'properties': {
     'id':   {'type': 'string'},
     'seg':  {'type': 'integer'}, # voyage segment 1,2, ...

@@ -98,5 +98,5 @@ def net_test():
   state1 = build_network(r1['picks'], r1['drops'], r1['agents']);
   return r1, state1
 
-# net_test()
+#net_test()
 

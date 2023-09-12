@@ -18,6 +18,7 @@ ADD ${D}/nuts_centroid.csv /
 ADD conf_lite.json /
 ADD api.py /
 ADD lane.py /
+ADD net.py /
 
 RUN pip install flask
 RUN pip install flask_restful
