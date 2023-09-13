@@ -24,7 +24,6 @@
   [[fetch]]
     files = ["./price.py"]
 </py-config>
-</py-config>
         
 <py-script>
 
@@ -35,6 +34,7 @@
 </py-script>
 
 <py-script>
+"""
 import folium
 from folium import plugins
 from pyodide.http import open_url
@@ -159,16 +159,6 @@ folium.Marker(
  popup="LT price calculator / Google ",
  icon=folium.Icon(icon="cloud"), ).add_to(m)
 
-""" 
-folium.CircleMarker(
-  location=[52.52, 13.40],
-  radius=100,
-  popup="Price calc. range=100",
-  color="#3186cc",
-  fill=True,
-  fill_color="#3186cc",  ).add_to(m)
-"""
-
 x1=52.42
 x2=13.40
 lane_coord = [
@@ -202,18 +192,8 @@ m.add_child(minimap)
 #plugins.MarkerCluster(data).add_to(m)
 
 display(m, target="folium")
+"""
 </py-script>
-
-</section>
-
-<section>
-
-<py-script>
-import panel as pn
-
-from1 = pn.widgets.Select(name='country', options=['FI', 'SE', 'BR'], value='FI')
-from1
-</py-script>  
 
 </section>
 
