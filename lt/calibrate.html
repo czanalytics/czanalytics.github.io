@@ -4,9 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
+
     <title>Price calibration</title>
+
     <script defer src="https://pyscript.net/alpha/pyscript.js"></script>
-      <style>
+
+    <style>
       .button {
         background-color: #4CAF50; /* Green */
         border: none;
@@ -19,12 +22,14 @@
       }
     </style>
   </head>
+
   <body>
-    <h3>Use custom data to calibrate the price -model</h3> 
+    <h3>Use custom data to calibrate the price model</h3> 
 
     <p>
-    The calibration uses (latitude, longitude) -coordinates, while location names are optional,
-    <a href="https://raw.githubusercontent.com/czanalytics/czanalytics.github.io/master/lt/dat/calibrate-1.csv">csv-example</a>. 
+    The calibration uses (latitude, longitude) coordinates, while location names are optional,
+    <a href="https://raw.githubusercontent.com/czanalytics/czanalytics.github.io/master/lt/dat/calibrate-1.csv">
+      csv example</a>. 
     </p>
 
     <div id="output"></div>
@@ -36,8 +41,11 @@
     <div id="filesize"></div>
     <div id="filetype"></div>
     <div id="filedate"></div>
+
     <h4>File Contents:</h4>
+
     <iframe id="content" width="700" height="400"></iframe>
+
     <py-script output="output">
 import asyncio
 import sys
