@@ -1,0 +1,21 @@
+<py-script src="./flight.py"></py-script>
+<div class="grid grid-rows-4 p-4 bg-blue-100 border-2 justify-items-left">
+    <div>
+        <select name="flight-mode" id="flight-mode-select">
+            <option value="one">One Way</option>
+            <option value="round">Round Trip</option>
+        </select>
+    </div>
+    <div>
+        <h4 class="font-semibold">Departure Date</h4>
+        <input id = "dep" class="w-3/4 bg-white border-4">
+    </div>
+    <div>
+        <h4 class="font-semibold">Return Date</h4>
+        <input id="ret" class="w-3/4 bg-white border-4">
+    </div>
+    <div>
+        <button id="book-flight" class="p-2 my-2 bg-green-200 border-2 border-gray-400 rounded-lg">Book Flight</button>
+        <p id="flight-info" class="italic">Flight Info will go here</p>
+    </div>
+</div>
