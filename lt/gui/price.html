@@ -2,7 +2,7 @@
 <html lang="en">
 
 <head>
-  <title>Lane Map</title>
+  <title>Price</title>
     <meta charset="utf-8" />
   <link rel="icon" type="image/x-icon" href="./favicon.png" />
     <link
@@ -20,205 +20,109 @@
   packages = [
   "https://cdn.holoviz.org/panel/0.14.3/dist/wheels/bokeh-2.4.3-py3-none-any.whl",
   "folium", "pandas", "numpy", "panel==0.13.1"]
-  plugins = ["https://pyscript.net/latest/plugins/python/py_tutor.py"] 
-  [[fetch]]
-    files = ["./price.py"]
+  plugins = ["https://pyscript.net/latest/plugins/python/py_tutor.py"]
 </py-config>
-        
-<py-script>
 
-</py-script>
-
-<py-script>
-
-</py-script>
-
-<py-script src="./price.py"></py-script>
 
 <div class="grid grid-rows-4 p-4 bg-blue-100 border-2 justify-items-left">
-    <div>
+  
+   <div>      
         <select name="flight-mode" id="flight-mode-select">
-            <option value="one">One Way</option>
-            <option value="round">Round Trip</option>
+            <option value="one">EUR</option>
+            <option value="gbp">GBP</option>
+            <option value="sek">SEK</option>
+            <option value="usd">USD</option>
         </select>
     </div>
+
     <div>
-        <h4 class="font-semibold">Departure Date</h4>
-        <input id = "dep" class="w-3/4 bg-white border-4">
+        <h4 class="font-semibold">From</h4>
+        <input id="dep" class="w-3/4 bg-white border-4">
     </div>
+
     <div>
-        <h4 class="font-semibold">Return Date</h4>
+        <h4 class="font-semibold">To</h4>
         <input id="ret" class="w-3/4 bg-white border-4">
     </div>
+
     <div>
-        <button id="book-flight" class="p-2 my-2 bg-green-200 border-2 border-gray-400 rounded-lg">Book Flight</button>
-        <p id="flight-info" class="italic">Flight Info will go here</p>
+        <button id="book-flight" class="p-2 my-2 bg-green-200 border-2 border-gray-400 rounded-lg">Get Price</button>
+        <p id="flight-info" class="italic"> Avg. price with 68% conf. range (low, high) </p>
     </div>
 </div>
 
+
 <py-script>
-"""
-import folium
-from folium import plugins
-from pyodide.http import open_url
-import json
-import pandas as pd
-import numpy as np
+def approx(x, n=20):
+  """Round x to closest n"""
 
-url = ("https://raw.githubusercontent.com/python-visualization/folium/master/examples/data")
-state_geo = f"{url}/us-states.json"
-state_unemployment = f"{url}/US_Unemployment_Oct2012.csv"
+  return round(x/n)*n
 
-state_data = pd.read_csv(open_url(state_unemployment))
-geo_json = json.loads(open_url(state_geo).read())
+def price_est(loc1, loc2, dist = 111, c = 2.0, pro=0.1):
+  """Estimate price based on postal code locations."""
+  
+  p = dist * c             # mockup
+  p_lo = p - pro * p
+  p_hi = p + pro * p
 
-url_nuts2 = 'https://raw.githubusercontent.com/czanalytics/multimodal-shipping/main/dat/nuts2.json'
-geo_nuts2= json.loads(open_url(url_nuts2).read())
-g = geo_nuts2
-
-url_nuts3 = 'https://raw.githubusercontent.com/czanalytics/multimodal-shipping/main/dat/nuts3.json'
-geo_nuts3= json.loads(open_url(url_nuts3).read())
-
-m = folium.Map(location=[52.3776, 4.8246], zoom_start=5, control_scale=True) 
-
-#folium.GeoJson(geo_nuts2, name="NUTS2/transport").add_to(m)
-
-folium.GeoJson(geo_nuts3, name="NUTS3").add_to(m)
-
-nuts_ids = ['AT11', 'AT12', 'AT13']
-from_ids = ['FI19', 'FI20']
-to_ids = ['BE10', 'BE21', 'BE22', 'BE23', 'BE24']
-
-filter_ids = from_ids + to_ids # areas of interest
-g['features'] = [r for r in g['features'] if r['properties']['NUTS_ID'] in filter_ids] # filter
-
-folium.GeoJson(
-  g, 
-  name="from / to",
-  style_function=lambda x: {
-    'fillColor': 'red'
-    if x['properties']['NUTS_ID'] in from_ids
-    else 'green',
-    'fillOpacity': .5
-    if x['properties']['NUTS_ID'] in to_ids 
-    else 0.1,
-    'weight': 0.1 
-  },
-).add_to(m)
-
-d = {'nuts_id': to_ids, 'price': [3, 4, 5, 7,8]}
-d_price = pd.DataFrame(data=d)
-
-folium.Choropleth(
-    geo_data=g,
-    name="price estimate",
-    data=d_price,
-    columns=["nuts_id", "price"], 
-    key_on="feature.properties.NUTS_ID",
-    fill_color="YlGn",
-    fill_opacity=0.7,
-    line_opacity=0.2,
-    legend_name="Price",
-).add_to(m)
-
-# https://www.nagarajbhat.com/post/folium-visualization/
-d0 = {'id': [1, 2], 'lat': [52.37, 53.52], 'lon': [4.8, 13.4], 'price': [1000, 2000]}
-dp = pd.DataFrame(data=d0)
-
-for i in range(0, len(dp)):
-   folium.Circle(
-     location=[dp.iloc[i]['lat'], dp.iloc[i]['lon']],
-     popup="lane " + str(dp.iloc[i]['id']) + ": " + str(dp.iloc[i]['price']) + "EUR",
-     radius=float(dp.iloc[i]['price']*20),
-     color='white', 
-     fill=True,
-     fill_color='red').add_to(m)
-
-x = 'Load Tripping'
-latLong = [
-(52.37760, 4.82460, x),
-(52.52, 13.40, x),
-(59.85, 17.64, x)]
-
-# point_layer name list
-all_gp = []
-for x in range(len(latLong)):
-  pg = latLong[x][2]
-  all_gp.append(pg)
-
-# Create point_layer object
-unique_gp = list(set(all_gp))
-
-vlist = []
-for i,k in enumerate(unique_gp):
-  locals()[f'point_layer{i}'] = folium.FeatureGroup(name=k)
-  vlist.append(locals()[f'point_layer{i}'])
-
-# Creating list for point_layer
-pl_group = []
-for n in all_gp:
-  for v in vlist:
-    if n == vars(v)['layer_name']:
-      pl_group.append(v)
-
-for (lat,lng,nameP), pg in zip(latLong, pl_group):
-  folium.CircleMarker(location=[lat, lng], radius=5,
-    popup=str(nameP) + " Lat: " + str(lat) + " , Long: " + str(lng),
-    tooltip=str(nameP) + " Lat: " + str(lat) + " , Long: " + str(lng),
-    fill=True,  # Set fill to True
-    color='green',
-    fill_opacity=1.0).add_to(pg)
-
-pg.add_to(m)
-
-m.add_child(folium.LayerControl(collapsed=False))
-
-folium.Marker(location = [52.3776, 4.8246],
- popup="Load Tripping HQ",
- icon=folium.Icon(color="blue", icon="info-sign"),).add_to(m)
-
-folium.Marker(
- location=[60.45, 26.22],
- popup="LT price calculator / Google ",
- icon=folium.Icon(icon="cloud"), ).add_to(m)
-
-x1=52.42
-x2=13.40
-lane_coord = [
-  (x1, x2),
-  (x1-1, x2-1),
-  (x1-2, x2-1),
-  (x1-2, x2-2),
-  (x1-3, x2-2)]
-
-folium.PolyLine(lane_coord, 
- color="#bb8833",
- opacity=0.7,
- tooltip="Lane ID 001").add_to(m)
-
-plugins.Fullscreen(
-  position="topright",
-  title="Expand me",
-  title_cancel="Exit full screen",
-  force_separate_button=True,
-).add_to(m)
-
-plugins.Geocoder().add_to(m)
-plugins.LocateControl().add_to(m)
-
-minimap = plugins.MiniMap()
-m.add_child(minimap)
-
-#data = np.array([np.random.uniform(low = 25, high = 50, size = 100),
-# np.random.uniform(low = -125, high = -70, size = 100)]).T
-# m = folium.Map([40, -100], zoom_start = 3)
-#plugins.MarkerCluster(data).add_to(m)
-
-display(m, target="folium")
-"""
+  return approx(p), approx(p_lo), approx(p_hi)
 </py-script>
 
-</section>
+<py-script>
+import js
+from js import document
+
+from pyodide.ffi import create_proxy
+
+def _flight_mode_change(*args, **kwargs):
+  currentMode = document.getElementById("flight-mode-select").value
+
+  currentMode = 'eur'
+
+  if currentMode == 'one':
+    document.getElementById("ret").disabled = True
+  else:
+    document.getElementById("ret").disabled = False
+
+flight_mode_change = create_proxy(_flight_mode_change)
+document.getElementById("flight-mode-select").addEventListener("input", flight_mode_change)
+
+def _book_flight(*args, **kwargs):
+  currentMode = document.getElementById("flight-mode-select").value
+  currentMode = 'eur'
+
+  loc1 = document.getElementById("dep").value
+  loc2 = document.getElementById("ret").value
+
+  price, price_lo, price_hi = price_est(loc1, loc2)
+  #price = str(1000); price_lo = 'aaa'; price_hi = 'sssss'
+
+  if currentMode == 'one':
+    document.getElementById("flight-info").innerText = f"Departing on {loc1}."
+  else:
+    document.getElementById("flight-info").innerText = f"{price} EUR ({price_lo}, {price_hi})"
+
+
+book_flight = create_proxy(_book_flight)
+document.getElementById("book-flight").addEventListener("click", book_flight)
+
+flight_mode_change()
+</py-script>
+
+<py-script>
+import pandas as pd
+
+from pyodide.http import open_url
+
+#url_nuts2 = 'https://raw.githubusercontent.com/czanalytics/multimodal-shipping/main/dat/nuts2.json'
+#geo_nuts2= json.loads(open_url(url_nuts2).read())
+
+url = ("https://raw.githubusercontent.com/czanalytics/multimodal-shipping/main/dat/ODMatrix2021_N2.csv")
+#url = ("https://raw.githubusercontent.com/Cheukting/pyscript-ice-cream/main/bj-products.csv")
+d = pd.read_csv(open_url(url))
+d_ = d.loc[(d['Origin'] == 'ES70') & (d['Destination'] == 'PT11') ]
+print (d_)
+</py-script>
 
 </body>
 
