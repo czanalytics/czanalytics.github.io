@@ -21,8 +21,18 @@
   "https://cdn.holoviz.org/panel/0.14.3/dist/wheels/bokeh-2.4.3-py3-none-any.whl",
   "folium", "pandas", "numpy", "panel==0.13.1"]
   plugins = ["https://pyscript.net/latest/plugins/python/py_tutor.py"]
+  [[fetch]]
+        files = ["./price.py"]
 </py-config>
 
+<py-script>    
+from price import approx # import price doesn't work
+
+print( approx(1966.0526) )
+
+#model_conf = co2_foo()
+#ms = model_conf['models']
+</py-script>    
 
 <div class="grid grid-rows-4 p-4 bg-blue-100 border-2 justify-items-left">
   
@@ -31,6 +41,7 @@
             <option value="one">EUR</option>
             <option value="gbp">GBP</option>
             <option value="sek">SEK</option>
+            <option value="sek">CHF</option>
             <option value="usd">USD</option>
         </select>
     </div>
@@ -51,57 +62,20 @@
     </div>
 </div>
 
-
-<py-script>
-def approx(x, n=20):
-  """Round x to closest n"""
-
-  return round(x/n)*n
-
-def price_est(loc1, loc2, dist = 111, c = 2.0, pro=0.1):
-  """Estimate price based on postal code locations."""
-  
-  p = dist * c             # mockup
-  p_lo = p - pro * p
-  p_hi = p + pro * p
-
-  return approx(p), approx(p_lo), approx(p_hi)
-</py-script>
+<!--  
+-->
 
 <py-script>
 import js
 from js import document
-
 from pyodide.ffi import create_proxy
 
-def _flight_mode_change(*args, **kwargs):
-  currentMode = document.getElementById("flight-mode-select").value
-
-  currentMode = 'eur'
-
-  if currentMode == 'one':
-    document.getElementById("ret").disabled = True
-  else:
-    document.getElementById("ret").disabled = False
+from price import price_est # !
+from price import _flight_mode_change, _book_flight
 
 flight_mode_change = create_proxy(_flight_mode_change)
+
 document.getElementById("flight-mode-select").addEventListener("input", flight_mode_change)
-
-def _book_flight(*args, **kwargs):
-  currentMode = document.getElementById("flight-mode-select").value
-  currentMode = 'eur'
-
-  loc1 = document.getElementById("dep").value
-  loc2 = document.getElementById("ret").value
-
-  price, price_lo, price_hi = price_est(loc1, loc2)
-  #price = str(1000); price_lo = 'aaa'; price_hi = 'sssss'
-
-  if currentMode == 'one':
-    document.getElementById("flight-info").innerText = f"Departing on {loc1}."
-  else:
-    document.getElementById("flight-info").innerText = f"{price} EUR ({price_lo}, {price_hi})"
-
 
 book_flight = create_proxy(_book_flight)
 document.getElementById("book-flight").addEventListener("click", book_flight)
@@ -112,15 +86,12 @@ flight_mode_change()
 <py-script>
 import pandas as pd
 
-from pyodide.http import open_url
+from price import get_data # !
 
-#url_nuts2 = 'https://raw.githubusercontent.com/czanalytics/multimodal-shipping/main/dat/nuts2.json'
-#geo_nuts2= json.loads(open_url(url_nuts2).read())
+d = get_data()
 
-url = ("https://raw.githubusercontent.com/czanalytics/multimodal-shipping/main/dat/ODMatrix2021_N2.csv")
-#url = ("https://raw.githubusercontent.com/Cheukting/pyscript-ice-cream/main/bj-products.csv")
-d = pd.read_csv(open_url(url))
 d_ = d.loc[(d['Origin'] == 'ES70') & (d['Destination'] == 'PT11') ]
+
 print (d_)
 </py-script>
 
