@@ -64,7 +64,7 @@ browse:
 %.ui0 : %.html
 	$(BROWSER)  $< 
 
-# sudo kill <PID> # python3
+# kill <PID> or sudo kill <PID> # 'python3' locates bg server
 ps:
 	pgrep -l -u ah
 

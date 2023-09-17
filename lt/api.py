@@ -1,6 +1,7 @@
 from flask import Flask, request, jsonify, abort  # make_response
 from flask_restful import Resource, Api
 #from flask_expects_json import expects_json
+from flask_cors import CORS
 
 from datetime import datetime  # date
 #import json
@@ -10,6 +11,8 @@ from lane import price_est, eta_est, co_est, route_est
 from lane import routing_lane, config_lane, status_lane, report_lane
 
 app = Flask(__name__)
+
+CORS(app)
 
 api = Api(app)
 
@@ -42,7 +45,7 @@ class intro(Resource):
     api description
     """
     def get(self):
-       key_check(request.headers.get('Api-Key'))
+       #key_check(request.headers.get('Api-Key'))
 
        msg = {'api': 'lane',
             'version': conf["version"],
@@ -59,7 +62,7 @@ class price(Resource):
     Lane price estimate
     """
     def get(self):
-        key_check(request.headers.get('Api-Key'))
+        #key_check(request.headers.get('Api-Key'))
 
         req = request.json
         mod = conf["model"]["price"]
@@ -75,7 +78,19 @@ class price(Resource):
         return jsonify(msg)
 
     def post(self):
-        msg = {'x': 1}
+        #msg = {'x': 1}
+
+        req = request.json
+        mod = conf["model"]["price"]
+        p, p_lo, p_hi, meta = price_est(req, mod) # !
+
+        msg = {
+            'price': p, 'price_lo': p_lo, 'price_hi': p_hi,
+            'model': mod,
+            'datetime': datetime.now(),
+            'meta': meta,
+            'req': req
+        }
         return jsonify(msg)
 
 
@@ -84,7 +99,7 @@ class eta(Resource):
     Lane ETA estimate
     """
     def get(self):
-        key_check(request.headers.get('Api-Key'))
+        #key_check(request.headers.get('Api-Key'))
 
         req = request.json
         mod = conf["model"]["eta"]
@@ -105,7 +120,7 @@ class co(Resource):
     Lane CO2 estimate
     """
     def get(self):
-        key_check(request.headers.get('Api-Key'))
+        #key_check(request.headers.get('Api-Key'))
 
         req = request.json
         mod = conf["model"]["co"]
@@ -126,7 +141,7 @@ class route(Resource):
     Route estimated
     """
     def get(self):
-        key_check(request.headers.get('Api-Key'))
+        #key_check(request.headers.get('Api-Key'))
 
         req = request.json
         cnf = conf["route"]
@@ -146,7 +161,7 @@ class routing(Resource):
     Routing for cargo (pick, drop) -network.
     """
     def get(self):
-        key_check(request.headers.get('Api-Key'))
+        #key_check(request.headers.get('Api-Key'))
 
         req = request.json
         cnf = conf["routing"]
@@ -166,7 +181,7 @@ class config(Resource):
     Service configuration
     """
     def get(self):
-        key_check(request.headers.get('Api-Key'), fk = './.key_conf')
+        #key_check(request.headers.get('Api-Key'), fk = './.key_conf')
 
         req = request.json
         cnf = conf["config"]
@@ -186,7 +201,7 @@ class status(Resource):
     Service status
     """
     def get(self):
-        key_check(request.headers.get('Api-Key'))
+        #key_check(request.headers.get('Api-Key'))
 
         req = request.json
         cnf = conf["status"]
@@ -205,7 +220,7 @@ class report(Resource):
     Create report
     """
     def get(self):
-        key_check(request.headers.get('Api-Key'))
+        #key_check(request.headers.get('Api-Key'))
 
         req = request.json
         cnf = conf["report"]
@@ -218,9 +233,17 @@ class report(Resource):
         }
         return jsonify(msg)
 
+class tc(Resource):
+    ### @app.route('your route', methods=['GET'])
+    def get(self):
+        response = jsonify({'some': 'data'})
+        response.headers.add('Access-Control-Allow-Origin', '*')
+        return response
 
 api.add_resource(intro,   '/',            endpoint='/')
 api.add_resource(intro,   '/api',         endpoint='/api')
+
+api.add_resource(tc,'/api/tc',   endpoint='/api/tc')
 
 api.add_resource(price,   '/api/price',   endpoint='/api/price')
 api.add_resource(eta,     '/api/eta',     endpoint='/api/eta')

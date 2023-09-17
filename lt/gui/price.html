@@ -49,23 +49,43 @@ import json
 
 from pyodide.http import pyfetch
 
-async def main_api():
+async def lane_api():
   print("main_api()")
-  baseurl = "http://0.0.0.0:3333"
 
-  #headers = {"Content-type": "application/json"}
-  headers = {"Api-Key": "s3cr3t_k3y"}
+  #url = "http://0.0.0.0:3333"
+  url = "http://127.0.0.1:3333" 
+  url = "https://back-end-buckinghamshire.runblade.host"  
+  payload = {"id": "230801-001", "da": "23-08-01", "lat1": 48.86471, "lon1": 2.23901, "lat2": 52.36760, "lon2": 4.90410, "meta": "par-ams"}
+  
+  print(f"{url}/api/price")
+  print("POST body: ", payload)
 
-  response = await request(f"{baseurl}", method="GET", headers=headers)
-  print(f"GET request=> status:{response.status}, json:{await response.json()}")
+  body = json.dumps({"id": "230801-001", "da": "23-08-01", "lat1": 48.86471, "lon1": 2.23901, "lat2": 52.36760, "lon2": 4.90410, "meta": "par-ams"})
 
-  """"
-  body = json.dumps({"title": "test_title", "body": "test body", "userId": 1})
-  new_post = await request(f"{baseurl}/posts", body=body, method="POST", headers=headers)
-  print(f"POST request=> status:{new_post.status}, json:{await new_post.json()}")
-  """
+  headers = {"Content-type": "application/json"}
 
-asyncio.ensure_future(main_api())
+  r = await request(f"{url}/api", method="GET", headers=headers)
+  print(f"GET request=> status:{r.status}, json:{await r.json()}")
+  
+  #s = await request(f"{url}/api/tc", method="GET", headers=headers)
+  #print(f"GET request=> status:{s.status}, json:{await s.json()}")
+
+  t = await request(f"{url}/api/price", body=body, method="POST", headers=headers)
+  j = await t.json()
+  print(f"GET request=> status:{t.status}, json:{j}")
+  print(f"price = {j['price']} EUR  ({j['price_lo']}, {j['price_hi']})")
+
+  #t = await request(f"{url}/api/eta", body=body, method="POST", headers=headers)
+  #print(f"GET request=> status:{t.pstatus}, json:{await t.json()}")
+  
+  #t = await request(f"{url}/api/co", body=body, method="POST", headers=headers)
+  #print(f"GET request=> status:{t.status}, json:{await t.json()}")
+
+  print("lane_api")
+
+
+asyncio.ensure_future(lane_api()) # 
+
 </py-script>    
 
 <py-script>
@@ -74,6 +94,7 @@ import json
 from request import request  # import our request function.
 
 async def main_http():
+  print('main_http')
   baseurl = "https://jsonplaceholder.typicode.com"
 
   # GET
@@ -94,8 +115,9 @@ async def main_http():
   # DELETE
   new_post = await request(f"{baseurl}/posts/1", method="DELETE", headers=headers)
   print(f"DELETE request=> status:{new_post.status}, json:{await new_post.json()}")
+  print('main_http OK')
 
-asyncio.ensure_future(main_http())
+#asyncio.ensure_future(main_http()) #ok
 </py-script>
 
 <py-script>    
@@ -117,7 +139,7 @@ async def api_get():
 async def main():
   _ = await asyncio.gather(api_foo(), api_get())
 
-asyncio.ensure_future(main())
+#asyncio.ensure_future(main())
 </py-script>    
 
 <div class="grid grid-rows-4 p-4 bg-blue-100 border-2 justify-items-left">
@@ -182,4 +204,3 @@ print (d_)
 </py-script>
 
 </body>
-

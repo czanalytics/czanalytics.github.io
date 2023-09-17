@@ -23,6 +23,8 @@ ADD net.py /
 RUN pip install flask
 RUN pip install flask_restful
 RUN pip install flask-expects-json
+RUN pip install flask-cors
+
 RUN pip install pandas
 RUN pip install numpy
 RUN pip install geopy
