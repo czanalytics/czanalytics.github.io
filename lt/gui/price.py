@@ -1,5 +1,44 @@
 # price.py
 
+#curl -H 'Api-Key: s3cr3t_k3y' -s http://0.0.0.0:3333
+
+#curl -s -X GET -H 'Content-type: application/json' -H 'Api-Key: s3cr3t_k3y' http://0.0.0.0:3333/api/route --data '{"id":"230801-001", "da":"23-08-01", "lat1":48.86471, "lon1":2.23901, "lat2":52.36760, "lon2":4.90410, "meta":"paris-amsterdam"}'
+# https://docs.pyscript.net/latest/guides/http-requests.html
+# https://pyodide.org/en/stable/usage/api/python-api/http.html
+
+import json
+
+from pyodide.http import pyfetch
+
+async def login(email, pw):
+    print('login')
+    #ur = "https://back-end-buckinghamshire.runblade.host"
+    ur = "http://127.0.0.1:3333/api/route"
+    #ur = "http://0.0.0.0:3333/api/route",
+    d = {"id":"230914-001", "da":"23-10-01", "lat1":48.86471, "lon1":2.23901, "lat2":52.36760, "lon2":4.90410, "meta":"loc1-loc2"}
+    print(d)
+
+    try:
+        response = await pyfetch("https://cdn.jsdelivr.net/pyodide/v0.23.4/full/repodata.json") #ok
+        """
+        response = await pyfetch(
+            url = ur,
+            method = "GET",
+            headers = {"Content-Type": "application/json", "Api-Key": "s3cr3t_k3y"},
+            body = json.dumps(d)
+        )
+        """
+        if response.ok:
+            data = await response.json()
+            print(data)
+            return data
+            #return data.get("token")
+    except Exception as e:
+        print(f" Raising exception ")
+    finally:
+        return "hello"
+
+
 def approx(x, n=20):
   """Round x to closest n"""
 
