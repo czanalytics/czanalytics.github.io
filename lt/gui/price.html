@@ -61,7 +61,6 @@ async def lane_api():
   lat1 = float(document.getElementById("lat1").value)
   lon1 = float(document.getElementById("lon1").value)
 
-  
   payload = {"id": id, "da": da, "lat1": lat1, "lon1": lon1, "lat2": 52.36760, "lon2": 4.90410, "meta": "par-ams"}
   
   print(f"{url}/api/price")
@@ -121,6 +120,12 @@ async def main():
 
 <div class="grid grid-rows-4 p-4 bg-blue-100 border-2 justify-items-left">
   
+    <div>
+        <h4 class="font-semibold">When</h4>
+        API url <input id="url" class="w-3/4 bg-white border-4" value="https://violet-valleys.runblade.host">
+        <a href="https://violet-valleys.runblade.host">API info page => json</a>
+    </div>
+
    <div>      
         <select name="flight-mode" id="flight-mode-select">
             <option value="one">EUR</option>

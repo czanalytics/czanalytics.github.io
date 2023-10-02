@@ -10,11 +10,13 @@ import json
 
 from pyodide.http import pyfetch
 
+url = "https://violet-valleys.runblade.host"
+#url = "https://back-end-buckinghamshire.runblade.host"
+#url = "http://0.0.0.0:3333"; url = "http://127.0.0.1:3333" 
+
 async def login(email, pw):
     print('login')
-    #ur = "https://back-end-buckinghamshire.runblade.host"
     ur = "http://127.0.0.1:3333/api/route"
-    #ur = "http://0.0.0.0:3333/api/route",
     d = {"id":"230914-001", "da":"23-10-01", "lat1":48.86471, "lon1":2.23901, "lat2":52.36760, "lon2":4.90410, "meta":"loc1-loc2"}
     print(d)
 
@@ -105,8 +107,6 @@ def _book_flight(*args, **kwargs):
 async def _lane_api(*args, **kwargs):
   print("main_api()")
 
-  #url = "http://0.0.0.0:3333"; url = "http://127.0.0.1:3333" 
-  url = "https://back-end-buckinghamshire.runblade.host"
   id = "230925-001"
   #da = "23-09-25"
   da = "23-10-01"
