@@ -94,8 +94,9 @@ api_local() {
  #ia=$1; ib=$2 # select the test data range [d$ia, d$ib]
  ia=1; ib=8
 
- ci="api"     # image
- cn="$ci"_con # container name
+ ci="lane"     # image
+ cn="$ci"_api  # container
+ #ci="api"; cn="$ci"_con
 
  key="Api-Key: "`cat .key`
  ip="0.0.0.0"; p="3333"; url="http://$ip:$p"

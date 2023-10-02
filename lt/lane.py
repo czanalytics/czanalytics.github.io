@@ -13,8 +13,10 @@ import json
 import pandas as pd
 #from geopy.distance import geodesic
 import datetime
-
 import net
+
+#import warnings
+#warnings.simplefilter(action='ignore', category=FutureWarning)
 
 conf_schema = {'type': 'object', 'properties': {
     'id':   {'type': 'string'},
@@ -35,7 +37,7 @@ conf_data = {'data', 'foo'}
 
 # model conf simple/lite/gam/autom
 conf_model = {'price': 'price_lite', 'eta': 'eta_lite','co': 'co_simple'}      # lite
-#conf_model = {'price': 'price_lite', 'eta': 'eta_simple','co': 'co_simple'}
+##conf_model = {'price': 'price_lite', 'eta': 'eta_simple','co': 'co_simple'}
 #conf_model = {'price': 'price_simple', 'eta': 'eta_simple','co': 'co_simple'} # simple
 #conf_model = {'price': 'price_lite', 'eta': 'eta_lite','co': 'co_lite'}
 #conf_model = {'price': 'price_gam', 'eta': 'eta_gam','co': 'co_gam'}          # gam
@@ -57,7 +59,7 @@ conf_config = {'config': 'foo'} # manage (multiple)config files, pricing
 conf_status = {'status': 'foo'}
 conf_report = {'report': 'foo'}
 
-conf = {'version':  0.31,
+conf = {'version':  0.40,
         'app_ip':   '0.0.0.0',
         'app_port': 3333,
         'schema':   conf_schema,
@@ -72,8 +74,8 @@ conf = {'version':  0.31,
 
 
 lv = log.DEBUG
-log.basicConfig(format='%(asctime)s, %(name)s, %(levelname)s, \
-                %(funcName)s:%(lineno)s, %(message)s', level=lv)
+#log.basicConfig(format='%(asctime)s, %(name)s, %(levelname)s, %(funcName)s:%(lineno)s, %(message)s', level=lv)
+log.basicConfig(format='%(asctime)s, %(name)s, %(levelname)s: %(message)s, %(funcName)s:%(lineno)s', level=lv)
 #log.basicConfig(format='%(asctime)s, %(levelname)s, %(message)s', level=lv)
 
 dp = pd.read_csv("./nuts.csv") # data for lite-models
@@ -257,7 +259,7 @@ def dist(d):
     r = 6373.0 # earth radius [km]
     dist = round(r * c)
 
-    log.debug('dist = %i', dist)
+    #log.debug('dist = %i', dist)
 
     return dist
 
@@ -475,19 +477,29 @@ def price_nuts(r, err_p=0.10, base=10, price_min=20):
   """
   c = corr_price(r) # correction components
 
-  r['lane_corr']       = "['corr_dist', 'corr_fuel', 'corr_index', 'corr_tight']"
+  r['lane_corr'] = "['corr_dist', 'corr_fuel', 'corr_index', 'corr_tight']"
 
-  r['lane_corr_dist']  = round(r.get('distance_road') * (c.get('corr_dist')  - 1.00))
-  r['lane_corr_fuel']  = round(r.get('fuel')          * (c.get('corr_fuel')  - 1.00))
-  r['lane_corr_index'] = round(r.get('total_cost')    * (c.get('corr_index') - 1.00))
-  r['lane_corr_month'] = round(r.get('total_cost')    * (c.get('corr_month')  - 1.00))
-  r['lane_corr_day']   = round(r.get('total_cost')    * (c.get('corr_day')  - 1.00))
-  r['lane_corr_rush']  = round(r.get('total_cost')    * (c.get('corr_rush')  - 1.00))
+  corr_dist  = round(r.get('distance_road') * (c.get('corr_dist')  - 1.00))
+  corr_fuel  = round(r.get('fuel')          * (c.get('corr_fuel')  - 1.00))
+  corr_index = round(r.get('total_cost')    * (c.get('corr_index') - 1.00))
+  corr_month = round(r.get('total_cost')    * (c.get('corr_month') - 1.00))
+  corr_day   = round(r.get('total_cost')    * (c.get('corr_day')   - 1.00))
+  corr_rush  = round(r.get('total_cost')    * (c.get('corr_rush')  - 1.00))
 
-  corr_tot = float(r.get('lane_corr_dist')) + float(r.get('lane_corr_fuel')) + float(r.get('lane_corr_index')) + float(r.get('lane_corr_rush'))
+  corr_tot = corr_dist + corr_fuel + corr_index + corr_rush
+  corr_tot = corr_tot.iloc[0]
+
+  #log.debug('corr_tot = %s', corr_tot)
+
+  r['lane_corr_dist']  = corr_dist
+  r['lane_corr_fuel']  = corr_fuel
+  r['lane_corr_index'] = corr_index
+  r['lane_corr_month'] = corr_month
+  r['lane_corr_day']   = corr_day
+  r['lane_corr_rush']  = corr_rush
+
   r['lane_corr_tot'] = round_base(corr_tot)
-
-  p = float(r.get('total_cost')) + corr_tot
+  p = round(r.get('total_cost').iloc[0]) + corr_tot
 
   p = max(price_min, p)
 
@@ -495,17 +507,27 @@ def price_nuts(r, err_p=0.10, base=10, price_min=20):
 
   r['lane_err']        = "['err_base', 'err_dist', 'err_loc', 'err_future']"
 
-  r['lane_err_base']   = round_base(p * e.get('err_base'))
-  r['lane_err_dist']   = round_base(p * e.get('err_dist') / r.get('distance_road'))
-  r['lane_err_loc']    = round_base(p * e.get('err_loc')  / r.get('distance_road'))
-  r['lane_err_future'] = round_base(p * e.get('err_future'))
+  err_base   = round_base(p * e.get('err_base'))
+  err_dist   = round_base(p * e.get('err_dist') / r.get('distance_road'))
+  err_loc    = round_base(p * e.get('err_loc')  / r.get('distance_road'))
+  err_future = round_base(p * e.get('err_future'))
 
-  err = float(r.get('lane_err_base')) + float(r.get('lane_err_dist')) + float(r.get('lane_err_loc'))  + float(r.get('lane_err_future'))
+  err = err_base + err_dist + err_loc + err_future
+  err = err.iloc[0]
+
+  r['lane_err_base']   = err_base
+  r['lane_err_dist']   = err_dist
+  r['lane_err_loc']    = err_loc
+  r['lane_err_future'] = err_future
+
+  #err = float(r.get('lane_err_base')) + float(r.get('lane_err_dist')) + float(r.get('lane_err_loc'))  + float(r.get('lane_err_future'))
 
   r['lane_err_tot'] = round_base(err)
 
   p_lo = max(price_min, p - err)
   p_hi = p + err
+
+  log.debug('price = %s (%s, %s)', round(p), round(p_lo), round(p_hi))
 
   meta = r.to_dict("records")
 
@@ -584,7 +606,7 @@ def err_price(r):
 
   da = r['lane_da'].values[0] # ok
 
-  log.debug('xxxxxxxx da = %s', da)
+  #log.debug('da = %s', da)
 
   yyyy = int("20" + da[0:2]); mm = int(da[3:5]); dd = int(da[6:8])
   day = date(yyyy, mm, dd)
