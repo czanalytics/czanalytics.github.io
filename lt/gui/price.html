@@ -26,7 +26,7 @@
 </py-config>
 
 <py-script>    
-from price import approx # import price doesn't work
+from price import approx # specify foo(), as import price doesn't work
 
 print( approx(1966.0526) )
 
@@ -39,28 +39,35 @@ import asyncio
 import json
 from request import request  # import our request function.
 
-#curl -H 'Api-Key: s3cr3t_k3y' -s http://0.0.0.0:3333
-
-#curl -s -X GET -H 'Content-type: application/json' -H 'Api-Key: s3cr3t_k3y' http://0.0.0.0:3333/api/route --data '{"id":"230801-001", "da":"23-08-01", "lat1":48.86471, "lon1":2.23901, "lat2":52.36760, "lon2":4.90410, "meta":"paris-amsterdam"}'
-# https://docs.pyscript.net/latest/guides/http-requests.html
-# https://pyodide.org/en/stable/usage/api/python-api/http.html
-
 import json
 
 from pyodide.http import pyfetch
 
+#from price import lane_api 
+
 async def lane_api():
   print("main_api()")
 
-  #url = "http://0.0.0.0:3333"
-  url = "http://127.0.0.1:3333" 
-  url = "https://back-end-buckinghamshire.runblade.host"  
-  payload = {"id": "230801-001", "da": "23-08-01", "lat1": 48.86471, "lon1": 2.23901, "lat2": 52.36760, "lon2": 4.90410, "meta": "par-ams"}
+  #url = "http://0.0.0.0:3333"; url = "http://127.0.0.1:3333" 
+  url = "https://violet-valleys.runblade.host"
+  #url = "https://back-end-buckinghamshire.runblade.host"
+  id = "230925-001"
+  #da = "23-09-25"
+  da = "23-12-03"
+  lat1 = 40.0 # 48.86471
+  lon1 = 20 # 2.23901
+ 
+  da = str(document.getElementById("da").value)
+  lat1 = float(document.getElementById("lat1").value)
+  lon1 = float(document.getElementById("lon1").value)
+
+  
+  payload = {"id": id, "da": da, "lat1": lat1, "lon1": lon1, "lat2": 52.36760, "lon2": 4.90410, "meta": "par-ams"}
   
   print(f"{url}/api/price")
   print("POST body: ", payload)
 
-  body = json.dumps({"id": "230801-001", "da": "23-08-01", "lat1": 48.86471, "lon1": 2.23901, "lat2": 52.36760, "lon2": 4.90410, "meta": "par-ams"})
+  body = json.dumps(payload)
 
   headers = {"Content-type": "application/json"}
 
@@ -75,6 +82,9 @@ async def lane_api():
   print(f"GET request=> status:{t.status}, json:{j}")
   print(f"price = {j['price']} EUR  ({j['price_lo']}, {j['price_hi']})")
 
+  document.getElementById("flight-info").innerText = \
+  f"Price from API: {j['price']} EUR ({j['price_lo']}, {j['price_hi']})."
+
   #t = await request(f"{url}/api/eta", body=body, method="POST", headers=headers)
   #print(f"GET request=> status:{t.pstatus}, json:{await t.json()}")
   
@@ -83,42 +93,9 @@ async def lane_api():
 
   print("lane_api")
 
-
 asyncio.ensure_future(lane_api()) # 
-
 </py-script>    
 
-<py-script>
-import asyncio
-import json
-from request import request  # import our request function.
-
-async def main_http():
-  print('main_http')
-  baseurl = "https://jsonplaceholder.typicode.com"
-
-  # GET
-  headers = {"Content-type": "application/json"}
-  response = await request(f"{baseurl}/posts/2", method="GET", headers=headers)
-  print(f"GET request=> status:{response.status}, json:{await response.json()}")
-
-  # POST
-  body = json.dumps({"title": "test_title", "body": "test body", "userId": 1})
-  new_post = await request(f"{baseurl}/posts", body=body, method="POST", headers=headers)
-  print(f"POST request=> status:{new_post.status}, json:{await new_post.json()}")
-
-  # PUT
-  body = json.dumps({"id": 1, "title": "test_title", "body": "test body", "userId": 2})
-  new_post = await request(f"{baseurl}/posts/1", body=body, method="PUT", headers=headers)
-  print(f"PUT request=> status:{new_post.status}, json:{await new_post.json()}")
-
-  # DELETE
-  new_post = await request(f"{baseurl}/posts/1", method="DELETE", headers=headers)
-  print(f"DELETE request=> status:{new_post.status}, json:{await new_post.json()}")
-  print('main_http OK')
-
-#asyncio.ensure_future(main_http()) #ok
-</py-script>
 
 <py-script>    
 import json
@@ -155,13 +132,20 @@ async def main():
     </div>
 
     <div>
+        <h4 class="font-semibold">When</h4>
+        <input id="da" class="w-3/4 bg-white border-4" value="23-10-01"> 
+    </div>
+
+    <div>
         <h4 class="font-semibold">From</h4>
-        <input id="dep" class="w-3/4 bg-white border-4">
+        country<input id="dep" class="w-3/4 bg-white border-4" value="fi"> 
+        lat<input id="lat1" class="w-3/4 bg-white border-4" value="48.8"> 
+        lon<input id="lon1" class="w-3/4 bg-white border-4" value="2.2"> 
     </div>
 
     <div>
         <h4 class="font-semibold">To</h4>
-        <input id="ret" class="w-3/4 bg-white border-4">
+        <input id="ret" class="w-3/4 bg-white border-4" value="se">
     </div>
 
     <div>
@@ -179,13 +163,15 @@ from js import document
 from pyodide.ffi import create_proxy
 
 from price import price_est # !
-from price import _flight_mode_change, _book_flight
+from price import _flight_mode_change, _book_flight, _lane_api
 
 flight_mode_change = create_proxy(_flight_mode_change)
 
 document.getElementById("flight-mode-select").addEventListener("input", flight_mode_change)
 
-book_flight = create_proxy(_book_flight)
+book_flight = create_proxy(_lane_api)
+#book_flight = create_proxy(_book_flight)
+
 document.getElementById("book-flight").addEventListener("click", book_flight)
 
 flight_mode_change()

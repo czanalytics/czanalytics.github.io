@@ -70,10 +70,10 @@ def get_data():
 #d_ = d.loc[(d['Origin'] == 'ES70') & (d['Destination'] == 'PT11') ]
 #print (d_)
 
-
 import js
 from js import document
 from pyodide.ffi import create_proxy
+
 
 def _flight_mode_change(*args, **kwargs):
   currentMode = document.getElementById("flight-mode-select").value
@@ -99,5 +99,47 @@ def _book_flight(*args, **kwargs):
   if currentMode == 'one':
     document.getElementById("flight-info").innerText = f"Departing on {loc1}."
   else:
-    document.getElementById("flight-info").innerText = f"{price} EUR ({price_lo}, {price_hi})"
+    document.getElementById("flight-info").innerText = f"Price for {loc1} - {loc2} is {price} EUR ({price_lo}, {price_hi})"
 
+
+async def _lane_api(*args, **kwargs):
+  print("main_api()")
+
+  #url = "http://0.0.0.0:3333"; url = "http://127.0.0.1:3333" 
+  url = "https://back-end-buckinghamshire.runblade.host"
+  id = "230925-001"
+  #da = "23-09-25"
+  da = "23-10-01"
+
+  da = str(document.getElementById("da").value)
+
+  payload = {"id": id, "da": da, "lat1": 48.86471, "lon1": 2.23901, "lat2": 52.36760, "lon2": 4.90410, "meta": "par-ams"}
+
+  print(f"{url}/api/price")
+  print("POST body: ", payload)
+
+  body = json.dumps(payload)
+
+  headers = {"Content-type": "application/json"}
+
+  r = await request(f"{url}/api", method="GET", headers=headers)
+  print(f"GET request=> status:{r.status}, json:{await r.json()}")
+
+  #s = await request(f"{url}/api/tc", method="GET", headers=headers)
+  #print(f"GET request=> status:{s.status}, json:{await s.json()}")
+
+  t = await request(f"{url}/api/price", body=body, method="POST", headers=headers)
+  j = await t.json()
+  print(f"GET request=> status:{t.status}, json:{j}")
+  print(f"price = {j['price']} EUR  ({j['price_lo']}, {j['price_hi']})")
+
+  document.getElementById("flight-info").innerText = \
+  f"Price from API: {j['price']} EUR ({j['price_lo']}, {j['price_hi']})."
+
+  #t = await request(f"{url}/api/eta", body=body, method="POST", headers=headers)
+  #print(f"GET request=> status:{t.pstatus}, json:{await t.json()}")
+
+  #t = await request(f"{url}/api/co", body=body, method="POST", headers=headers)
+  #print(f"GET request=> status:{t.status}, json:{await t.json()}")
+
+  print("lane_api")
