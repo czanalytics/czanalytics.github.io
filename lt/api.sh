@@ -84,6 +84,44 @@ api_model() {
 #d2='{"id":"230701-001",        "co":100,"da":"23-07-01",                                          "lat1":60.19205,"lon1":24.94583,"lat2":60.10549,"lon2":24.15589}'
 #d3='{"id":"230701-001","seg":1,"co":100,"da":"23-07-01","ta":"10:00","db":"23-07-01","tb":"12:00","lat1":60.19205,"lon1":24.94583,"lat2":60.10549,"lon2":24.15589}'
 
+
+api_kb() { 
+ echo "test KB API"
+ echo "fn:"${FUNCNAME[*]}
+ echo $(date)
+ t0=$(date +%s)
+ set -x # shell echo, set +x unsets
+
+ ci="kb"     # image
+ cn="$ci"_api  # container
+
+ key="Api-Key: "`cat .key`
+ ip="0.0.0.0"; p="3333"; url="http://$ip:$p"
+ 
+ ct="Content-type: application/json"
+ pp="json_pp" # prettyprinter
+
+ docker stop $cn # clean
+ docker rm   $cn
+ docker rmi  $ci
+
+ docker build -t $ci . -f Dockerfile."$ci" --force-rm=true 
+ docker run -d -p $p:$p --name $cn $ci  # -d for detached mode in bg
+ sleep 3
+
+ curl -H "$key" -s "$url"     | "$pp" # silent -s
+ curl -H "$key" -s "$url"/api | "$pp" 
+ #curl -s -X GET -H "$ct" -H "$key" $url/api/dblist --data "$d" | "$pp"
+ 
+ set +x
+ docker logs -t $cn
+
+ echo $(date)
+ t1=$(date +%s)
+ echo "time elapsed `expr $t1 - $t0` sec."
+}
+
+
 api_local() { 
  echo "test api functionality"
  echo "fn:"${FUNCNAME[*]}
@@ -110,7 +148,8 @@ api_local() {
  docker rm   $cn
  docker rmi  $ci
 
- docker build -t $ci . -f Dockerfile."$ci" --force-rm=true 
+ docker build -t $ci . -f Dockerfile.api --force-rm=true 
+ #docker build -t $ci . -f Dockerfile."$ci" --force-rm=true 
  docker run -d -p $p:$p --name $cn $ci  # -d for detached mode in bg
  sleep 3
 

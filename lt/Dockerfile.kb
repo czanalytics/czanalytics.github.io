@@ -1,0 +1,28 @@
+# Dockerfile.kb for flask api
+FROM python:3
+
+ADD .key /
+ADD .key_conf /
+
+ARG D=tmp # data dir
+
+ADD ${D}/kb.yml /
+#ADD ${D}/data-kb.yml /
+#ADD ${D}/rules-kb.yml /
+
+ADD kb.py /
+
+RUN pip install flask
+RUN pip install flask_restful
+RUN pip install flask-expects-json
+RUN pip install flask-cors
+
+RUN pip install pandas
+RUN pip install numpy
+RUN pip install geopy
+RUN pip install datetime
+
+EXPOSE 8888
+
+CMD ["python", "./kb.py"]
+

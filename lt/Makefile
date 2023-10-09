@@ -11,6 +11,9 @@ D = ./tmp
 api_data:
 	source api.sh && api_data    2>&1 | tee $(D)/log-data.txt
 
+api_kb:
+	source api.sh && api_kb      2>&1 | tee $(D)/log-kb.txt
+
 api_local:
 	source api.sh && api_local   2>&1 | tee $(D)/log-local.txt
 
