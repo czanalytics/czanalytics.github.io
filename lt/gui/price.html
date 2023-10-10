@@ -19,11 +19,46 @@
 <py-config>
   packages = [
   "https://cdn.holoviz.org/panel/0.14.3/dist/wheels/bokeh-2.4.3-py3-none-any.whl",
-  "folium", "pandas", "numpy", "panel==0.13.1"]
+  "pytholog", "folium", "pandas", "numpy", "panel==0.13.1"]
   plugins = ["https://pyscript.net/latest/plugins/python/py_tutor.py"]
   [[fetch]]
         files = ["./price.py", "./request.py"]
 </py-config>
+
+<py-script>
+import logging as log
+
+log.basicConfig(format='%(asctime)s, %(levelname)s, %(message)s', level=log.DEBUG)
+
+log.debug('This message should appear on the console')
+log.info('So should this')
+log.warning('And this, too')
+</py-script>
+
+<py-script>
+log.info('KB conf. ')
+
+import pytholog as pl
+
+graph = pl.KnowledgeBase("graph")
+graph([
+        "edge(a, b, 6)", "edge(a, c, 1)", "edge(b, e, 4)",
+        "edge(b, f, 3)", "edge(c, d, 3)", "edge(d, e, 8)",
+        "edge(e, f, 2)",
+        "path(X, Y, W) :- edge(X , Y, W)",
+        "path(X, Y, W) :- edge(X, Z, W1), path(Z, Y, W2), W is W1 + W2"])
+
+log.info('KB set')
+
+answer, path = graph.query(pl.Expr("path(a, f, W)"), show_path = True)
+
+rules = graph.rule_search(pl.Expr("edge(From, To, Dist)"))
+print(rules)
+print(answer)
+print([x for x in path if str(x) > "Z"])
+
+log.debug('KB goals done')
+</py-script>
 
 <py-script>    
 from price import approx # specify foo(), as import price doesn't work
@@ -48,9 +83,7 @@ from pyodide.http import pyfetch
 async def lane_api():
   print("main_api()")
 
-  #url = "http://0.0.0.0:3333"; url = "http://127.0.0.1:3333" 
   url = "https://violet-valleys.runblade.host"
-  #url = "https://back-end-buckinghamshire.runblade.host"
   id = "230925-001"
   #da = "23-09-25"
   da = "23-12-03"
@@ -71,24 +104,24 @@ async def lane_api():
   headers = {"Content-type": "application/json"}
 
   r = await request(f"{url}/api", method="GET", headers=headers)
-  print(f"GET request=> status:{r.status}, json:{await r.json()}")
+  print(f"GET request status:{r.status}, json:{await r.json()}")
   
   #s = await request(f"{url}/api/tc", method="GET", headers=headers)
-  #print(f"GET request=> status:{s.status}, json:{await s.json()}")
+  #print(f"GET request status:{s.status}, json:{await s.json()}")
 
   t = await request(f"{url}/api/price", body=body, method="POST", headers=headers)
   j = await t.json()
-  print(f"GET request=> status:{t.status}, json:{j}")
+  print(f"GET request status:{t.status}, json:{j}")
   print(f"price = {j['price']} EUR  ({j['price_lo']}, {j['price_hi']})")
 
   document.getElementById("flight-info").innerText = \
   f"Price from API: {j['price']} EUR ({j['price_lo']}, {j['price_hi']})."
 
   #t = await request(f"{url}/api/eta", body=body, method="POST", headers=headers)
-  #print(f"GET request=> status:{t.pstatus}, json:{await t.json()}")
+  #print(f"GET request status:{t.pstatus}, json:{await t.json()}")
   
   #t = await request(f"{url}/api/co", body=body, method="POST", headers=headers)
-  #print(f"GET request=> status:{t.status}, json:{await t.json()}")
+  #print(f"GET request status:{t.status}, json:{await t.json()}")
 
   print("lane_api")
 
