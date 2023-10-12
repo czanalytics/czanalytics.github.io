@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <title>Lang MT</title>
+    <meta charset="utf-8" />
+  <link rel="icon" type="image/x-icon" href="./favicon.png" />
+    <link
+        rel="stylesheet"
+        href="https://pyscript.net/latest/pyscript.css"/>
+    <script defer src="https://pyscript.net/latest/pyscript.js"></script>
+    <link rel="stylesheet" href="./assets/css/examples.css" />
+</head>
+
+<body>
+<section class="pyscript">
+  <div id="folium"></div>
+   
+<py-config>
+  packages = [
+  "https://cdn.holoviz.org/panel/0.14.3/dist/wheels/bokeh-2.4.3-py3-none-any.whl",
+  "pytholog", "folium", "pandas", "numpy", "panel==0.13.1"]
+  plugins = ["https://pyscript.net/latest/plugins/python/py_tutor.py"]
+  [[fetch]]
+        files = ["./mt.py", "./request.py"]
+</py-config>
+
+<py-script>
+import logging as log
+
+log.basicConfig(format='%(asctime)s, %(levelname)s, %(message)s', level=log.DEBUG)
+
+#log.debug('This message should appear on the console')
+#log.info('So should this')
+#log.warning('And this, too')
+</py-script>
+
+<py-script>
+log.info('Setting up MT ... ')
+
+import pytholog as pl
+
+graph = pl.KnowledgeBase("graph")
+graph([
+        "edge(a, b, 6)", "edge(a, c, 1)", "edge(b, e, 4)",
+        "edge(b, f, 3)", "edge(c, d, 3)", "edge(d, e, 8)",
+        "edge(e, f, 2)",
+        "path(X, Y, W) :- edge(X , Y, W)",
+        "path(X, Y, W) :- edge(X, Z, W1), path(Z, Y, W2), W is W1 + W2"])
+
+#log.info('KB set')
+
+answer, path = graph.query(pl.Expr("path(a, f, W)"), show_path = True)
+
+rules = graph.rule_search(pl.Expr("edge(From, To, Dist)"))
+#print(rules)
+#print(answer)
+#print([x for x in path if str(x) > "Z"])
+
+#log.debug('KB goals done')
+</py-script>
+
+<py-script>
+import asyncio
+import json
+from request import request  # import our request function.
+
+# mt.py
+
+import json
+
+from pyodide.http import pyfetch
+
+url = "https://smtp-sports.runblade.host/"
+
+import pandas as pd
+
+from pyodide.http import open_url
+
+import js
+from js import document
+from pyodide.ffi import create_proxy
+
+async def mt_api(*args, **kwargs):
+  #print("mt_api ...")
+
+  txt = str(document.getElementById("text").value)
+  payload = {"text": txt, "to": "fi"}
+  print(f"{url}/api/mt/q=", payload)
+
+  body = json.dumps(payload)
+
+  headers = {"Content-type": "application/json"}
+
+  #r = await request(f"{url}/api", method="GET", headers=headers)
+  #print(f"GET request=> status:{r.status}, json:{await r.json()}")
+
+
+  document.getElementById("out").innerText = f"Hei"
+
+  #print("mt_api done")
+
+</py-script>
+
+<py-script>
+import js
+from js import document
+from pyodide.ffi import create_proxy
+
+#from mt import mt_api
+
+t = create_proxy(mt_api)
+
+document.getElementById("mt").addEventListener("click", t)
+
+asyncio.ensure_future(mt_api())
+</py-script>
+
+<py-script>
+log.info('MT v0.0 is ready.')
+</py-script>    
+
+<pre>
+
+  ML translation
+    coming ...
+              
+</pre>
+    <a href="https://smtp-sports.runblade.host/">API</a>
+      
+    <div>
+      <textarea rows = "5" cols = "40" name = "from" id="text">Hej</textarea>
+    </div>
+
+     <div>
+        <br>
+        <button id="mt" class="p-2 my-2 bg-green-200 border-2 border-gray-400 rounded-lg">Translate</button>
+
+        <p id="out" class="italic"> </p>
+    </div>
+
+</body>
