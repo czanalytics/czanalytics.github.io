@@ -1,16 +1,21 @@
+# net.py
+
 import numpy as np
 
 def routing_conf():
   """
   Configuration for a routing task.
-  Each cargo unit has a drop location specified.
+  - Line per location.
+  - Location defined by  (lat, lon) -location, list of cargo IDs, list of agent IDs, and optional name
+
+
   """
-  order    = {'id':'230824-0', 'da':'23-08-26'}                            # required fields
+  order    = {'id':'231122-0', 'da':'23-11-22'}                              # required fields
 
   picks    = [(52.367600,	4.90410,  [1, 2, 3, 4, 5], [1],    'amsterdam'), # OPTIONAL PLACE NAME
               (52.090700,	5.12140,  [6, 7, 8],       [1],    'utrecht')]
 
-  drops    = [(45.764000,	4.83570,  [1, 2, 3, 4],    [1, 2], 'lyon'),
+  drops    = [(45.764000,	4.83570,  [1, 2, 3, 4],    [1, 2], 'lyon'),      # both agents serve this location
               (44.933400,	4.89240,  [5, 6],          [2],    'valence'),
               (43.296500,	5.36980,  [7, 8],          [2],    'marseille')] # lyon is close to valence
 
