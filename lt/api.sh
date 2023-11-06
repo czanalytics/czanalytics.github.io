@@ -191,7 +191,13 @@ api_deploy() {
  echo "time elapsed `expr $t1 - $t0` sec."
 }
 
-
+o1='{"agents": [[52.3676, 4.9041, 6, 1, "a1ams"], [45.764, 4.8357, 3, 2, "a2lyo"]],
+ "drops": [[45.764, 4.8357, [1, 2, 3, 4], [1, 2], "lyon"],
+           [44.9334, 4.8924, [5, 6], [2], "valence"],
+           [43.2965, 5.3698, [7, 8], [2], "marseille"]],
+ "order": {"da": "23-11-06", "id": "231106-0"},
+ "picks": [[52.3676, 4.9041, [1, 2, 3, 4, 5], [1], "amsterdam"],
+           [52.0907, 5.1214, [6, 7, 8], [1], "utrecht"]]}'
 api_cloud() {
  echo "test the deployed api"
  echo "fn:"${FUNCNAME[*]}
@@ -208,7 +214,9 @@ api_cloud() {
  curl -H "$key" -s "$url"     | "$pp" 
  curl -H "$key" -s "$url"/api | "$pp" 
 
- for i in {1..7}
+ curl -s -X GET -H "$ct" -H "$key" $url/api/routing --data "$o1" | "$pp"
+ 
+ for i in {1..2}
  do
    di="d$i"         # test selected
    d=$(echo ${!di}) # evaluated
@@ -216,7 +224,7 @@ api_cloud() {
    curl -s -X GET -H "$ct" -H "$key" $url/api/price --data "$d" | "$pp"
    curl -s -X GET -H "$ct" -H "$key" $url/api/eta   --data "$d" | "$pp" 
    curl -s -X GET -H "$ct" -H "$key" $url/api/co    --data "$d" | "$pp"
-   curl -s -X GET -H "$ct" -H "$key" $url/api/route --data "$d" | "$pp"
+   curl -s -X GET -H "$ct" -H "$key" $url/api/routing --data "$d" | "$pp"
  done
 
  set +x
