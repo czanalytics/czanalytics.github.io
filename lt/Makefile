@@ -8,6 +8,9 @@ URL      := http://0.0.0.0:8000
 SHELL    := /bin/bash
 D = ./tmp
 
+api_clean:
+	source api.sh && api_clean   2>&1 | tee $(D)/log-clean.txt
+
 api_data:
 	source api.sh && api_data    2>&1 | tee $(D)/log-data.txt
 

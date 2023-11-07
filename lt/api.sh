@@ -1,4 +1,15 @@
-# api.sh for testing API service
+# api.sh for managing API
+
+
+api_clean() {
+ echo "clean api container artifacts"
+ echo "fn:"${FUNCNAME[*]}
+
+ docker stop lane_api     # stop the container
+ docker rm lane_api       # remove it
+ docker rmi -f lane       # force image remove
+ docker image prune -a    # prune all dangling images
+}
 
 
 api_data() {
@@ -153,8 +164,8 @@ api_local() {
  docker run -d -p $p:$p --name $cn $ci  # -d for detached mode in bg
  sleep 3
 
- curl -H "$key" -s "$url"     | "$pp" # request pp with silent -s
- curl -H "$key" -s "$url"/api | "$pp" 
+ #curl -H "$key" -s "$url"     | "$pp" # request pp with silent -s
+ #curl -H "$key" -s "$url"/api | "$pp" 
  
  for i in {1..10}
  do
@@ -198,6 +209,7 @@ o1='{"agents": [[52.3676, 4.9041, 6, 1, "a1ams"], [45.764, 4.8357, 3, 2, "a2lyo"
  "order": {"da": "23-11-06", "id": "231106-0"},
  "picks": [[52.3676, 4.9041, [1, 2, 3, 4, 5], [1], "amsterdam"],
            [52.0907, 5.1214, [6, 7, 8], [1], "utrecht"]]}'
+
 api_cloud() {
  echo "test the deployed api"
  echo "fn:"${FUNCNAME[*]}
@@ -211,20 +223,19 @@ api_cloud() {
  ct="Content-type: application/json"
  pp="json_pp"
 
- curl -H "$key" -s "$url"     | "$pp" 
- curl -H "$key" -s "$url"/api | "$pp" 
+ #curl -H "$key" -s "$url"     | "$pp" 
+ #curl -H "$key" -s "$url"/api | "$pp" 
 
- curl -s -X GET -H "$ct" -H "$key" $url/api/routing --data "$o1" | "$pp"
+ curl -s -X GET -H "$ct" $url/api/routing --data "$o1" | "$pp"
  
- for i in {1..2}
+ for i in {1..1}
  do
    di="d$i"         # test selected
    d=$(echo ${!di}) # evaluated
    
-   curl -s -X GET -H "$ct" -H "$key" $url/api/price --data "$d" | "$pp"
-   curl -s -X GET -H "$ct" -H "$key" $url/api/eta   --data "$d" | "$pp" 
-   curl -s -X GET -H "$ct" -H "$key" $url/api/co    --data "$d" | "$pp"
-   curl -s -X GET -H "$ct" -H "$key" $url/api/routing --data "$d" | "$pp"
+   curl -s -X GET -H "$ct" $url/api/price --data "$d" | "$pp"
+   curl -s -X GET -H "$ct" $url/api/eta   --data "$d" | "$pp" 
+   curl -s -X GET -H "$ct" $url/api/co    --data "$d" | "$pp"
  done
 
  set +x
