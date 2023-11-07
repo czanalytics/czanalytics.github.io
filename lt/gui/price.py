@@ -1,18 +1,10 @@
 # price.py
 
-#curl -H 'Api-Key: s3cr3t_k3y' -s http://0.0.0.0:3333
-
-#curl -s -X GET -H 'Content-type: application/json' -H 'Api-Key: s3cr3t_k3y' http://0.0.0.0:3333/api/route --data '{"id":"230801-001", "da":"23-08-01", "lat1":48.86471, "lon1":2.23901, "lat2":52.36760, "lon2":4.90410, "meta":"paris-amsterdam"}'
-# https://docs.pyscript.net/latest/guides/http-requests.html
-# https://pyodide.org/en/stable/usage/api/python-api/http.html
-
 import json
 
 from pyodide.http import pyfetch
 
 url = "https://violet-valleys.runblade.host"
-#url = "https://back-end-buckinghamshire.runblade.host"
-#url = "http://0.0.0.0:3333"; url = "http://127.0.0.1:3333" 
 
 async def login(email, pw):
     print('login')
@@ -60,17 +52,11 @@ import pandas as pd
 
 from pyodide.http import open_url
 
-#url_nuts2 = 'https://raw.githubusercontent.com/czanalytics/multimodal-shipping/main/dat/nuts2.json'
-#geo_nuts2= json.loads(open_url(url_nuts2).read())
-
 def get_data():
     url = ("https://raw.githubusercontent.com/czanalytics/multimodal-shipping/main/dat/ODMatrix2021_N2.csv")
     d = pd.read_csv(open_url(url))
 
     return d
-
-#d_ = d.loc[(d['Origin'] == 'ES70') & (d['Destination'] == 'PT11') ]
-#print (d_)
 
 import js
 from js import document
@@ -96,7 +82,6 @@ def _book_flight(*args, **kwargs):
   loc2 = document.getElementById("ret").value
 
   price, price_lo, price_hi = price_est(loc1, loc2)
-  #price = str(1000); price_lo = 'aaa'; price_hi = 'sssss'
 
   if currentMode == 'one':
     document.getElementById("flight-info").innerText = f"Departing on {loc1}."
@@ -108,7 +93,6 @@ async def _lane_api(*args, **kwargs):
   print("main_api()")
 
   id = "230925-001"
-  #da = "23-09-25"
   da = "23-10-01"
 
   da = str(document.getElementById("da").value)
@@ -125,9 +109,6 @@ async def _lane_api(*args, **kwargs):
   r = await request(f"{url}/api", method="GET", headers=headers)
   print(f"GET request=> status:{r.status}, json:{await r.json()}")
 
-  #s = await request(f"{url}/api/tc", method="GET", headers=headers)
-  #print(f"GET request=> status:{s.status}, json:{await s.json()}")
-
   t = await request(f"{url}/api/price", body=body, method="POST", headers=headers)
   j = await t.json()
   print(f"GET request=> status:{t.status}, json:{j}")
@@ -135,11 +116,5 @@ async def _lane_api(*args, **kwargs):
 
   document.getElementById("flight-info").innerText = \
   f"Price from API: {j['price']} EUR ({j['price_lo']}, {j['price_hi']})."
-
-  #t = await request(f"{url}/api/eta", body=body, method="POST", headers=headers)
-  #print(f"GET request=> status:{t.pstatus}, json:{await t.json()}")
-
-  #t = await request(f"{url}/api/co", body=body, method="POST", headers=headers)
-  #print(f"GET request=> status:{t.status}, json:{await t.json()}")
 
   print("lane_api")

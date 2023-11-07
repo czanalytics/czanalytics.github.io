@@ -63,7 +63,7 @@ log.debug('KB goals done')
 <py-script>    
 from price import approx # specify foo(), as import price doesn't work
 
-print( approx(1966.0526) )
+print( approx(2023.117) )
 
 #model_conf = co2_foo()
 #ms = model_conf['models']
@@ -84,11 +84,10 @@ async def lane_api():
   print("main_api()")
 
   url = "https://violet-valleys.runblade.host"
-  id = "230925-001"
-  #da = "23-09-25"
-  da = "23-12-03"
-  lat1 = 40.0 # 48.86471
-  lon1 = 20 # 2.23901
+  id = "231106-001"
+  da = "23-11-06"
+  lat1 = 48.0 # 48.86471
+  lon1 = 2.3 # 2.23901
  
   da = str(document.getElementById("da").value)
   lat1 = float(document.getElementById("lat1").value)
@@ -97,31 +96,23 @@ async def lane_api():
   payload = {"id": id, "da": da, "lat1": lat1, "lon1": lon1, "lat2": 52.36760, "lon2": 4.90410, "meta": "par-ams"}
   
   print(f"{url}/api/price")
-  print("POST body: ", payload)
+  print("payload: ", payload)
 
   body = json.dumps(payload)
 
   headers = {"Content-type": "application/json"}
 
   r = await request(f"{url}/api", method="GET", headers=headers)
-  print(f"GET request status:{r.status}, json:{await r.json()}")
+  print(f"GET /api request status:{r.status}, json:{await r.json()}")
   
-  #s = await request(f"{url}/api/tc", method="GET", headers=headers)
-  #print(f"GET request status:{s.status}, json:{await s.json()}")
-
   t = await request(f"{url}/api/price", body=body, method="POST", headers=headers)
   j = await t.json()
-  print(f"GET request status:{t.status}, json:{j}")
+
+  print(f"POST /api/price request status:{t.status}, json:{j}")
   print(f"price = {j['price']} EUR  ({j['price_lo']}, {j['price_hi']})")
 
   document.getElementById("flight-info").innerText = \
   f"Price from API: {j['price']} EUR ({j['price_lo']}, {j['price_hi']})."
-
-  #t = await request(f"{url}/api/eta", body=body, method="POST", headers=headers)
-  #print(f"GET request status:{t.pstatus}, json:{await t.json()}")
-  
-  #t = await request(f"{url}/api/co", body=body, method="POST", headers=headers)
-  #print(f"GET request status:{t.status}, json:{await t.json()}")
 
   print("lane_api")
 
@@ -154,9 +145,8 @@ async def main():
 <div class="grid grid-rows-4 p-4 bg-blue-100 border-2 justify-items-left">
   
     <div>
-        <h4 class="font-semibold">When</h4>
         API url <input id="url" class="w-3/4 bg-white border-4" value="https://violet-valleys.runblade.host">
-        <a href="https://violet-valleys.runblade.host">API info page => json</a>
+        <a href="https://violet-valleys.runblade.host">Browse the API info => json</a>
     </div>
 
    <div>      
