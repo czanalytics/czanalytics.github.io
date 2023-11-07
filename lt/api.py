@@ -115,11 +115,45 @@ class eta(Resource):
         return jsonify(msg)
 
 
+    def post(self):
+        #key_check(request.headers.get('Api-Key'))
+
+        req = request.json
+        mod = conf["model"]["eta"]
+        t, t_lo, t_hi, meta = eta_est(req, mod) # !
+
+        msg = {
+            'eta': t, 'eta_lo': t_lo, 'eta_hi': t_hi,
+            'model': mod,
+            'datetime': datetime.now(),
+            'meta': meta,
+            'req': req
+        }
+        return jsonify(msg)
+
+
 class co(Resource):
     """
     Lane CO2 estimate
     """
     def get(self):
+        #key_check(request.headers.get('Api-Key'))
+
+        req = request.json
+        mod = conf["model"]["co"]
+        co, co_lo, co_hi, meta = co_est(req, mod) # !
+
+        msg = {
+            'co': co, 'co_lo': co_lo, 'co_hi': co_hi,
+            'model': mod,
+            'datetime': datetime.now(),
+            'meta': meta,
+            'req': req
+        }
+        return jsonify(msg)
+
+
+    def post(self):
         #key_check(request.headers.get('Api-Key'))
 
         req = request.json
@@ -156,11 +190,43 @@ class route(Resource):
         return jsonify(msg)
 
 
+    def post(self):
+        #key_check(request.headers.get('Api-Key'))
+
+        req = request.json
+        cnf = conf["route"]
+        route = route_est(req, cnf) # !
+
+        msg = {
+            'route_conf': route,
+            'route': cnf,
+            'datetime': datetime.now(),
+            'req': req
+        }
+        return jsonify(msg)
+
+
 class routing(Resource):
     """
     Routing for cargo (pick, drop) -network.
     """
     def get(self):
+        #key_check(request.headers.get('Api-Key'))
+
+        req = request.json
+        cnf = conf["routing"]
+        r = routing_lane(req, cnf) # !
+
+        msg = {
+            'routing_conf': cnf,
+            'routing': r,
+            'datetime': datetime.now(),
+            'req': req
+        }
+        return jsonify(msg)
+
+
+    def post(self):
         #key_check(request.headers.get('Api-Key'))
 
         req = request.json
@@ -233,12 +299,15 @@ class report(Resource):
         }
         return jsonify(msg)
 
+
 class tc(Resource):
     ### @app.route('your route', methods=['GET'])
+
     def get(self):
         response = jsonify({'some': 'data'})
         response.headers.add('Access-Control-Allow-Origin', '*')
         return response
+
 
 api.add_resource(intro,   '/',            endpoint='/')
 api.add_resource(intro,   '/api',         endpoint='/api')

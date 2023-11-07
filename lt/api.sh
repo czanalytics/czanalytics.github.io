@@ -228,6 +228,8 @@ api_cloud() {
 
  curl -s -X GET -H "$ct" $url/api/routing --data "$o1" | "$pp"
  
+ curl -s -X POST -H "$ct" $url/api/routing --data "$o1" | "$pp"
+ 
  for i in {1..1}
  do
    di="d$i"         # test selected
@@ -236,6 +238,17 @@ api_cloud() {
    curl -s -X GET -H "$ct" $url/api/price --data "$d" | "$pp"
    curl -s -X GET -H "$ct" $url/api/eta   --data "$d" | "$pp" 
    curl -s -X GET -H "$ct" $url/api/co    --data "$d" | "$pp"
+ done
+
+
+ for i in {1..2}
+ do
+   di="d$i"         # test selected
+   d=$(echo ${!di}) # evaluated
+   
+   curl -s -X POST -H "$ct" $url/api/price --data "$d" | "$pp"
+   curl -s -X POST -H "$ct" $url/api/eta   --data "$d" | "$pp" 
+   curl -s -X POST -H "$ct" $url/api/co    --data "$d" | "$pp"
  done
 
  set +x

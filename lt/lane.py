@@ -59,7 +59,7 @@ conf_config = {'config': 'foo'} # manage (multiple)config files, pricing
 conf_status = {'status': 'foo'}
 conf_report = {'report': 'foo'}
 
-conf = {'version':  0.40,
+conf = {'version':  0.45,
         'app_ip':   '0.0.0.0',
         'app_port': 3333,
         'schema':   conf_schema,
@@ -110,6 +110,8 @@ def price_est(d, mod):
             p, p_lo, p_hi, meta = 0, 0, 0, 0
             #log.ERROR('unknown model') # fails
 
+    log.debug('price_est: request %s', d)
+
     return round(p), round(p_lo), round(p_hi), meta
 
 
@@ -128,6 +130,8 @@ def eta_est(d, mod):
             #t, t_lo, t_hi, meta = eta_gam(d)
         case _:
             t, t_lo, t_hi, meta = 0, 0, 0, 0
+
+    log.debug('eta_est: request %s', d)
 
     return round(t, 1), round(t_lo, 1), round(t_hi, 1), meta
 
@@ -148,6 +152,8 @@ def co_est(d, mod):
         case _:
             co, co_lo, co_hi, meta = 0, 0, 0, 0
 
+    log.debug('co_est: request %s', d)
+
     return round(co), round(co_lo), round(co_hi), meta
 
 
@@ -167,6 +173,8 @@ def route_est(d, conf):
         case _:
             route = 0
 
+    log.debug('route_est: request %s', d)
+
     return route
 
 
@@ -185,6 +193,8 @@ def routing_lane(d, cnf):
             #r = routing_fleet(d, cnf)
         case _:
             r = 0
+
+    log.debug('routing_est: request %s', d)
 
     return r
 
