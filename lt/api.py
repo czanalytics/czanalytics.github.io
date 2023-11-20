@@ -66,13 +66,13 @@ class price(Resource):
 
         req = request.json
         mod = conf["model"]["price"]
-        p, p_lo, p_hi, meta = price_est(req, mod) # !
+        p, p_lo, p_hi, doc = price_est(req, mod) # !
 
         msg = {
             'price': p, 'price_lo': p_lo, 'price_hi': p_hi,
             'model': mod,
             'datetime': datetime.now(),
-            'meta': meta,
+            'doc': doc,
             'req': req
         }
         return jsonify(msg)
@@ -82,13 +82,13 @@ class price(Resource):
 
         req = request.json
         mod = conf["model"]["price"]
-        p, p_lo, p_hi, meta = price_est(req, mod) # !
+        p, p_lo, p_hi, doc = price_est(req, mod) # !
 
         msg = {
             'price': p, 'price_lo': p_lo, 'price_hi': p_hi,
             'model': mod,
             'datetime': datetime.now(),
-            'meta': meta,
+            'doc': doc,
             'req': req
         }
         return jsonify(msg)
@@ -103,13 +103,13 @@ class eta(Resource):
 
         req = request.json
         mod = conf["model"]["eta"]
-        t, t_lo, t_hi, meta = eta_est(req, mod) # !
+        t, t_lo, t_hi, doc = eta_est(req, mod) # !
 
         msg = {
             'eta': t, 'eta_lo': t_lo, 'eta_hi': t_hi,
             'model': mod,
             'datetime': datetime.now(),
-            'meta': meta,
+            'doc': doc,
             'req': req
         }
         return jsonify(msg)
@@ -120,13 +120,13 @@ class eta(Resource):
 
         req = request.json
         mod = conf["model"]["eta"]
-        t, t_lo, t_hi, meta = eta_est(req, mod) # !
+        t, t_lo, t_hi, doc = eta_est(req, mod) # !
 
         msg = {
             'eta': t, 'eta_lo': t_lo, 'eta_hi': t_hi,
             'model': mod,
             'datetime': datetime.now(),
-            'meta': meta,
+            'doc': doc,
             'req': req
         }
         return jsonify(msg)
@@ -141,13 +141,13 @@ class co(Resource):
 
         req = request.json
         mod = conf["model"]["co"]
-        co, co_lo, co_hi, meta = co_est(req, mod) # !
+        co, co_lo, co_hi, doc = co_est(req, mod) # !
 
         msg = {
             'co': co, 'co_lo': co_lo, 'co_hi': co_hi,
             'model': mod,
             'datetime': datetime.now(),
-            'meta': meta,
+            'doc': doc,
             'req': req
         }
         return jsonify(msg)
@@ -158,13 +158,13 @@ class co(Resource):
 
         req = request.json
         mod = conf["model"]["co"]
-        co, co_lo, co_hi, meta = co_est(req, mod) # !
+        co, co_lo, co_hi, doc = co_est(req, mod) # !
 
         msg = {
             'co': co, 'co_lo': co_lo, 'co_hi': co_hi,
             'model': mod,
             'datetime': datetime.now(),
-            'meta': meta,
+            'doc': doc,
             'req': req
         }
         return jsonify(msg)
@@ -179,12 +179,13 @@ class route(Resource):
 
         req = request.json
         cnf = conf["route"]
-        route = route_est(req, cnf) # !
+        route, doc = route_est(req, cnf) # !
 
         msg = {
-            'route_conf': route,
-            'route': cnf,
+            'route_conf': cnf,
+            'route': 0,
             'datetime': datetime.now(),
+            'doc': doc,
             'req': req
         }
         return jsonify(msg)
@@ -195,12 +196,13 @@ class route(Resource):
 
         req = request.json
         cnf = conf["route"]
-        route = route_est(req, cnf) # !
+        route, doc = route_est(req, cnf) # !
 
         msg = {
-            'route_conf': route,
-            'route': cnf,
+            'route_conf': cnf,
+            'route': 0,
             'datetime': datetime.now(),
+            'doc': doc,
             'req': req
         }
         return jsonify(msg)
@@ -215,12 +217,13 @@ class routing(Resource):
 
         req = request.json
         cnf = conf["routing"]
-        r = routing_lane(req, cnf) # !
+        r, doc = routing_lane(req, cnf) # !
 
         msg = {
             'routing_conf': cnf,
             'routing': r,
             'datetime': datetime.now(),
+            'doc': doc,
             'req': req
         }
         return jsonify(msg)
@@ -231,12 +234,13 @@ class routing(Resource):
 
         req = request.json
         cnf = conf["routing"]
-        r = routing_lane(req, cnf) # !
+        r, doc = routing_lane(req, cnf) # !
 
         msg = {
             'routing_conf': cnf,
             'routing': r,
             'datetime': datetime.now(),
+            'doc': doc,
             'req': req
         }
         return jsonify(msg)

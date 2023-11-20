@@ -77,7 +77,7 @@ api_model() {
  mepalo="paris-london"
  mepaam="paris-amsterdam"
 
- dtemp='{"id":"%s", "da":"%s", "lat1":%s, "lon1":%s, "lat2":%s, "lon2":%s, "meta":"%s"}\n' # careful
+ dtemp='{"id":"%s", "da":"%s", "lat1":%s, "lon1":%s, "lat2":%s, "lon2":%s, "doc":"%s"}\n' # careful
 
  d1=$(printf  "$dtemp" "$id" "$da" "$lapa" "$lopa" "$lawa" "$lowa" "$mepawa")
  d2=$(printf  "$dtemp" "$id" "$da" "$lapa" "$lopa" "$labe" "$lobe" "$mepabe")

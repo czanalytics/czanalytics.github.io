@@ -59,7 +59,7 @@ conf_config = {'config': 'foo'} # manage (multiple)config files, pricing
 conf_status = {'status': 'foo'}
 conf_report = {'report': 'foo'}
 
-conf = {'version':  0.45,
+conf = {'version':  0.47,
         'app_ip':   '0.0.0.0',
         'app_port': 3333,
         'schema':   conf_schema,
@@ -97,22 +97,22 @@ def price_est(d, mod):
     """
     match mod:
         case 'price_simple':
-            p, p_lo, p_hi, meta = price_simple(d)
+            p, p_lo, p_hi, doc = price_simple(d)
         case 'price_lite':
-            p, p_lo, p_hi, meta = price_lite(d)
+            p, p_lo, p_hi, doc = price_lite(d)
         case 'price_gam':
-            p, p_lo, p_hi, meta = 0, 0, 0, 0
-            #p, p_lo, p_hi, meta = price_gam(d)
+            p, p_lo, p_hi, doc = 0, 0, 0, ""
+            #p, p_lo, p_hi, doc = price_gam(d)
         case 'price_automl':
-            p, p_lo, p_hi, meta = 0, 0, 0, 0
-            #p, p_lo, p_hi, meta = price_automl(d)
+            p, p_lo, p_hi, doc = 0, 0, 0, ""
+            #p, p_lo, p_hi, doc = price_automl(d)
         case _:
-            p, p_lo, p_hi, meta = 0, 0, 0, 0
+            p, p_lo, p_hi, doc = 0, 0, 0, ""
             #log.ERROR('unknown model') # fails
 
     log.debug('price_est: request %s', d)
 
-    return round(p), round(p_lo), round(p_hi), meta
+    return p+0.01, p_lo+0.01, p_hi+0.01, doc
 
 
 def eta_est(d, mod):
@@ -122,18 +122,18 @@ def eta_est(d, mod):
     # structural pattern mathing, https://peps.python.org/pep-0622/
     match mod:
         case 'eta_simple':
-            t, t_lo, t_hi, meta = eta_simple(d)
+            t, t_lo, t_hi, doc = eta_simple(d)
         case 'eta_lite':
-            t, t_lo, t_hi, meta = eta_lite(d)
+            t, t_lo, t_hi, doc = eta_lite(d)
         case 'eta_gam':
-            t, t_lo, t_hi, meta = 0, 0, 0, 0
-            #t, t_lo, t_hi, meta = eta_gam(d)
+            t, t_lo, t_hi, doc = 0, 0, 0, ""
+            #t, t_lo, t_hi, doc = eta_gam(d)
         case _:
-            t, t_lo, t_hi, meta = 0, 0, 0, 0
+            t, t_lo, t_hi, doc = 0, 0, 0, ""
 
     log.debug('eta_est: request %s', d)
 
-    return round(t, 1), round(t_lo, 1), round(t_hi, 1), meta
+    return t+0.01, t_lo+0.01, t_hi+0.01, doc
 
 
 def co_est(d, mod):
@@ -142,19 +142,19 @@ def co_est(d, mod):
     """
     match mod:
         case 'co_simple':
-            co, co_lo, co_hi, meta = co_simple(d)
+            co, co_lo, co_hi, doc = co_simple(d)
         case 'co_lite':
-            co, co_lo, co_hi, meta = 0, 0, 0, 0
-            #co, co_lo, co_hi, meta = co_lite(d)
+            co, co_lo, co_hi, doc = 0, 0, 0, ""
+            #co, co_lo, co_hi, doc = co_lite(d)
         case 'co_gam':
-            co, co_lo, co_hi, meta = 0, 0, 0, 0
-            #co, co_lo, co_hi, meta = co_gam(d)
+            co, co_lo, co_hi, doc = 0, 0, 0, ""
+            #co, co_lo, co_hi, doc = co_gam(d)
         case _:
-            co, co_lo, co_hi, meta = 0, 0, 0, 0
+            co, co_lo, co_hi, doc = 0, 0, 0, ""
 
     log.debug('co_est: request %s', d)
 
-    return round(co), round(co_lo), round(co_hi), meta
+    return co+0.01, co_lo+0.01, co_hi+0.01, doc
 
 
 def route_est(d, conf):
@@ -173,9 +173,10 @@ def route_est(d, conf):
         case _:
             route = 0
 
+    doc = ""
     log.debug('route_est: request %s', d)
 
-    return route
+    return route, doc
 
 
 def routing_lane(d, cnf):
@@ -194,9 +195,10 @@ def routing_lane(d, cnf):
         case _:
             r = 0
 
+    doc = ""
     log.debug('routing_est: request %s', d)
 
-    return r
+    return r, doc
 
 
 def config_lane(d, cnf):
@@ -287,10 +289,12 @@ def price_gam(d, price_km=2, price_min=50, err=0.1):
     log.debug('from: %s', from_reg)
     log.debug('to  : %s', to_reg)
 
-    p, p_lo, p_hi, meta = 0, 0, 0, 0
+    p, p_lo, p_hi = 0, 0, 0
     #p, p_lo, p_hi = pridict(model, df)
 
-    return round(p), round(p_lo), round(p_hi), meta
+    doc = ""
+
+    return round(p, 1), round(p_lo, 1), round(p_hi, 1), doc
 
 
 def price_simple(d, price_km=2, to_road_dist=1.2, price_min=20, err=0.15):
@@ -305,9 +309,9 @@ def price_simple(d, price_km=2, to_road_dist=1.2, price_min=20, err=0.15):
     p_lo = p - p * err
     p_hi = p + p * err
 
-    meta = 0
+    doc = ""
 
-    return round(p), round(p_lo), round(p_hi), meta
+    return round(p, 1), round(p_lo, 1), round(p_hi, 1), doc
 
 
 def price_lite(d, price_km=2, price_min=50, err=0.1):
@@ -317,9 +321,9 @@ def price_lite(d, price_km=2, price_min=50, err=0.1):
     """
     r = nuts_intel(d, dd, dp)
 
-    p, p_lo, p_hi, meta = price_nuts(r)
+    p, p_lo, p_hi, doc = price_nuts(r)
 
-    return round(p), round(p_lo), round(p_hi), meta
+    return round(p, 1), round(p_lo, 1), round(p_hi, 1), doc
 
 
 def eta_simple(d, v=80, to_road_dist=1.2, err=0.15):
@@ -333,8 +337,9 @@ def eta_simple(d, v=80, to_road_dist=1.2, err=0.15):
     t_lo = t - t * err
     t_hi = t + t * err
 
-    meta = 0
-    return round(t, 1), round(t_lo, 1), round(t_hi, 1), meta
+    doc = ""
+
+    return round(t, 1), round(t_lo, 1), round(t_hi, 1), doc
 
 
 def eta_lite(d, v=80, err=0.10):
@@ -343,12 +348,12 @@ def eta_lite(d, v=80, err=0.10):
     using EU transportation data for NUTS regions.
     """
     r = nuts_intel(d, dd, dp)
-    t, t_lo, t_hi, meta = eta_nuts(r)
+    t, t_lo, t_hi, doc = eta_nuts(r)
 
-    return round(t, 1), round(t_lo, 1), round(t_hi, 1), meta
+    return round(t, 1), round(t_lo, 1), round(t_hi, 1), doc
 
 
-def co_simple(d, c=100, to_road_dist=1.2, err=0.2):
+def co_simple(d, c=100.0, to_road_dist=1.2, err=0.2):
     """
     Simplistic transportation CO2 [g] estimate
     distance d [km], CO2/km c [g/km]
@@ -361,27 +366,9 @@ def co_simple(d, c=100, to_road_dist=1.2, err=0.2):
     co_lo = co - co * err
     co_hi = co + co * err
 
-    meta = 0
+    doc = ""
 
-    return round(co), round(co_lo), round(co_hi), meta
-
-
-def co_simple(d, c=100, err=0.2):
-    """
-    Simplistic transportation CO2 [g] estimate
-    distance d [km], CO2/km c [g/km]
-    """
-    ln = dist(d)
-
-    c = d.get('co', c) # get co from the dict d, or use the default value c
-
-    co = c * ln
-    co_lo = co - co * err
-    co_hi = co + co * err
-
-    meta = 0
-
-    return round(co), round(co_lo), round(co_hi), meta
+    return round(co, 1), round(co_lo, 1), round(co_hi, 1), doc
 
 
 def route_streetmap(d, conf):
@@ -440,6 +427,8 @@ def nuts_intel(d, dd, dp):
   Access price data using closest NUTS2-region, dd.
   1st NUTS3 (from, to) regions are determined from (lat, lon)
   """
+  x = 0.01
+
   nc1 = closest_nuts(dd, lat=d["lat1"], lon=d["lon1"]) # NUTS3
   nc2 = closest_nuts(dd, lat=d["lat2"], lon=d["lon2"])
   n1 = nc1['id_nuts'].values[0][0:4]  # NUTS3 nuts NUTS2 conversion
@@ -454,21 +443,21 @@ def nuts_intel(d, dd, dp):
   r['lane_db'] = d.get('da', d.get('da'))
   r['lane_ta'] = d.get('ta', '00:00')
   r['lane_tb'] = d.get('tb', '24:00')
-  r['lane_err1'] = d1 # add metadata
-  r['lane_err2'] = d2
-  r['lane_dist'] = dist({'lat1': d["lat1"], 'lon1': d["lon1"], 'lat2':d["lat2"], 'lon2':d["lon2"]})
+  r['lane_err1'] = d1+x # add metadata
+  r['lane_err2'] = d2+x
+  r['lane_dist'] = dist({'lat1': d["lat1"], 'lon1': d["lon1"], 'lat2':d["lat2"], 'lon2':d["lon2"]})+x
 
   # round response data
-  r['all_distancecosts'] = round_base(r['all_distancecosts'])
-  r['all_timecosts'] =  round_base(r['all_timecosts'])
-  r['distance_geodesic'] = round(r['distance_geodesic'])
-  r['distance_road'] = round(r['distance_road'])
-  r['fuel'] = round(r['fuel'])
-  r['taxes'] = round_base(r['taxes'])
-  r['tolls'] = round_base(r['tolls'])
-  r['total_cost'] = round_base(r['total_cost'])
-  r['vignettecost'] = round_base(r['vignettecost'])
-  r['wages'] = round_base(r['wages'], 5)
+  r['all_distancecosts'] = round_base(r['all_distancecosts'])+x
+  r['all_timecosts'] =  round_base(r['all_timecosts'])+x
+  r['distance_geodesic'] = round(r['distance_geodesic'])+x
+  r['distance_road'] = round(r['distance_road'])+x
+  r['fuel'] = round(r['fuel'])+x
+  r['taxes'] = round_base(r['taxes'])+x
+  r['tolls'] = round_base(r['tolls'])+x
+  r['total_cost'] = round_base(r['total_cost'])+x
+  r['vignettecost'] = round_base(r['vignettecost'])+x
+  r['wages'] = round_base(r['wages'], 5)+x
 
   return r
 
@@ -478,23 +467,26 @@ def round_base(x, base=5):
   Round x to closest integer using base.
   For example round_base(123, 5)=125.
   """
-  return base * round(x / base)
+  xx = base * round(x / base)
+
+  return round(xx, 1)
 
 
 def price_nuts(r, err_p=0.10, base=10, price_min=20):
   """
   Estimate price [EUR] from NUT2 region to other
   """
+  x = 0.01
   c = corr_price(r) # correction components
 
   r['lane_corr'] = "['corr_dist', 'corr_fuel', 'corr_index', 'corr_tight']"
 
-  corr_dist  = round(r.get('distance_road') * (c.get('corr_dist')  - 1.00))
-  corr_fuel  = round(r.get('fuel')          * (c.get('corr_fuel')  - 1.00))
-  corr_index = round(r.get('total_cost')    * (c.get('corr_index') - 1.00))
-  corr_month = round(r.get('total_cost')    * (c.get('corr_month') - 1.00))
-  corr_day   = round(r.get('total_cost')    * (c.get('corr_day')   - 1.00))
-  corr_rush  = round(r.get('total_cost')    * (c.get('corr_rush')  - 1.00))
+  corr_dist  = round(r.get('distance_road') * (c.get('corr_dist')  - 1.00))+x
+  corr_fuel  = round(r.get('fuel')          * (c.get('corr_fuel')  - 1.00))+x
+  corr_index = round(r.get('total_cost')    * (c.get('corr_index') - 1.00))+x
+  corr_month = round(r.get('total_cost')    * (c.get('corr_month') - 1.00))+x
+  corr_day   = round(r.get('total_cost')    * (c.get('corr_day')   - 1.00))+x
+  corr_rush  = round(r.get('total_cost')    * (c.get('corr_rush')  - 1.00))+x
 
   corr_tot = corr_dist + corr_fuel + corr_index + corr_rush
   corr_tot = corr_tot.iloc[0]
@@ -517,10 +509,10 @@ def price_nuts(r, err_p=0.10, base=10, price_min=20):
 
   r['lane_err']        = "['err_base', 'err_dist', 'err_loc', 'err_future']"
 
-  err_base   = round_base(p * e.get('err_base'))
-  err_dist   = round_base(p * e.get('err_dist') / r.get('distance_road'))
-  err_loc    = round_base(p * e.get('err_loc')  / r.get('distance_road'))
-  err_future = round_base(p * e.get('err_future'))
+  err_base   = round_base(p * e.get('err_base'))+x
+  err_dist   = round_base(p * e.get('err_dist') / r.get('distance_road'))+x
+  err_loc    = round_base(p * e.get('err_loc')  / r.get('distance_road'))+x
+  err_future = round_base(p * e.get('err_future'))+x
 
   err = err_base + err_dist + err_loc + err_future
   err = err.iloc[0]
@@ -530,31 +522,30 @@ def price_nuts(r, err_p=0.10, base=10, price_min=20):
   r['lane_err_loc']    = err_loc
   r['lane_err_future'] = err_future
 
-  #err = float(r.get('lane_err_base')) + float(r.get('lane_err_dist')) + float(r.get('lane_err_loc'))  + float(r.get('lane_err_future'))
-
-  r['lane_err_tot'] = round_base(err)
+  r['lane_err_tot'] = round_base(err)+x
 
   p_lo = max(price_min, p - err)
   p_hi = p + err
 
-  log.debug('price = %s (%s, %s)', round(p), round(p_lo), round(p_hi))
+  log.debug('price = %s (%s, %s)', round(p, 1), round(p_lo, 1), round(p_hi, 1))
 
-  meta = r.to_dict("records")
+  doc = r.to_dict("records")
 
-  return round_base(p, base), round_base(p_lo, base), round_base(p_hi, base), meta
+  return round_base(p, base), round_base(p_lo, base), round_base(p_hi, base), doc
 
 
 def eta_nuts(r, err_p = 0.15):
   """
   Estimate time on road [h] from NUTS2 region to other
   """
-  t = r['time_road'].values[0]
-  t_lo = t - err_p * t
-  t_hi = t + err_p * t
+  x = 0.01
+  t = r['time_road'].values[0]+x
+  t_lo = t - err_p * t + x
+  t_hi = t + err_p * t + x
 
-  meta = r.to_dict("records")
+  doc = r.to_dict("records")
 
-  return round(t, 1), round(t_lo, 1), round(t_hi, 1), meta
+  return round(t, 1), round(t_lo, 1), round(t_hi, 1), doc
 
 
 def corr_price(r):
@@ -626,14 +617,14 @@ def err_price(r):
   dur_days = dur.days
   dur_weeks  = round(dur_days/7, 1)
 
+  x = 0.001
   corr_dist  =  r.get('lane_dist') / r.get('distance_geodesic')
-
-  err_base   = 0.10 + dur_weeks * 0.0001 # default
-  err_dist   = abs(corr_dist - 1.00) * r.get('distance_road')  # km
-  err_loc    = (r.get('lane_err1') + r.get('lane_err2')) / 2   # km 
-  err_prior  = 0.00
-  err_env    = 0.00 # TBD weather, for ETA estimates too!
-  err_future = 0.00 # weeks in future
+  err_base   = 0.10 + dur_weeks * 0.0001+0.01 # default
+  err_dist   = abs(corr_dist - 1.00) * r.get('distance_road')+x  # km
+  err_loc    = (r.get('lane_err1') + r.get('lane_err2')) / 2 +x  # km 
+  err_prior  = 0.00 + x
+  err_env    = 0.00 + x# TBD weather, for ETA estimates too!
+  err_future = 0.00 + x# weeks in future
 
   errs = {
       "err_base":err_base, "err_dist":err_dist, "err_loc": err_loc,
