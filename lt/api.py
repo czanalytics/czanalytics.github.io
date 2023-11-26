@@ -216,10 +216,11 @@ class routing(Resource):
         #key_check(request.headers.get('Api-Key'))
 
         req = request.json
-        cnf = conf["routing"]
+        cnf = conf["routing"]["service"]
         r, doc = routing_lane(req, cnf) # !
 
         msg = {
+            'version': conf["version"],
             'routing_conf': cnf,
             'routing': r,
             'datetime': datetime.now(),
@@ -233,10 +234,11 @@ class routing(Resource):
         #key_check(request.headers.get('Api-Key'))
 
         req = request.json
-        cnf = conf["routing"]
+        cnf = conf["routing"]["service"]
         r, doc = routing_lane(req, cnf) # !
 
         msg = {
+            'version': conf["version"],
             'routing_conf': cnf,
             'routing': r,
             'datetime': datetime.now(),

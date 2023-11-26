@@ -202,13 +202,21 @@ api_deploy() {
  echo "time elapsed `expr $t1 - $t0` sec."
 }
 
-o1='{"agents": [[52.3676, 4.9041, 6, 1, "a1ams"], [45.764, 4.8357, 3, 2, "a2lyo"]],
- "drops": [[45.764, 4.8357, [1, 2, 3, 4], [1, 2], "lyon"],
-           [44.9334, 4.8924, [5, 6], [2], "valence"],
-           [43.2965, 5.3698, [7, 8], [2], "marseille"]],
- "order": {"da": "23-11-06", "id": "231106-0"},
- "picks": [[52.3676, 4.9041, [1, 2, 3, 4, 5], [1], "amsterdam"],
-           [52.0907, 5.1214, [6, 7, 8], [1], "utrecht"]]}'
+o0='{"agents": [{"lat": 1, "lon": 2}, {"lat":3, "lon":4}],
+"drops": [{"x":1, "y":3, "z": [1,2,3]}]}'
+
+o2='{"agents": [{"lat": 52.3676, "lon": 4.9041, "cap": 6, "id": 1, "doc": "a1ams"}, 
+                {"lat": 45.764, "lon": 4.8357, "cap": 3, "id": 2, "doc": "a2lyo"}]}'
+
+o1='{
+ "order":   {"da": "23-11-23", "id": "231123-0", "ta": "10:00", "tb": "12:00", "doc": "priority client"},
+ "agents": [{"lat": 52.3676, "lon": 4.9041, "cap": 6, "id": 1, "doc": "a1ams"}, 
+            {"lat": 45.764,  "lon": 4.8357, "cap": 3, "id": 2, "doc": "a2lyo"}],
+ "picks":  [{"lat": 52.3676, "lon": 4.9041, "ids": [1, 2, 3, 4, 5], "ags": [1],    "doc": "amsterdam"},
+            {"lat": 52.0907, "lon": 5.1214, "ids": [6, 7, 8],       "ags": [1],    "doc": "utrecht"}],
+ "drops":  [{"lat": 45.764,  "lon": 4.8357, "ids": [1, 2, 3, 4],    "ags": [1, 2], "doc": "lyon"},
+            {"lat": 44.9334, "lon": 4.8924, "ids": [5, 6],          "ags": [2],    "doc": "valence"},
+            {"lat": 43.2965, "lon": 5.3698, "ids": [7, 8],          "ags": [2],    "doc": "marseille"}]}'
 
 api_cloud() {
  echo "test the deployed api"
@@ -312,7 +320,7 @@ api_route() {
 # }
 #
 api_routing() {
- echo "Routing for cargo (pick, drop)-network."
+ echo "Routing for cargo (pick, drop) -network."
  echo "fn:"${FUNCNAME[*]}
  echo $(date)
  t0=$(date +%s)
@@ -337,14 +345,16 @@ api_routing() {
  dr1=$(printf "$template" "$id" "$da" "$lat1" "$lon1" "$lat2" "$lon2")
  dr2=$d2 # testing price-calculator payload 
 
- curl -H "$key" -s "$url"/api/routing | "$pp" 
+ #curl -H "$key" -s "$url"/api/routing | "$pp" 
 
  for i in {1..2}
  do
    di="dr$i"        # test selected
    d=$(echo ${!di}) # evaluated
    
-   curl -s -X GET -H "$ct" -H "$key" $url/api/routing --data "$d" | "$pp"
+    curl -s -X POST -H "$ct" $url/api/routing --data "$o1" | "$pp"
+   #curl -s -X POST -H "$ct" $url/api/routing --data "$d" | "$pp"
+   #curl -s -X GET -H "$ct" -H "$key" $url/api/routing --data "$d" | "$pp"
  done
 
  set +x

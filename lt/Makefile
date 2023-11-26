@@ -1,6 +1,9 @@
 # Makefile for WSL2 Ubuntu bash-shell 
-# 
-# Example: cd <project> make server > make browse 
+# Some of the targets work in Windows (PowerShell PS> bash.exe) 
+#
+# Usage: make api_local
+#        make api_*
+#        make server > make browse 
 # 
 BROWSER  := google-chrome
 BROWSER0 := explorer.exe

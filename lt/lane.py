@@ -59,7 +59,7 @@ conf_config = {'config': 'foo'} # manage (multiple)config files, pricing
 conf_status = {'status': 'foo'}
 conf_report = {'report': 'foo'}
 
-conf = {'version':  0.47,
+conf = {'version':  0.48,
         'app_ip':   '0.0.0.0',
         'app_port': 3333,
         'schema':   conf_schema,
@@ -179,24 +179,25 @@ def route_est(d, conf):
     return route, doc
 
 
-def routing_lane(d, cnf):
+def routing_lane(d, mod):
     """
     Dispatch selected routing service
     """
-    match cnf["service"]:
+    match mod:
         case 'routing_consolidate':
-            r = routing_consolidate(d, cnf)
+            r = routing_consolidate(d, 0)
         case 'routing_multimodal':
             r = 0
-            #routing = routing_multimodal(d, cnf)
+            #routing = routing_multimodal(d, 0)
         case 'routing_fleet':
             r = 0
-            #r = routing_fleet(d, cnf)
+            #r = routing_fleet(d, 0)
         case _:
             r = 0
 
     doc = ""
     log.debug('routing_est: request %s', d)
+    log.debug('routing_est: r %s', r)
 
     return r, doc
 
