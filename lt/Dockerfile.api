@@ -29,6 +29,7 @@ RUN pip install pandas
 RUN pip install numpy
 RUN pip install geopy
 RUN pip install datetime
+RUN pip install geopy
 
 EXPOSE 3333
 

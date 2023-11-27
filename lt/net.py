@@ -1,6 +1,8 @@
 # net.py
 
 import numpy as np
+import pandas as pd
+from geopy.distance import geodesic
 
 def routing_conf():
   """
@@ -25,7 +27,63 @@ def routing_conf():
   return {'order':order, 'picks':picks, 'drops':drops, 'agents':agents}
 
 
-def links(a, dd, dp):
+def closest_nuts0(d, lat, lon):
+  """
+  Find the NUTS region closest to (lat, lon)
+  """
+  #from scipy.spatial.distance import pdist
+  from geopy.distance import geodesic
+  #import numpy as np
+
+  la = lat
+  lo = lon
+
+  def dist(r, la, lo):
+    loc1 = (la, lo)
+    loc2 = (r['lat'], r['lon'])
+    try:
+      ds = (geodesic(loc1, loc2).kilometers)
+    except Exception as e:
+      log.ERROR(e.message)
+
+    return ds
+
+  d['dist'] = d.apply(lambda r: dist(r, la, lo), axis = 1)
+  d = d.round({'dist':0})
+  dd = d.sort_values(by = ['dist'])
+  return dd[:1] # dd[1:6]
+
+
+def nuts_intel0(dd, dp, lat1, lon1, lat2, lon2):
+  """
+  Access price data using closest NUTS2-region, dd.
+  1st NUTS3 (from, to) regions are determined from (lat, lon).
+  """
+  nc1 = closest_nuts0(dd, lat=lat1, lon=lon1) # NUTS3 centroid
+  nc2 = closest_nuts0(dd, lat=lat2, lon=lon2)
+
+  #print("nc", nc1)
+
+  n1 = nc1['id_nuts'].values[0][0:4]  # NUTS3 nuts NUTS2 conversion
+  n2 = nc2['id_nuts'].values[0][0:4]  # pick 4 first letters
+
+  dp1 = dp[dp['start_nuts'] == n1 ] # filter
+  dp2 = dp1[dp1['end_nuts'] == n2].copy() # !
+
+  d1 = nc1['dist'].values[0]
+  d2 = nc2['dist'].values[0]
+
+  #print(d1)
+
+  dp2['err1'] = d1 # ok since previous copy()
+  dp2['err2'] = d2
+
+  #print(dp2)
+
+  return dp2
+
+
+def links0(a, dd, dp):
   """
   Find routing network links between locations 1 and 2.
   Input a = (lat1, lon1, n1, a1, c1, p1, d1,
@@ -36,16 +94,17 @@ def links(a, dd, dp):
   lat1 = a[0]; lon1 = a[1]; loc1 = a[2]
   lat2 = a[7]; lon2 = a[8]; loc2 = a[9]
 
-  #print("lane", a)
+  #print("\n lane", a)
 
   r = 0 # default
   try:
-    r = nuts_intel(dd, dp, lat1, lon1, lat2, lon2) # the slow part
-    #display(r)
+    r = nuts_intel0(dd, dp, lat1, lon1, lat2, lon2) # the slow part
   except:
     pass
 
-  #p1 = np.array(a[4]).tolist() # ok
+  print("r", r)
+
+  p1 = np.array(a[4]).tolist() # ok
 
   a1 = np.array(a[3]);  c1 = a[4];  p1 = np.array(a[5]); d1 = np.array(a[6])
   a2 = np.array(a[10]); c2 = a[11]; p2 = np.array(a[12]); d2 = np.array(a[13])
@@ -55,7 +114,7 @@ def links(a, dd, dp):
 
   time_road  = r.time_road.item()
 
-  #print(time_road)
+  print(time_road)
 
   a = np.array([loc1, start_nuts, lat1, lon1, a1, p1, d1, loc2, end_nuts, lat2, lon2, a2, p2, d2, time_road], dtype=object)
 
@@ -65,7 +124,7 @@ def links(a, dd, dp):
   return r
 
 
-def build_network(picks, drops, agents):
+def build_network(picks, drops, agents, dd, dp):
   """
   Build network with all location pairs for cargo picks and drops.
    (lat, lon, n, a, c, p, d) notation means
@@ -75,22 +134,40 @@ def build_network(picks, drops, agents):
   dnodes = [(dlat, dlon, dloc,     ag, 1, 0, du) for dlat, dlon, du, ag, dloc in drops]         # (loc,            0, [u1, u2, ..])
   anodes = [(alat, alon, aloc, np.nan, 0, 0,  0) for alat, alon,  u, ag, aloc in agents]        # (loc,           #u,            0)
 
+  print("dnodes----")
+  print(dnodes)
+
+  print("pnodes----")
+  print(pnodes)
+
+  print("anodes----")
+  print(anodes)
+
   nodes = pnodes + dnodes + anodes
+
+  #print("nodes----")
+  #print(nodes)
 
   # TODO: solve case where agent depo (drops=0, picks=0) overlaps with picks/drops > 0
 
-  lane_matrix = [(lat1, lon1, n1, a1, c1, p1, d1, lat2, lon2, n2, a2, c2, p2, d2) for (lat1, lon1, n1, a1, c1, p1, d1) in nodes for (lat2, lon2, n2, a2, c2, p2, d2) in nodes if n1 != n2]
-  print(lane_matrix) # all loc pairs
+  lane_matrix = [(lat1, lon1, n1, a1, c1, p1, d1, lat2, lon2, n2, a2, c2, p2, d2) for
+                 (lat1, lon1, n1, a1, c1, p1, d1) in nodes for
+                 (lat2, lon2, n2, a2, c2, p2, d2) in nodes if n1 != n2]
 
-  n = [links(link, dd, dp) for link in lane_matrix] # line-by-line
+  #print("matrix") # 
+  #print(lane_matrix) # all loc pairs
+
+  n = [links0(link, dd, dp) for link in lane_matrix] # line-by-line
+
   nn = pd.concat(n, ignore_index=True)
+  #nn = 0
 
   return nn
 
-
-def net_test():
+def net_test(dd, dp):
   """
   Test routing conf and building network.
+  dd and dp data frames, specigy NUTS reqions, see lane.py
   """
   r1 = routing_conf()
 
@@ -100,8 +177,19 @@ def net_test():
   print("drops:", r1['drops'])
   print("agents:", r1['agents'])
 
-  state1 = build_network(r1['picks'], r1['drops'], r1['agents']);
+  state1 = build_network(r1['picks'], r1['drops'], r1['agents'], dd, dp);
+
+  print ("\nconf:\n", r1)
+  print("\nnetwork:\n", state1)
+
   return r1, state1
 
-#net_test()
 
+# usage: python3 -c "import net; net.test()"
+def test():
+    dp = pd.read_csv("./tmp/nuts.csv") # data for lite-models
+    dd = pd.read_csv("./tmp/nuts_centroid.csv")
+
+    r, st = net_test(dd, dp)
+
+    return 0

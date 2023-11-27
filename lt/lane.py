@@ -11,9 +11,11 @@ import logging as log # log.debug/info/warning
 import json
 #import numpy as np
 import pandas as pd
-#from geopy.distance import geodesic
+from geopy.distance import geodesic
 import datetime
-import net
+
+#import net
+from net import net_test
 
 #import warnings
 #warnings.simplefilter(action='ignore', category=FutureWarning)
@@ -161,39 +163,43 @@ def route_est(d, conf):
     """
     Dispatch route estimation to requested service
     """
+    r0 = 0 # default
+
     match conf["service"]:
         case 'route_streetmap':
-            route = route_streetmap(d, conf)
+            r = route_streetmap(d, conf)
         case 'route_openroute':
-            route = 0
-            #route = route_openroute(d, conf)
+            #r = route_openroute(d, conf)
+            r = r0
         case 'route_googlemaps':
-            route = 0
-            #route = route_googlemaps(d, conf)
+            #r = route_googlemaps(d, conf)
+            r = r0
         case _:
-            route = 0
+            r = r0
 
     doc = ""
     log.debug('route_est: request %s', d)
 
-    return route, doc
+    return r, doc
 
 
 def routing_lane(d, mod):
     """
     Dispatch selected routing service
     """
+    r0 = 0 # default
+
     match mod:
         case 'routing_consolidate':
             r = routing_consolidate(d, 0)
         case 'routing_multimodal':
-            r = 0
-            #routing = routing_multimodal(d, 0)
+            #r = routing_multimodal(d, 0)
+            r = r0
         case 'routing_fleet':
-            r = 0
             #r = routing_fleet(d, 0)
+            r = r0
         case _:
-            r = 0
+            r = r0
 
     doc = ""
     log.debug('routing_est: request %s', d)
@@ -389,9 +395,15 @@ def routing_consolidate(d, cnf):
     Car-carriers, in coordination, collect/deliver cars.
     """
 
+    r0, st = net_test(dd, dp)
+
+    dd.to_csv("./net.csv", sep=',', index=False, encoding='utf-8')
+
+    log.debug('routing_consolidate: net %s', r0)
     r = 0
 
     return r
+    #return st # nan in df makes json fails?
 
 
 def closest_nuts(d, lat, lon):
@@ -432,8 +444,10 @@ def nuts_intel(d, dd, dp):
 
   nc1 = closest_nuts(dd, lat=d["lat1"], lon=d["lon1"]) # NUTS3
   nc2 = closest_nuts(dd, lat=d["lat2"], lon=d["lon2"])
+
   n1 = nc1['id_nuts'].values[0][0:4]  # NUTS3 nuts NUTS2 conversion
   n2 = nc2['id_nuts'].values[0][0:4]  # pick 4 first letters
+
   dp1 = dp[dp['start_nuts'] == n1 ] # filter
   r = dp1[dp1['end_nuts'] == n2].copy()
 
@@ -444,8 +458,10 @@ def nuts_intel(d, dd, dp):
   r['lane_db'] = d.get('da', d.get('da'))
   r['lane_ta'] = d.get('ta', '00:00')
   r['lane_tb'] = d.get('tb', '24:00')
+
   r['lane_err1'] = d1+x # add metadata
   r['lane_err2'] = d2+x
+
   r['lane_dist'] = dist({'lat1': d["lat1"], 'lon1': d["lon1"], 'lat2':d["lat2"], 'lon2':d["lon2"]})+x
 
   # round response data
@@ -459,6 +475,8 @@ def nuts_intel(d, dd, dp):
   r['total_cost'] = round_base(r['total_cost'])+x
   r['vignettecost'] = round_base(r['vignettecost'])+x
   r['wages'] = round_base(r['wages'], 5)+x
+
+  log.debug('nuts_intel = %s', r)
 
   return r
 
