@@ -187,6 +187,23 @@ api_local() {
 }
 
 
+api_docker_hub() {
+ echo "push image to docker hub"
+ echo "fn:"${FUNCNAME[*]}
+ echo $(date)
+ t0=$(date +%s)
+ set -x
+
+ docker tag lane czanalytics/lane
+ docker push czanalytics/lane
+ 
+ set +x
+ echo $(date)
+ t1=$(date +%s)
+ echo "time elapsed `expr $t1 - $t0` sec."
+}
+
+
 api_deploy() {
  echo "deploy api container"
  echo "fn:"${FUNCNAME[*]}
