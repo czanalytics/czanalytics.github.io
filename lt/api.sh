@@ -188,7 +188,7 @@ api_local() {
 
 
 api_docker_hub() {
- echo "push image to docker hub"
+ echo "push the image to docker hub"
  echo "fn:"${FUNCNAME[*]}
  echo $(date)
  t0=$(date +%s)

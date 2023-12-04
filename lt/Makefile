@@ -9,7 +9,7 @@ MAJOR?=0
 MINOR?=48
 VER=$(MAJOR).$(MINOR)
 
-APP = "lane2"
+APP = "lane"
 HUB = "czanaytics"
 DOCF = "Dockerfile"
 IMG = "${APP}"
