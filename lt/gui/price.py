@@ -4,7 +4,7 @@ import json
 
 from pyodide.http import pyfetch
 
-url = "https://violet-valleys.runblade.host"
+url = "https://chips-generating.runblade.host"
 
 async def login(email, pw):
     print('login')
