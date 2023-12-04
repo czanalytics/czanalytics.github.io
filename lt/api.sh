@@ -251,9 +251,8 @@ api_cloud() {
  #curl -H "$key" -s "$url"     | "$pp" 
  #curl -H "$key" -s "$url"/api | "$pp" 
 
- curl -s -X GET -H "$ct" $url/api/routing --data "$o1" | "$pp"
- 
- curl -s -X POST -H "$ct" $url/api/routing --data "$o1" | "$pp"
+ #curl -s -X GET -H "$ct" $url/api/routing --data "$o1" | "$pp" 
+ #curl -s -X POST -H "$ct" $url/api/routing --data "$o1" | "$pp"
  
  for i in {1..1}
  do
@@ -370,6 +369,7 @@ api_routing() {
    d=$(echo ${!di}) # evaluated
    
     curl -s -X POST -H "$ct" $url/api/routing --data "$o1" | "$pp"
+    curl -s -X GET  -H "$ct" $url/api/routing --data "$o1" | "$pp"
    #curl -s -X POST -H "$ct" $url/api/routing --data "$d" | "$pp"
    #curl -s -X GET -H "$ct" -H "$key" $url/api/routing --data "$d" | "$pp"
  done
