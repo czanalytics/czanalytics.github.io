@@ -63,7 +63,8 @@ conf_report = {'report': 'foo'}
 
 conf = {'version':  0.49,
         'app_ip':   '0.0.0.0',
-        'app_port': 3333,
+        #'app_port': 3333,
+        'app_port': 8888,
         'schema':   conf_schema,
         'data':     conf_data,
         'model':    conf_model,

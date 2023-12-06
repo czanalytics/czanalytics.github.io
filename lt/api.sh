@@ -143,12 +143,13 @@ api_local() {
  #ia=$1; ib=$2 # select the test data range [d$ia, d$ib]
  ia=1; ib=8
 
- ci="lane"     # image
- cn="$ci"_api  # container
+ ci="lane_dev" # image
+ cn="$ci"_api  # container name
  #ci="api"; cn="$ci"_con
 
  key="Api-Key: "`cat .key`
- ip="0.0.0.0"; p="3333"; url="http://$ip:$p"
+ #ip="0.0.0.0"; p="3333"; url="http://$ip:$p"
+ ip="0.0.0.0"; p="8888"; url="http://$ip:$p"
  
  ct="Content-type: application/json"
  pp="json_pp" # prettyprinter
@@ -162,6 +163,7 @@ api_local() {
  docker build -t $ci . -f Dockerfile.api --force-rm=true 
  #docker build -t $ci . -f Dockerfile."$ci" --force-rm=true 
  docker run -d -p $p:$p --name $cn $ci  # -d for detached mode in bg
+ 
  sleep 3
 
  #curl -H "$key" -s "$url"     | "$pp" # request pp with silent -s
@@ -192,10 +194,11 @@ api_docker_hub() {
  echo "fn:"${FUNCNAME[*]}
  echo $(date)
  t0=$(date +%s)
+ week=$(date +%V)
  set -x
 
- docker tag lane czanalytics/lane
- docker push czanalytics/lane
+ docker tag lane_dev czanalytics/lane:v0.$week
+ docker push czanalytics/lane:v0.$week
  
  set +x
  echo $(date)

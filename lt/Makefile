@@ -6,7 +6,7 @@
 #        make server > make browse 
 
 MAJOR?=0
-MINOR?=48
+MINOR?=$(date +%U)
 VER=$(MAJOR).$(MINOR)
 
 APP = "lane"
