@@ -115,7 +115,7 @@ api_kb() {
  docker stop $cn # clean
  docker rm   $cn
  docker rmi  $ci
-
+ 
  docker build -t $ci . -f Dockerfile."$ci" --force-rm=true 
  docker run -d -p $p:$p --name $cn $ci  # -d for detached mode in bg
  sleep 3
@@ -197,8 +197,13 @@ api_docker_hub() {
  week=$(date +%V)
  set -x
 
- docker tag lane_dev czanalytics/lane:v0.$week
- docker push czanalytics/lane:v0.$week
+ docker buildx build --no-cache -f Dockerfile.api --platform=linux/amd64,linux/arm64/v8 -t czanalytics/lane:v0.$week --push .
+ 
+ # docker buildx create --name multiarch --driver docker-container --use 
+ # docker buildx build --no-cache -f Dockerfile.api --platform=linux/amd64,linux/arm64/v8,linux/arm/v7 -t czanalytics/lane:latest --push .
+ 
+ #docker tag lane_dev czanalytics/lane:v0.$week
+ #docker push czanalytics/lane:v0.$week
  
  set +x
  echo $(date)
