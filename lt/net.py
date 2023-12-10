@@ -12,7 +12,7 @@ def routing_conf():
 
 
   """
-  order    = {'id':'231122-0', 'da':'23-11-22'}                              # required fields
+  order    = {'id':'231122-0', 'da':'2023-11-22'}                              # required fields
 
   picks    = [(52.367600,	4.90410,  [1, 2, 3, 4, 5], [1],    'amsterdam'), # OPTIONAL PLACE NAME
               (52.090700,	5.12140,  [6, 7, 8],       [1],    'utrecht')]

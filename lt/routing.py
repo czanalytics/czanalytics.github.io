@@ -10,7 +10,7 @@ def policy(id, order, picks, drops, agents):
   """
   Set routing policy for agents.
 
-  {'order': {'id': '230824-0', 'da': '23-08-26'},
+  {'order': {'id': '230824-0', 'da': '2023-08-26'},
    'picks':  [(52.3676, 4.9041, [1, 2, 3, 4, 5],    [1], 'amsterdam'),
               (52.0907, 5.1214, [6, 7, 8],          [1], 'utrecht')],
    'drops':  [(45.7640, 4.8357, [1, 2, 3, 4],    [1, 2], 'lyon'),
@@ -19,7 +19,7 @@ def policy(id, order, picks, drops, agents):
    'agents': [(52.3676, 4.9041, 6,                    1, 'a1ams'),
               (45.7640, 4.8357, 3,                    2, 'a2lyo')]}
    """
-  ver = 'v230829'
+  ver = 'v231211'
 
   ags  =     [id for (lat, lon, u, id, name) in agents]  # agent id list [1, 2]
   us   =     [u  for (lat, lon, u, id, name) in agents]  # agent capacity list [6, 3]
