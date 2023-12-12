@@ -61,7 +61,7 @@ conf_config = {'config': 'foo'} # manage (multiple)config files, pricing
 conf_status = {'status': 'foo'}
 conf_report = {'report': 'foo'}
 
-conf = {'version':  0.49,
+conf = {'version':  0.50,
         'app_ip':   '0.0.0.0',
         #'app_port': 3333,
         'app_port': 8888,
@@ -456,8 +456,8 @@ def nuts_intel(d, dd, dp):
   d2 = nc2['dist'].values[0]
 
   r['lane_da'] = d.get('da')
-  r['lane_db'] = d.get('da', d.get('da'))
-  r['lane_ta'] = d.get('ta', '00:00')
+  r['lane_db'] = d.get('db', d.get('da'))  # if db is missing use da
+  r['lane_ta'] = d.get('ta', '00:00') # 00:00 is default
   r['lane_tb'] = d.get('tb', '24:00')
 
   r['lane_err1'] = d1+x # add metadata
@@ -580,16 +580,18 @@ def corr_price(r):
   from datetime import date
   from datetime import datetime
 
-  current_date = date.today()
-
   da = r['lane_da'].values[0] # ok
 
-  yyyy = int("20" + da[0:2]); mm = int(da[3:5]); dd = int(da[6:8])
-  day = date(yyyy, mm, dd)
+  # YYYY-MM-DD
+  # 0123456789
+  yyyy = int(da[0:4]); mm = int(da[5:7]); dd = int(da[8:10]) # ! index?
+  #yyyy = int("20" + da[0:2]); mm = int(da[3:5]); dd = int(da[6:8])
 
-  dur = current_date - day
+  dur = date.today() - date(yyyy, mm, dd)
 
-  conf_lite = get_conf()
+  log.debug('corr_price: yyyy %s, mm %s, dd %s, dur %s', yyyy, mm, dd, dur.days)
+
+  conf_lite = get_conf() # json
   key_day = 4 # TBD
   key_month = 7
 
@@ -600,7 +602,7 @@ def corr_price(r):
   corr_hist  = 1.00
   corr_month = conf_lite["corr_month"][key_month]
   corr_day   = conf_lite["corr_day"][key_day]
-  corr_rush  = 1.00 + 0.05 / dur.days**2 # 1 day adds 5%, 2 days 1%, and 3- ~0% 
+  corr_rush  = 1.00 + 0.05 / (1 + abs(dur.days)**2) - 0.05 # 1 day adds 5%, 2 days 1%, and 3- ~0% 
   corr_tight = 1.00
 
   corrs = {
@@ -623,19 +625,18 @@ def err_price(r):
   from datetime import date
   from datetime import datetime
 
-  current_date = date.today()
-
   da = r['lane_da'].values[0] # ok
 
   #log.debug('da = %s', da)
 
-  yyyy = int("20" + da[0:2]); mm = int(da[3:5]); dd = int(da[6:8])
-  day = date(yyyy, mm, dd)
-  day = date(2020, 1, 1) # db age
+  yyyy = int(da[0:4]); mm = int(da[5:7]); dd = int(da[8:10])
+  #yyyy = int("20" + da[0:2]); mm = int(da[3:5]); dd = int(da[6:8])
 
-  dur = current_date - day
+  dur = date.today() - date(yyyy, mm, dd)
   dur_days = dur.days
   dur_weeks  = round(dur_days/7, 1)
+
+  log.debug('err_price: yyyy %s, mm %s, dd %s, dur %s', yyyy, mm, dd, dur.days)
 
   x = 0.001
   corr_dist  =  r.get('lane_dist') / r.get('distance_geodesic')

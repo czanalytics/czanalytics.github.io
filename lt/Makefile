@@ -27,6 +27,9 @@ URL      := http://0.0.0.0:8000
 SHELL    := /bin/bash
 D = ./tmp
 
+api_docker_hub:
+	source api.sh && api_docker_hub  2>&1 | tee $(D)/log-docker-hub.txt
+
 api_clean:
 	source api.sh && api_clean   2>&1 | tee $(D)/log-clean.txt
 
@@ -41,9 +44,6 @@ api_local:
 
 api_model:
 	source api.sh && api_model   2>&1 | tee $(D)/log-models.txt
-
-api_docker_hub:
-	source api.sh && api_docker_hub  2>&1 | tee $(D)/log-docker-hub.txt
 
 api_deploy:
 	source api.sh && api_deploy  2>&1 | tee $(D)/log-deploy.txt
