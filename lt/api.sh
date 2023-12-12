@@ -204,7 +204,10 @@ api_docker_hub() {
  
  #docker tag lane_dev czanalytics/lane:v0.$week
  #docker push czanalytics/lane:v0.$week
- 
+
+ # pulling
+ #docker run -dp 127.0.0.1:8888:8888 czanalytics/lane:v0.$week
+
  set +x
  echo $(date)
  t1=$(date +%s)
