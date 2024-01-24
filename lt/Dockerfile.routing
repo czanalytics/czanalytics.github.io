@@ -1,5 +1,5 @@
-# Dockerfile.routing for flask api
-# run 'make api_data' target 1st to prepare files in D-directory 
+# Dockerfile.routing for routing bundle api
+# run 'make api_bundle' target 1st to prepare files in D-directory 
 FROM python:3
 
 ADD .key /
@@ -16,7 +16,7 @@ ADD ${D}/nuts_centroid.csv /
 # ADD ${D}/<models> /
 
 ADD conf_lite.json /
-ADD api.py /
+ADD api_bundle.py /
 ADD lane.py /
 ADD net.py /
 
@@ -40,5 +40,5 @@ RUN pip install geopy
 
 #EXPOSE 3333
 
-CMD ["python", "./api.py"]
+CMD ["python", "./api_bundle.py"]
 

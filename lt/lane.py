@@ -61,10 +61,11 @@ conf_config = {'config': 'foo'} # manage (multiple)config files, pricing
 conf_status = {'status': 'foo'}
 conf_report = {'report': 'foo'}
 
-conf = {'version':  0.50,
+conf = {'version':  0.05,
         'app_ip':   '0.0.0.0',
         #'app_port': 3333,
         'app_port': 8888,
+        'bundle_port': 6666,
         'schema':   conf_schema,
         'data':     conf_data,
         'model':    conf_model,

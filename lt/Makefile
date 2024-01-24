@@ -30,6 +30,9 @@ D = ./tmp
 api_docker_hub:
 	source api.sh && api_docker_hub  2>&1 | tee $(D)/log-docker-hub.txt
 
+api_bundle:
+	source api.sh && api_bundle  2>&1 | tee $(D)/log-bundle.txt
+
 api_clean:
 	source api.sh && api_clean   2>&1 | tee $(D)/log-clean.txt
 

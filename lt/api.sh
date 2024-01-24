@@ -51,8 +51,9 @@ api_model() {
 # defaults: co=100, seg=1, (db,ta,tb)=(da,00:00,24:00)  
 
  id="231213-001"
- da="2023-12-13"
- 
+ da="2023-12-13" 
+ #da="23-12-13" # <=0.48
+
  laam=52.36760; loam=4.90410  # amsterdam
  lalo=51.50720; lolo=0.12760  # london ?NUTS-error?
  laco=55.67610; loco=12.56830 # copenhagen
@@ -124,6 +125,84 @@ api_kb() {
  curl -H "$key" -s "$url"/api | "$pp" 
  #curl -s -X GET -H "$ct" -H "$key" $url/api/dblist --data "$d" | "$pp"
  
+ set +x
+ docker logs -t $cn
+
+ echo $(date)
+ t1=$(date +%s)
+ echo "time elapsed `expr $t1 - $t0` sec."
+}
+
+
+o1='{
+ "order":   {"da": "2024-01-24", "id": "240124-0", "ta": "10:00", "tb": "12:00", "doc": "priority client"},
+ "agents": [{"lat": 52.3676, "lon": 4.9041, "cap": 6, "id": 1, "doc": "a1ams"}, 
+            {"lat": 45.764,  "lon": 4.8357, "cap": 3, "id": 2, "doc": "a2lyo"}],
+ "picks":  [{"lat": 52.3676, "lon": 4.9041, "ids": [1, 2, 3, 4, 5], "ags": [1],    "doc": "amsterdam"},
+            {"lat": 52.0907, "lon": 5.1214, "ids": [6, 7, 8],       "ags": [1],    "doc": "utrecht"}],
+ "drops":  [{"lat": 45.764,  "lon": 4.8357, "ids": [1, 2, 3, 4],    "ags": [1, 2], "doc": "lyon"},
+            {"lat": 44.9334, "lon": 4.8924, "ids": [5, 6],          "ags": [2],    "doc": "valence"},
+            {"lat": 43.2965, "lon": 5.3698, "ids": [7, 8],          "ags": [2],    "doc": "marseille"}]}'
+o2='{
+ "order":   {"da": "2024-02-01", "id": "240201-0", "ta": "10:00", "tb": "12:00", "doc": "priority client"},
+ "agents": [{"lat": 52.3676, "lon": 4.9041, "cap": 6, "id": 1, "doc": "a1ams"}, 
+            {"lat": 45.764,  "lon": 4.8357, "cap": 3, "id": 2, "doc": "a2lyo"}],
+ "picks":  [{"lat": 52.3676, "lon": 4.9041, "ids": [1, 2, 3, 4, 5], "ags": [1],    "doc": "amsterdam"},
+            {"lat": 52.0907, "lon": 5.1214, "ids": [6, 7, 8],       "ags": [1],    "doc": "utrecht"}],
+ "drops":  [{"lat": 45.764,  "lon": 4.8357, "ids": [1, 2, 3, 4],    "ags": [1, 2], "doc": "lyon"},
+            {"lat": 44.9334, "lon": 4.8924, "ids": [5, 6],          "ags": [2],    "doc": "valence"},
+            {"lat": 43.2965, "lon": 5.3698, "ids": [7, 8],          "ags": [2],    "doc": "marseille"}]}'
+
+api_bundle() { 
+ echo "test bundle api"
+ echo "fn:"${FUNCNAME[*]}
+ echo $(date)
+ t0=$(date +%s)
+ set -x # shell echo, set +x unsets
+ 
+ #ia=$1; ib=$2 # select the test data range [d$ia, d$ib]
+ ia=1; ib=8
+
+ ci="lane_bundle" # dev image
+ cn="$ci"_api  # container name
+ #ci="api"; cn="$ci"_con
+
+ key="Api-Key: "`cat .key`
+ #ip="0.0.0.0"; p="3333"; url="http://$ip:$p"
+ ip="0.0.0.0"; p="6666"; url="http://$ip:$p" # unique dev port
+ 
+ ct="Content-type: application/json"
+ pp="json_pp" # prettyprinter
+
+ # source api_data.sh # access weekly updated data
+
+ docker stop $cn # clean
+ docker rm   $cn
+ docker rmi  $ci
+
+ docker build -t $ci . -f Dockerfile.routing --force-rm=true 
+ #docker build -t $ci . -f Dockerfile."$ci" --force-rm=true 
+ docker run -d -p $p:$p --name $cn $ci  # -d for detached mode in bg
+ 
+ sleep 3
+
+ curl -H "$key" -s "$url"     | "$pp" # request pp with silent -s
+ curl -H "$key" -s "$url"/api | "$pp" 
+ 
+ for i in {1..1}
+ do
+   #di="o$i"          # test selected
+   #d=$(echo ${!di}) # evaluated
+
+   #curl -s -X GET -H "$ct" -H "$key" $url/api/price --data "$d" | "$pp"
+   #curl -s -X GET -H "$ct" -H "$key" $url/api/eta   --data "$d" | "$pp" 
+   #curl -s -X GET -H "$ct" -H "$key" $url/api/co    --data "$d" | "$pp"
+   # curl -s -X GET -H "$ct" -H "$key" $url/api/route --data "$d" | "$pp"
+
+   curl -s -X GET -H "$ct" $url/api/routing --data "$o1" | "$pp"
+   curl -s -X POST -H "$ct" $url/api/routing --data "$o2" | "$pp"
+ done
+
  set +x
  docker logs -t $cn
 
@@ -235,16 +314,6 @@ o0='{"agents": [{"lat": 1, "lon": 2}, {"lat":3, "lon":4}],
 
 o2='{"agents": [{"lat": 52.3676, "lon": 4.9041, "cap": 6, "id": 1, "doc": "a1ams"}, 
                 {"lat": 45.764, "lon": 4.8357, "cap": 3, "id": 2, "doc": "a2lyo"}]}'
-
-o1='{
- "order":   {"da": "2023-12-23", "id": "231223-0", "ta": "10:00", "tb": "12:00", "doc": "priority client"},
- "agents": [{"lat": 52.3676, "lon": 4.9041, "cap": 6, "id": 1, "doc": "a1ams"}, 
-            {"lat": 45.764,  "lon": 4.8357, "cap": 3, "id": 2, "doc": "a2lyo"}],
- "picks":  [{"lat": 52.3676, "lon": 4.9041, "ids": [1, 2, 3, 4, 5], "ags": [1],    "doc": "amsterdam"},
-            {"lat": 52.0907, "lon": 5.1214, "ids": [6, 7, 8],       "ags": [1],    "doc": "utrecht"}],
- "drops":  [{"lat": 45.764,  "lon": 4.8357, "ids": [1, 2, 3, 4],    "ags": [1, 2], "doc": "lyon"},
-            {"lat": 44.9334, "lon": 4.8924, "ids": [5, 6],          "ags": [2],    "doc": "valence"},
-            {"lat": 43.2965, "lon": 5.3698, "ids": [7, 8],          "ags": [2],    "doc": "marseille"}]}'
 
 api_cloud() {
  echo "test the deployed api"
