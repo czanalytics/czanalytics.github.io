@@ -1,0 +1,97 @@
+% pdp.pi pickup and delivery problem
+% shortest_dist from http://www.picat-lang.org/papers/ictai17.pdf
+
+import planner.
+
+% distance optimized
+table (+,+,min)
+shortest_dist(X,X,Dist) => 
+	Dist=0.
+shortest_dist(X,Y,Dist) =>
+	road(X,Z,DistXZ),
+	shortest_dist(Z,Y,DistZY),
+	Dist = DistXZ+DistZY.
+
+% target: no waiting or loaded cargo
+final({Trucks,[]}) => 
+  foreach([_Loc,Dests|_] in Trucks)
+    Dests == []
+  end.
+
+% unload cargo
+action({Trucks,Cargo},NextState,Action,ActionCost),
+select([Loc,Dests,Cap],Trucks,TrucksR),
+select(Loc,Dests,DestsR) => % unload deterministically
+	Action = $unload(Loc),
+	ActionCost = 1,
+	NewTrucks = insert_ordered(TrucksR,[Loc,DestsR,Cap]),
+	NextState = {NewTrucks,Cargo}.
+
+action({Trucks,Cargo},NextState,Action,ActionCost) ?=>
+	Action = $unload(Loc),
+	ActionCost = 1,
+	select([Loc,Dests,Cap],Trucks,TrucksR),
+	select(Dest,Dests,DestsR),
+	NewTrucks = insert_ordered(TrucksR,[Loc,DestsR,Cap]),
+	NewCargo = insert_ordered(Cargo,(Loc,Dest)),
+	NextState = {NewTrucks,NewCargo}.
+
+% load cargo
+action({Trucks,Cargo},NextState,Action,ActionCost) ?=>
+	Action = $load(Loc),
+	ActionCost = 1,
+	select([Loc,Dests,Cap],Trucks,TrucksR),
+	length(Dests) < Cap,
+	select((Loc,Dest),Cargo,CargoR), % cargo and truck in same location
+	NewTrucks = insert_ordered(TrucksR,[Loc,insert_ordered(Dests,Dest),Cap]),
+	NextState = {NewTrucks,CargoR}.
+
+% drive a truck from Loc to NextLoc
+action({Trucks,Cargo},NextState,Action,ActionCost) =>
+	Action = $move(Loc,NextLoc),
+	select([Loc|Tail],Trucks,TrucksR),
+	road(Loc,NextLoc,ActionCost),
+	NewTrucks = insert_ordered(TrucksR,[NextLoc|Tail]),
+	NextState = {NewTrucks,Cargo},
+	estimate_cost(NextState) =< current_resource()-ActionCost.
+
+% cost
+table
+estimate_cost({Trucks,Cargo}) = Cost =>
+	LoadedCargo = [(Loc,Dest) : [Loc,Dests,_] in Trucks, Dest in Dests],
+	NumLoadedCargo = length(LoadedCargo),
+	TruckLocs = [Loc : [Loc|_] in Trucks],
+	travel_cost(TruckLocs,LoadedCargo,Cargo,0,TCost),
+	Cost = TCost+NumLoadedCargo+length(Cargo)*2. % load and unload costs
+
+% the maximum of the minimum cost of transporting cargo unit
+travel_cost(_Trucks,[],[],Cost0,Cost) => 
+	Cost=Cost0.
+
+travel_cost(Trucks,[(PLoc,PDest)|Cargo],Cargo2,Cost0,Cost) =>
+	Cost1 = min([D1+D2 : TLoc in Trucks,
+	shortest_dist(TLoc,PLoc,D1),
+	shortest_dist(PLoc,PDest,D2)]),
+	travel_cost(Trucks,Cargo,Cargo2,max(Cost0,Cost1),Cost).
+
+travel_cost(Trucks,[],Cargo2,Cost0,Cost) =>
+	travel_cost(Trucks,Cargo2,[],Cost0,Cost).
+
+% routing conf.
+main =>
+	Facts = $[
+	road(c3,c1,40),road(c1,c3,40),road(c3,c2,18), % (node, node, distance) 
+	road(c2,c3,18),road(c4,c1,36),road(c1,c4,36),
+	road(c4,c3,37),road(c3,c4,37),road(c5,c2,24),
+	road(c2,c5,24),road(c5,c3,26),road(c3,c5,26)],
+
+	cl_facts(Facts,[$road(+,-,-)]),
+
+	Trucks = [[c2,[],3],[c1,[],2]], % [location, cargo, capacity]
+	Cargo = [(c1,c2),(c1,c2),(c3,c1),(c2,c5)], % [pickup, delivery] locations
+
+	best_plan({sort(Trucks),sort(Cargo)},Plan,PlanCost),
+		foreach ({I,Action} in zip(1..len(Plan),Plan))
+			printf("%3d. %w\n",I,Action)
+		end,
+		println(tot = PlanCost).
