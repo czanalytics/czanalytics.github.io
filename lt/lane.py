@@ -55,6 +55,8 @@ conf_routing = {'service': 'routing_consolidate', 'foo': 'bar'}
 #conf_routing = {'service': 'routing_multimodal'}
 #conf_routing = {'service': 'routing_fleet'}
 
+# fuel conf
+conf_fuel = {'price': 'fuel_simple'}
 
 # management confs
 conf_config = {'config': 'foo'} # manage (multiple)config files, pricing
@@ -63,14 +65,16 @@ conf_report = {'report': 'foo'}
 
 conf = {'version':  0.05,
         'app_ip':   '0.0.0.0',
-        #'app_port': 3333,
-        'app_port': 8888,
+        #'app_port': 3333,    #prod
+        'app_port': 8888,     #dev
+        'fuel_port': 7777,
         'bundle_port': 6666,
         'schema':   conf_schema,
         'data':     conf_data,
         'model':    conf_model,
         'route':    conf_route,
         'routing':  conf_routing,
+        'fuel':     conf_fuel,
         'config':   conf_config,
         'status':   conf_status,
         'report':   conf_report
@@ -94,6 +98,39 @@ def get_conf():
  return dic
 
 #con = get_conf()
+
+
+def fuel_est(d, mod):
+    """
+    Dispatch fuel price estimates to requested model
+    """
+    match mod:
+        case 'fuel_simple':
+            p, p_lo, p_hi, doc = fuel_simple(d)
+        case 'fuel_lite':
+            #p, p_lo, p_hi, doc = fuel_lite(d)
+        case _:
+            p, p_lo, p_hi, doc = 0, 0, 0, ""
+            #log.ERROR('unknown fuel model') 
+
+    log.debug('fuel_price_est: request %s', d)
+
+    return p+0.01, p_lo+0.01, p_hi+0.01, doc
+
+
+def fuel_simple(d):
+    """
+    Provide latest fuel price info from weekly EU statistics source.
+    """
+
+    p =  10
+    p_lo = 9
+    p_hi = 11
+
+    doc = "dummy"
+
+    return round(p, 1), round(p_lo, 1), round(p_hi, 1), doc
+
 
 def price_est(d, mod):
     """

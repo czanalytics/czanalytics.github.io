@@ -153,6 +153,62 @@ o2='{
             {"lat": 44.9334, "lon": 4.8924, "ids": [5, 6],          "ags": [2],    "doc": "valence"},
             {"lat": 43.2965, "lon": 5.3698, "ids": [7, 8],          "ags": [2],    "doc": "marseille"}]}'
 
+api_fuel() { 
+ echo "test fuel info api"
+ echo "fn:"${FUNCNAME[*]}
+ echo $(date)
+ t0=$(date +%s)
+ set -x # shell echo, set +x unsets
+ 
+ #ia=$1; ib=$2 # select the test data range [d$ia, d$ib]
+ ia=1; ib=8
+
+ ci="fuel" # dev image
+ cn="$ci"_api  # container name
+ #ci="api"; cn="$ci"_con
+
+ key="Api-Key: "`cat .key`
+ #ip="0.0.0.0"; p="3333"; url="http://$ip:$p"
+ ip="0.0.0.0"; p="7777"; url="http://$ip:$p" # unique dev port
+ 
+ ct="Content-type: application/json"
+ pp="json_pp" # prettyprinter
+
+ # source api_data.sh # access weekly updated data
+
+ docker stop $cn # clean
+ docker rm   $cn
+ docker rmi  $ci
+
+ docker build -t $ci . -f Dockerfile.fuel --force-rm=true 
+ #docker build -t $ci . -f Dockerfile."$ci" --force-rm=true 
+ docker run -d -p $p:$p --name $cn $ci  # -d for detached mode in bg
+ 
+ sleep 3
+
+ curl -H "$key" -s "$url"     | "$pp" # request pp with silent -s
+ curl -H "$key" -s "$url"/api | "$pp" 
+ 
+ for i in {1..1}
+ do
+   #di="o$i"          # test selected
+   #d=$(echo ${!di}) # evaluated
+
+   #curl -s -X GET -H "$ct" -H "$key" $url/api/price --data "$d" | "$pp"
+
+   curl -s -X GET -H "$ct" $url/api/fuel --data "$o1" | "$pp"
+   curl -s -X POST -H "$ct" $url/api/fuel --data "$o2" | "$pp"
+ done
+
+ set +x
+ docker logs -t $cn
+
+ echo $(date)
+ t1=$(date +%s)
+ echo "time elapsed `expr $t1 - $t0` sec."
+}
+
+ 
 api_bundle() { 
  echo "test bundle api"
  echo "fn:"${FUNCNAME[*]}
@@ -210,7 +266,6 @@ api_bundle() {
  t1=$(date +%s)
  echo "time elapsed `expr $t1 - $t0` sec."
 }
-
 
 api_local() { 
  echo "test api functionality"
