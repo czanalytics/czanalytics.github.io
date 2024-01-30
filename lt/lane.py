@@ -108,6 +108,7 @@ def fuel_est(d, mod):
         case 'fuel_simple':
             p, p_lo, p_hi, doc = fuel_simple(d)
         case 'fuel_lite':
+            p, p_lo, p_hi, doc = 0, 0, 0, ""
             #p, p_lo, p_hi, doc = fuel_lite(d)
         case _:
             p, p_lo, p_hi, doc = 0, 0, 0, ""
