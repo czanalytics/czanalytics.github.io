@@ -39,7 +39,5 @@ RUN pip install geopy
 RUN pip install datetime
 RUN pip install geopy
 
-#EXPOSE 3333
-
 CMD ["python", "./api_bundle.py"]
 

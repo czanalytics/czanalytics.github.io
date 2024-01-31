@@ -1,3 +1,4 @@
+# API for knowledge base
 from flask import Flask, request, jsonify, abort  # make_response
 from flask_restful import Resource, Api
 #from flask_expects_json import expects_json
@@ -6,7 +7,7 @@ from flask_cors import CORS
 from datetime import datetime  # date
 #import json
 
-from db import conf, kb
+from db import conf, kb_est
 
 app = Flask(__name__)
 
@@ -14,10 +15,10 @@ CORS(app)
 
 api = Api(app)
 
-
 def key_check(key, fk = './.key'):
     """
-    Permission denied if the request header key is not correct
+    Permission denied if the request header key is not correct.
+    The use assumes .key -file.
     """
     with open(fk) as f:
         k = f.read()
@@ -45,9 +46,9 @@ class intro(Resource):
     def get(self):
        #key_check(request.headers.get('Api-Key'))
 
-       msg = {'api': 'lane',
+       msg = {'api': 'lane_kb',
             'version': conf["version"],
-            'endpoints': ['price', 'eta', 'co'],
+            'endpoints': ['kb'],
             'schema_expected': conf["schema"],
             'datetime': datetime.now()
         }
@@ -63,8 +64,8 @@ class ask_kb(Resource):
         #key_check(request.headers.get('Api-Key'))
 
         req = request.json
-        mod = conf["model"]["price"]
-        d = kb(req, mod) # !
+        mod = conf["data"]["kb"]
+        d = kb_est(req, mod) # !
 
         msg = {
             'kbs': p,
@@ -74,12 +75,12 @@ class ask_kb(Resource):
 
     def post(self):
         req = request.json
-        mod = conf["model"]["price"]
-        d = kb(req, mod) # !
+        mod = conf["data"]["kb"]
+        d = kb_est(req, mod) # !
 
         msg = {
             'kb': d,
-            ''datetime': datetime.now()
+            'datetime': datetime.now()
         }
         return jsonify(msg)
 
@@ -89,8 +90,7 @@ api.add_resource(intro,   '/',            endpoint='/')
 api.add_resource(intro,   '/api',         endpoint='/api')
 
 api.add_resource(ask_kb, '/api/kb',   endpoint='/api/kb')
-#api.add_resource(price,   '/api/price',   endpoint='/api/price')
 
 if __name__ == '__main__':
-    app.run(conf["app_ip"], conf["app_port"])
+    app.run(conf["app_ip"], conf["kb_port"])
 

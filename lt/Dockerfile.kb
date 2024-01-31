@@ -12,6 +12,7 @@ ADD ${D}/kb.yml /
 #ADD ${D}/rules-kb.yml /
 
 ADD kb.py /
+ADD db.py /
 
 RUN pip install flask
 RUN pip install flask_restful
@@ -23,7 +24,7 @@ RUN pip install numpy
 RUN pip install geopy
 RUN pip install datetime
 
-EXPOSE 8888
+RUN pip install pytholog
 
 CMD ["python", "./kb.py"]
 

@@ -63,12 +63,13 @@ conf_config = {'config': 'foo'} # manage (multiple)config files, pricing
 conf_status = {'status': 'foo'}
 conf_report = {'report': 'foo'}
 
-conf = {'version':  0.05,
+conf = {'version':  0.06,
         'app_ip':   '0.0.0.0',
-        #'app_port': 3333,    #prod
-        'app_port': 8888,     #dev
-        'fuel_port': 7777,
+        #'app_port':    3333,    #prod
+        'kb_port':     5555,
         'bundle_port': 6666,
+        'fuel_port':   7777,
+        'app_port':    8888,     #dev
         'schema':   conf_schema,
         'data':     conf_data,
         'model':    conf_model,
