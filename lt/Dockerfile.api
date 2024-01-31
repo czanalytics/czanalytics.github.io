@@ -1,9 +1,10 @@
-# Dockerfile.api for flask api
+# Dockerfile.api for Flask api
 # run 'make api_data' target 1st to prepare files in D-directory 
 FROM python:3
 
-ADD .key /
-ADD .key_conf /
+# optional
+#ADD .key /
+#ADD .key_conf /
 
 ARG D=tmp # data dir
 
@@ -12,8 +13,6 @@ ADD ${D}/nuts-names-21.csv /
 ADD ${D}/nuts.csv /
 ADD ${D}/nuts3.json /
 ADD ${D}/nuts_centroid.csv /
-
-# ADD ${D}/<models> /
 
 ADD conf_lite.json /
 ADD api.py /

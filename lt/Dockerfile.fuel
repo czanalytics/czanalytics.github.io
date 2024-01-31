@@ -8,8 +8,9 @@ RUN apt-get -y install cron
 
 # lane generics START >>> 
 
-ADD .key /
-ADD .key_conf /
+# optional files
+#ADD .key /
+#ADD .key_conf /
 
 ARG D=tmp
 

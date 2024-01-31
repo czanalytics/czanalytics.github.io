@@ -1,8 +1,9 @@
 # Dockerfile.kb for flask api
 FROM python:3
 
-ADD .key /
-ADD .key_conf /
+# optional
+#ADD .key /
+#ADD .key_conf /
 
 ARG D=tmp # data dir
 

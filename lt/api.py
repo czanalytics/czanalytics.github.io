@@ -19,7 +19,8 @@ api = Api(app)
 
 def key_check(key, fk = './.key'):
     """
-    Permission denied if the request header key is not correct
+    Permission denied if the request header key is not correct.
+    If this function is used, local file .key is expected.
     """
     with open(fk) as f:
         k = f.read()
@@ -45,7 +46,7 @@ class intro(Resource):
     api description
     """
     def get(self):
-       #key_check(request.headers.get('Api-Key'))
+       #key_check(request.headers.get('Api-Key')) # key disabled
 
        msg = {'api': 'lane v0.50',
             'version': conf["version"],

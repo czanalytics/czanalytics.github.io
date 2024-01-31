@@ -2,8 +2,9 @@
 # run 'make api_bundle' target 1st to prepare files in D-directory 
 FROM python:3
 
-ADD .key /
-ADD .key_conf /
+# optional
+#ADD .key /
+#ADD .key_conf /
 
 ARG D=tmp # data dir
 
