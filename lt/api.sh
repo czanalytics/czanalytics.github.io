@@ -163,11 +163,11 @@ api_fuel() {
  #ia=$1; ib=$2 # select the test data range [d$ia, d$ib]
  ia=1; ib=8
 
- ci="fuel" # dev image
+ ci="lane_fuel" # dev image
  cn="$ci"_api  # container name
  #ci="api"; cn="$ci"_con
 
- key="Api-Key: "`cat .key`
+ # key="Api-Key: "`cat .key` # optional
  #ip="0.0.0.0"; p="3333"; url="http://$ip:$p"
  ip="0.0.0.0"; p="7777"; url="http://$ip:$p" # unique dev port
  
@@ -183,21 +183,26 @@ api_fuel() {
  docker build -t $ci . -f Dockerfile.fuel --force-rm=true 
  #docker build -t $ci . -f Dockerfile."$ci" --force-rm=true 
  docker run -d -p $p:$p --name $cn $ci  # -d for detached mode in bg
- 
+
  sleep 3
 
- curl -H "$key" -s "$url"     | "$pp" # request pp with silent -s
- curl -H "$key" -s "$url"/api | "$pp" 
+ curl -s "$url"     | "$pp" # request pp with silent -s
+ #curl -H "$key" -s "$url"     | "$pp" # with optional key
+
+ curl -s "$url"/api | "$pp" 
  
- for i in {1..1}
+ of1='{"foo1": "bar1"}'
+ of2='{"foo2": "bar2"}'
+ 
+ for i in {1..2}
  do
-   #di="o$i"          # test selected
-   #d=$(echo ${!di}) # evaluated
+   di="of$i"          # test selected
+   d=$(echo ${!di}) # evaluated
 
-   #curl -s -X GET -H "$ct" -H "$key" $url/api/price --data "$d" | "$pp"
-
-   curl -s -X GET -H "$ct" $url/api/fuel --data "$o1" | "$pp"
-   curl -s -X POST -H "$ct" $url/api/fuel --data "$o2" | "$pp"
+   curl -s -X GET -H "$ct" $url/api/fuel --data "$d" | "$pp"
+   
+   #curl -s -X GET -H $ct" $url/api/fuel | "$pp"
+   #curl -s -X POST -H "$ct" $url/api/fuel --data "$d" | "$pp"
  done
 
  set +x
