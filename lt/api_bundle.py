@@ -1,14 +1,10 @@
-from flask import Flask, request, jsonify, abort  # make_response
+from flask import Flask, request, jsonify, abort
 from flask_restful import Resource, Api
-#from flask_expects_json import expects_json
 from flask_cors import CORS
-
 from datetime import datetime  # date
-#import json
 
 from lane import conf
-from lane import price_est, eta_est, co_est, route_est
-from lane import routing_lane, config_lane, status_lane, report_lane
+from bundle import bundle_est, demo_est
 
 app = Flask(__name__)
 
@@ -19,7 +15,8 @@ api = Api(app)
 
 def key_check(key, fk = './.key'):
     """
-    Permission denied if the request header key is not correct
+    Permission denied if the request header key is not correct.
+    Assumes .key file.
     """
     with open(fk) as f:
         k = f.read()
@@ -42,189 +39,38 @@ def key_check(key, fk = './.key'):
 
 class intro(Resource):
     """
-    api description
+    API description
     """
     def get(self):
        #key_check(request.headers.get('Api-Key'))
 
        msg = {'api': 'lane_bundle',
             'version': conf["version"],
-            'endpoints': ['route', 'routing'],
-            'datetime': datetime.now()
-        }
+            'endpoints': ['bundle', 'demo'],
+            'datetime': datetime.now()}
+
        return jsonify(msg)
 
 
-class price(Resource):
+class bundle(Resource):
     """
-    Lane price estimate
-    """
-    def get(self):
-        #key_check(request.headers.get('Api-Key'))
-
-        req = request.json
-        mod = conf["model"]["price"]
-        p, p_lo, p_hi, doc = price_est(req, mod) # !
-
-        msg = {
-            'price': p, 'price_lo': p_lo, 'price_hi': p_hi,
-            'model': mod,
-            'datetime': datetime.now(),
-            'doc': doc,
-            'req': req
-        }
-        return jsonify(msg)
-
-    def post(self):
-        #msg = {'x': 1}
-
-        req = request.json
-        mod = conf["model"]["price"]
-        p, p_lo, p_hi, doc = price_est(req, mod) # !
-
-        msg = {
-            'price': p, 'price_lo': p_lo, 'price_hi': p_hi,
-            'model': mod,
-            'datetime': datetime.now(),
-            'doc': doc,
-            'req': req
-        }
-        return jsonify(msg)
-
-
-class eta(Resource):
-    """
-    Lane ETA estimate
+    Bundle transportation plant for cargo (pick, drop) -network.
     """
     def get(self):
         #key_check(request.headers.get('Api-Key'))
 
         req = request.json
-        mod = conf["model"]["eta"]
-        t, t_lo, t_hi, doc = eta_est(req, mod) # !
-
-        msg = {
-            'eta': t, 'eta_lo': t_lo, 'eta_hi': t_hi,
-            'model': mod,
-            'datetime': datetime.now(),
-            'doc': doc,
-            'req': req
-        }
-        return jsonify(msg)
-
-
-    def post(self):
-        #key_check(request.headers.get('Api-Key'))
-
-        req = request.json
-        mod = conf["model"]["eta"]
-        t, t_lo, t_hi, doc = eta_est(req, mod) # !
-
-        msg = {
-            'eta': t, 'eta_lo': t_lo, 'eta_hi': t_hi,
-            'model': mod,
-            'datetime': datetime.now(),
-            'doc': doc,
-            'req': req
-        }
-        return jsonify(msg)
-
-
-class co(Resource):
-    """
-    Lane CO2 estimate
-    """
-    def get(self):
-        #key_check(request.headers.get('Api-Key'))
-
-        req = request.json
-        mod = conf["model"]["co"]
-        co, co_lo, co_hi, doc = co_est(req, mod) # !
-
-        msg = {
-            'co': co, 'co_lo': co_lo, 'co_hi': co_hi,
-            'model': mod,
-            'datetime': datetime.now(),
-            'doc': doc,
-            'req': req
-        }
-        return jsonify(msg)
-
-
-    def post(self):
-        #key_check(request.headers.get('Api-Key'))
-
-        req = request.json
-        mod = conf["model"]["co"]
-        co, co_lo, co_hi, doc = co_est(req, mod) # !
-
-        msg = {
-            'co': co, 'co_lo': co_lo, 'co_hi': co_hi,
-            'model': mod,
-            'datetime': datetime.now(),
-            'doc': doc,
-            'req': req
-        }
-        return jsonify(msg)
-
-
-class route(Resource):
-    """
-    Route estimated
-    """
-    def get(self):
-        #key_check(request.headers.get('Api-Key'))
-
-        req = request.json
-        cnf = conf["route"]
-        route, doc = route_est(req, cnf) # !
-
-        msg = {
-            'route_conf': cnf,
-            'route': 0,
-            'datetime': datetime.now(),
-            'doc': doc,
-            'req': req
-        }
-        return jsonify(msg)
-
-
-    def post(self):
-        #key_check(request.headers.get('Api-Key'))
-
-        req = request.json
-        cnf = conf["route"]
-        route, doc = route_est(req, cnf) # !
-
-        msg = {
-            'route_conf': cnf,
-            'route': 0,
-            'datetime': datetime.now(),
-            'doc': doc,
-            'req': req
-        }
-        return jsonify(msg)
-
-
-class routing(Resource):
-    """
-    Routing for cargo (pick, drop) -network.
-    """
-    def get(self):
-        #key_check(request.headers.get('Api-Key'))
-
-        req = request.json
-        cnf = conf["routing"]["service"]
-        r, doc = routing_lane(req, cnf) # !
+        cnf = conf["bundle"]["routing"]
+        r, doc = bundle_est(req, cnf) # !
 
         msg = {
             'version': conf["version"],
-            'routing_conf': cnf,
-            'routing': r,
+            'bundle_conf': cnf,
+            'plan': r,
             'datetime': datetime.now(),
             'doc': doc,
-            'req': req
-        }
+            'req': req}
+
         return jsonify(msg)
 
 
@@ -232,102 +78,68 @@ class routing(Resource):
         #key_check(request.headers.get('Api-Key'))
 
         req = request.json
-        cnf = conf["routing"]["service"]
-        r, doc = routing_lane(req, cnf) # !
+        cnf = conf["bundle"]["routing"]
+        r, doc = bundle_est(req, cnf) # !
 
         msg = {
             'version': conf["version"],
-            'routing_conf': cnf,
-            'routing': r,
+            'bundle_conf': cnf,
+            'plan': r,
+            'datetime': datetime.now(),
+            'doc': doc,
+            'req': req}
+
+        return jsonify(msg)
+
+class demo(Resource):
+    """
+    Demonstrate transportation functionality.
+    """
+    def get(self):
+        #key_check(request.headers.get('Api-Key'))
+
+        req =  {"foo": "bar"}
+        #req = request.json
+
+        cnf = conf["bundle"]["demo"]
+        r, doc = demo_est(req, cnf) # !
+
+        msg = {
+            'version': conf["version"],
+            'demo_conf': cnf,
+            'demo': r,
             'datetime': datetime.now(),
             'doc': doc,
             'req': req
         }
+
         return jsonify(msg)
 
 
-class config(Resource):
-    """
-    Service configuration
-    """
-    def get(self):
-        #key_check(request.headers.get('Api-Key'), fk = './.key_conf')
-
-        req = request.json
-        cnf = conf["config"]
-        r = config_lane(req, cnf) # !
-
-        msg = {
-            'config_conf': cnf,
-            'config': r,
-            'datetime': datetime.now(),
-            'req': req
-        }
-        return jsonify(msg)
-
-
-class status(Resource):
-    """
-    Service status
-    """
-    def get(self):
+    def post(self):
         #key_check(request.headers.get('Api-Key'))
 
         req = request.json
-        cnf = conf["status"]
-        r = status_lane(req, cnf) # !
+        cnf = conf["bundle"]["demo"]
+        r, doc = demo_est(req, cnf) # !
 
         msg = {
-            'status': r,
+            'version': conf["version"],
+            'demo_conf': cnf,
+            'demo': r,
             'datetime': datetime.now(),
+            'doc': doc,
             'req': req
         }
+
         return jsonify(msg)
-
-
-class report(Resource):
-    """
-    Create report
-    """
-    def get(self):
-        #key_check(request.headers.get('Api-Key'))
-
-        req = request.json
-        cnf = conf["report"]
-        r = report_lane(req, cnf) # !
-
-        msg = {
-            'report': r,
-            'datetime': datetime.now(),
-            'req': req
-        }
-        return jsonify(msg)
-
-
-class tc(Resource):
-    ### @app.route('your route', methods=['GET'])
-
-    def get(self):
-        response = jsonify({'some': 'data'})
-        response.headers.add('Access-Control-Allow-Origin', '*')
-        return response
 
 
 api.add_resource(intro,   '/',            endpoint='/')
 api.add_resource(intro,   '/api',         endpoint='/api')
 
-api.add_resource(tc,'/api/tc',   endpoint='/api/tc')
-
-#api.add_resource(price,   '/api/price',   endpoint='/api/price')
-#api.add_resource(eta,     '/api/eta',     endpoint='/api/eta')
-#api.add_resource(co,      '/api/co',      endpoint='/api/co')
-
-api.add_resource(route,   '/api/route',   endpoint='/api/route')
-api.add_resource(routing, '/api/routing', endpoint='/api/routing')
-
-#api.add_resource(config,  '/api/config',  endpoint='/api/config')
-#api.add_resource(status,  '/api/status',  endpoint='/api/status')
-#api.add_resource(report,  '/api/report',  endpoint='/api/report')
+api.add_resource(bundle, '/api/bundle', endpoint='/api/bundle')
+api.add_resource(demo,   '/api/demo',   endpoint='/api/demo')
 
 if __name__ == '__main__':
     app.run(conf["app_ip"], conf["bundle_port"])

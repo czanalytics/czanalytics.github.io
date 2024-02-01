@@ -45,24 +45,30 @@ conf_model = {'price': 'price_lite', 'eta': 'eta_lite','co': 'co_simple'}      #
 #conf_model = {'price': 'price_gam', 'eta': 'eta_gam','co': 'co_gam'}          # gam
 #conf_model = {'price': 'price_automl', 'eta': 'eta_automl','co': 'co_automl'} # automl
 
-# route conf
+# fuel conf
+conf_fuel = {'price': 'fuel_simple'}
+
+# bundling conf
+conf_bundle= {'routing': 'picat', 'demo':'demo1'}
+#conf_bundle= {'routing': 'picat', 'demo':'demo2'}
+#conf_bundle= {'routing': 'google', 'demo':'demo3'} # TBD
+
+# route conf TBD
 conf_route = {'service': 'route_streetmap', 'foo': 'bar'}
 #conf_route = {'service': 'route_openroute'}
 #conf_route = {'service': 'route_googlemaps'}
 
-# routing conf
+# routing conf TBD
 conf_routing = {'service': 'routing_consolidate', 'foo': 'bar'}
 #conf_routing = {'service': 'routing_multimodal'}
 #conf_routing = {'service': 'routing_fleet'}
 
-# fuel conf
-conf_fuel = {'price': 'fuel_simple'}
-
-# management confs
-conf_config = {'config': 'foo'} # manage (multiple)config files, pricing
+# management confs TBD
+conf_config = {'config': 'foo'} # manage these configs as files
 conf_status = {'status': 'foo'}
 conf_report = {'report': 'foo'}
 
+# integrated config
 conf = {'version':  0.06,
         'app_ip':   '0.0.0.0',
         #'app_port':    3333,    #prod
@@ -75,6 +81,7 @@ conf = {'version':  0.06,
         'model':    conf_model,
         'route':    conf_route,
         'routing':  conf_routing,
+        'bundle':   conf_bundle,
         'fuel':     conf_fuel,
         'config':   conf_config,
         'status':   conf_status,

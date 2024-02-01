@@ -1,5 +1,6 @@
-# Dockerfile.routing for routing bundle api
-# run 'make api_bundle' target 1st to prepare files in D-directory 
+# Dockerfile.bundle for API the bundle routing plans
+# Makefile target api_bundle is provided for testing
+
 FROM python:3
 
 # optional
@@ -18,6 +19,7 @@ ADD ${D}/nuts_centroid.csv /
 
 ADD conf_lite.json /
 ADD api_bundle.py /
+ADD bundle.py /
 ADD lane.py /
 ADD net.py /
 

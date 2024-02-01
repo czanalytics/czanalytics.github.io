@@ -224,12 +224,11 @@ api_bundle() {
  #ia=$1; ib=$2 # select the test data range [d$ia, d$ib]
  ia=1; ib=8
 
- ci="lane_bundle" # dev image
+ ci="lane_bundle" # image
  cn="$ci"_api  # container name
  #ci="api"; cn="$ci"_con
 
- key="Api-Key: "`cat .key`
- #ip="0.0.0.0"; p="3333"; url="http://$ip:$p"
+ #key="Api-Key: "`cat .key` # optional
  ip="0.0.0.0"; p="6666"; url="http://$ip:$p" # unique dev port
  
  ct="Content-type: application/json"
@@ -241,27 +240,29 @@ api_bundle() {
  docker rm   $cn
  docker rmi  $ci
 
- docker build -t $ci . -f Dockerfile.routing --force-rm=true 
+ docker build -t $ci . -f Dockerfile.bundle --force-rm=true 
  #docker build -t $ci . -f Dockerfile."$ci" --force-rm=true 
  docker run -d -p $p:$p --name $cn $ci  # -d for detached mode in bg
  
  sleep 3
 
- curl -H "$key" -s "$url"     | "$pp" # request pp with silent -s
- curl -H "$key" -s "$url"/api | "$pp" 
+ curl -s "$url"     | "$pp" # request pp with silent -s
+ curl -s "$url"/api | "$pp" 
+ #curl -H "$key" -s "$url"     | "$pp" # request pp with silent -s
+ #curl -H "$key" -s "$url"/api | "$pp" 
  
- for i in {1..1}
+ curl -s -X GET -H "$ct" $url/api/demo | "$pp"
+
+ for i in {1..2}
  do
-   #di="o$i"          # test selected
-   #d=$(echo ${!di}) # evaluated
+   di="o$i"         # test selected
+   d=$(echo ${!di}) # evaluated
 
-   #curl -s -X GET -H "$ct" -H "$key" $url/api/price --data "$d" | "$pp"
-   #curl -s -X GET -H "$ct" -H "$key" $url/api/eta   --data "$d" | "$pp" 
-   #curl -s -X GET -H "$ct" -H "$key" $url/api/co    --data "$d" | "$pp"
-   # curl -s -X GET -H "$ct" -H "$key" $url/api/route --data "$d" | "$pp"
+   curl -s -X GET  -H "$ct" $url/api/bundle --data "$d" | "$pp"
+   curl -s -X POST -H "$ct" $url/api/bundle --data "$d" | "$pp"
 
-   curl -s -X GET -H "$ct" $url/api/routing --data "$o1" | "$pp"
-   curl -s -X POST -H "$ct" $url/api/routing --data "$o2" | "$pp"
+   #curl -s -X GET -H "$ct" $url/api/demo --data "$o1" | "$pp"
+   #curl -s -X POST -H "$ct" $url/api/demo --data "$o2" | "$pp"
  done
 
  set +x
