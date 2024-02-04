@@ -57,7 +57,53 @@ def demo_est(d, mod):
 
 def plan_picat(d):
     """
+    PDP bundlin implemented using Picat backend.
     """
+
+    with open('/Picat/req.json', 'w') as jsonfile:
+        json.dump(d, jsonfile)
+
+    agents = d["agents"]
+
+    f1 = open("/Picat/input.pi", "w")
+    L = ["[n1,[],2,a1],", "[n2,[],3,a2],"]
+    f1.writelines(L)
+    f1.close()
+
+
+    #f2 = open("/Picat/input2.pi", "w")
+    #f2.writelines("[")
+    #for a in agents:
+      #s = "[" + agents["location"] + ",[]," + agents["capasity"] + "],"
+    #  f2.writelines(a)
+
+    #f2.writelines("]")
+    #f2.close()
+
+    #for a in agents:
+    #    log.debug('agent: %s', a)
+    #    #print('a={:d}, b={:d}'.format(f(x,n),g(x,n)))
+
+    with open('/Picat/req_agents.json', 'w') as jsonfile:
+        json.dump(agents, jsonfile)
+
+    #data = json.loads('/Picat/req_agents.json')
+
+    f2 = open("/Picat/input2.pi", "w")
+    # Iterate through the JSON array
+    for a in agents:
+        loc = a["location"]
+        cap = a["capacity"]
+        log.debug('agent: %s loc:%s cap:%s', a, loc, cap)
+        s =  "[" + loc + ",[]," + str(cap) + "]"
+        f2.write(s)
+
+    #f2.writelines("[")
+    #for a in agents:
+      #s = "[" + agents["location"] + ",[]," + agents["capasity"] + "],"
+    #  f2.writelines(a)
+    #f2.writelines("]")
+    f2.close()
 
     runcmd("rm -f /Picat/plan.txt")
 
@@ -68,13 +114,14 @@ def plan_picat(d):
     #doc = "foo & bar"
     doc2 = doc.replace("'", "\"")
     d = json.loads(doc2)
-    d = dict(sorted(d.items()))
-    return d, doc
+    ds = dict(sorted(d.items()))
+
+    return ds, doc
 
 
 def plan_google(d):
     """
-    TBD
+    PDP implementation using Google optimization library. TBD
     """
     d = {"foo": "bar"}
     doc = "foo & bar"
