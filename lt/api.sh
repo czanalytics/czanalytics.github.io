@@ -213,7 +213,30 @@ api_fuel() {
  echo "time elapsed `expr $t1 - $t0` sec."
 }
 
- 
+
+# order -  pickup & delivery order optional
+# agents - id optional; location = inial loc. depot node etc.
+# cargo - id optional
+# lanes - lane(from node,to node,dist/time) 
+#         (ni,nj) is symmetric to (nj,ni)
+
+b1='{
+ "order":   {"da":"2024-02-05", "ta":"11:00", "tb":"12:00", 
+             "id":"2024-02-05-001"},
+ "agents": [{"location":"n1", "capacity":2, "id":"a1"},
+            {"location":"n2", "capacity":3, "id":"a2"}],
+ "cargo":  [{"pick": "n1", "drop":"n2", "id": "c1"},
+            {"pick": "n1", "drop":"n2", "id": "c2"},
+            {"pick": "n3", "drop":"n1", "id": "c3"},
+            {"pick": "n2", "drop":"n5", "id": "c4"}],
+ "lanes":  ["lane(n3,n1,40)","lane(n1,n3,40)",
+            "lane(n3,n2,18)","lane(n2,n3,18)",
+            "lane(n4,n1,36)","lane(n1,n4,36)",
+	          "lane(n4,n3,37)","lane(n3,n4,37)",
+            "lane(n5,n2,24)","lane(n2,n5,24)",
+            "lane(n5,n3,26)","lane(n3,n5,26)"]
+          }'
+
 api_bundle() { 
  echo "test bundle api"
  echo "fn:"${FUNCNAME[*]}
@@ -252,9 +275,9 @@ api_bundle() {
  
  curl -s -X GET -H "$ct" $url/api/demo | "$pp"
 
- for i in {1..2}
+ for i in {1..1}
  do
-   di="o$i"         # test selected
+   di="b$i"         # test selected
    d=$(echo ${!di}) # evaluated
 
    curl -s -X GET  -H "$ct" $url/api/bundle --data "$d" | "$pp"

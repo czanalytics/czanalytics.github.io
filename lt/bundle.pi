@@ -82,10 +82,11 @@ main =>
 
 	Cargo = [(n1,n2),(n1,n2),(n3,n1),(n2,n5)],    % (pickup,delivery) nodes
 
-	Agents = [[n2,[],3,a1],[n1,[],2,a2]],         % [depot node,cargo,capacity,id]
+	Agents = [[n1,[],2,a1],
+	          [n2,[],3,a2]],                      % [depot node,cargo,capacity,id]
 
 	Lanes = $[
-	lane(n3,n1,40),lane(n1,n3,40),lane(n3,n2,18), % lane(from node,to node,distance) 
+	lane(n3,n1,40),lane(n1,n3,40),lane(n3,n2,18), % lane(from node,to node,dist/time) 
 	lane(n2,n3,18),lane(n4,n1,36),lane(n1,n4,36),
 	lane(n4,n3,37),lane(n3,n4,37),lane(n5,n2,24),
 	lane(n2,n5,24),lane(n5,n3,26),lane(n3,n5,26)],
