@@ -1,10 +1,9 @@
 # bundle.py for routing  
-#
 
 import logging as log
+import json
 
 from lane import runcmd
-
 
 lv = log.DEBUG
 log.basicConfig(format='%(asctime)s, %(name)s, %(levelname)s: %(message)s, %(funcName)s:%(lineno)s', level=lv)
@@ -12,7 +11,7 @@ log.basicConfig(format='%(asctime)s, %(name)s, %(levelname)s: %(message)s, %(fun
 
 def bundle_est(d, mod):
     """
-    Dispatch bundling to requested model
+    Dispatch bundling to requested backend.
     """
 
     fd = {"foo": "bar"}
@@ -22,7 +21,7 @@ def bundle_est(d, mod):
             plan_dict, doc = plan_picat(d)
         case 'google':
             plan_dict, doc = fd, "null"
-            #plan_dict, doc = plan_google(d)
+            #plan_dict, doc = plan_google(d) # TBD
         case _:
             plan_dict, doc = fd, "null"
             #log.ERROR('unknown bundle plan') 
@@ -34,7 +33,7 @@ def bundle_est(d, mod):
 
 def demo_est(d, mod):
     """
-    Dispatch the requested demo
+    Dispatch the requested demo.
     """
 
     fd = {"foo": "bar"}
@@ -59,14 +58,23 @@ def demo_est(d, mod):
 def plan_picat(d):
     """
     """
-    d = {"foo": "bar"}
-    doc = "foo & bar"
 
+    runcmd("rm -f /Picat/plan.txt")
+
+    runcmd('cd Picat; ./picat bundle.pi >> plan.txt', verbose=True)
+
+    with open('/Picat/plan.txt','r') as f:
+        doc = f.read()
+    #doc = "foo & bar"
+    doc2 = doc.replace("'", "\"")
+    d = json.loads(doc2)
+    d = dict(sorted(d.items()))
     return d, doc
 
 
 def plan_google(d):
     """
+    TBD
     """
     d = {"foo": "bar"}
     doc = "foo & bar"
@@ -76,6 +84,7 @@ def plan_google(d):
 
 def demo3(d):
     """
+    TBD
     """
     d = {"foo": "bar"}
     doc = "foo & bar"
@@ -94,17 +103,22 @@ def demo2(d):
 
 def demo1(d):
     """
-    Introduce Picat for  Pickup and Delivery Problems, PDPs.
+    Introduce Picat for Pickup and Delivery Problem, PDP.
+    Output log from Picat is returned.
     """
+
     runcmd("ls -lat /Picat")
 
-    runcmd('cd Picat; ./picat pdp.pi >> plan.txt', verbose=True) # 
+    runcmd("rm -f /Picat/demo1.txt")
 
-    with open('/Picat/plan.txt','r') as f:
+    runcmd('cd Picat; ./picat pdp.pi >> demo1.txt', verbose=True)
+
+    with open('/Picat/demo1.txt','r') as f:
         doc = f.read()
-
     #doc = "foo & bar"
 
+    #doc2 = doc.replace("'", "\"")
+    #d = json.loads(doc2)
     d = {"foo": "bar"}
 
     return d, doc

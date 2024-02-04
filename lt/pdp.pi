@@ -91,7 +91,10 @@ main =>
 	Cargo = [(c1,c2),(c1,c2),(c3,c1),(c2,c5)], % [pickup, delivery] locations
 
 	best_plan({sort(Trucks),sort(Cargo)},Plan,PlanCost),
+		printf("["),
 		foreach ({I,Action} in zip(1..len(Plan),Plan))
-			printf("%3d. %w\n",I,Action)
+			printf("'%w', ",Action)
+			%printf("%3d. %w\n",I,Action)
 		end,
-		println(tot = PlanCost).
+	  printf("'%3d'",PlanCost),
+		printf("]").

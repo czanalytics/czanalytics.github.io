@@ -93,7 +93,7 @@ class bundle(Resource):
 
 class demo(Resource):
     """
-    Demonstrate transportation functionality.
+    Demonstrate API functionality.
     """
     def get(self):
         #key_check(request.headers.get('Api-Key'))
@@ -135,8 +135,8 @@ class demo(Resource):
         return jsonify(msg)
 
 
-api.add_resource(intro,   '/',            endpoint='/')
-api.add_resource(intro,   '/api',         endpoint='/api')
+api.add_resource(intro,  '/',           endpoint='/')
+api.add_resource(intro,  '/api',        endpoint='/api')
 
 api.add_resource(bundle, '/api/bundle', endpoint='/api/bundle')
 api.add_resource(demo,   '/api/demo',   endpoint='/api/demo')

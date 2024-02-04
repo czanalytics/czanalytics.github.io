@@ -241,14 +241,13 @@ api_bundle() {
  docker rmi  $ci
 
  docker build -t $ci . -f Dockerfile.bundle --force-rm=true 
- #docker build -t $ci . -f Dockerfile."$ci" --force-rm=true 
  docker run -d -p $p:$p --name $cn $ci  # -d for detached mode in bg
  
  sleep 3
 
  curl -s "$url"     | "$pp" # request pp with silent -s
  curl -s "$url"/api | "$pp" 
- #curl -H "$key" -s "$url"     | "$pp" # request pp with silent -s
+ #curl -H "$key" -s "$url"     | "$pp" # with optional key
  #curl -H "$key" -s "$url"/api | "$pp" 
  
  curl -s -X GET -H "$ct" $url/api/demo | "$pp"
@@ -259,7 +258,7 @@ api_bundle() {
    d=$(echo ${!di}) # evaluated
 
    curl -s -X GET  -H "$ct" $url/api/bundle --data "$d" | "$pp"
-   curl -s -X POST -H "$ct" $url/api/bundle --data "$d" | "$pp"
+   #curl -s -X POST -H "$ct" $url/api/bundle --data "$d" | "$pp"
 
    #curl -s -X GET -H "$ct" $url/api/demo --data "$o1" | "$pp"
    #curl -s -X POST -H "$ct" $url/api/demo --data "$o2" | "$pp"
