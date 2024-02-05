@@ -221,7 +221,7 @@ api_fuel() {
 #         (ni,nj) is symmetric to (nj,ni)
 
 b1='{
- "order":   {"da":"2024-02-05", "ta":"11:00", "tb":"12:00", 
+ "order":   {"da":"2024-02-05", "ta":"12:00", "tb":"15:00", 
              "id":"2024-02-05-001"},
  "agents": [{"location":"n1", "capacity":2, "id":"a1"},
             {"location":"n2", "capacity":3, "id":"a2"}],
@@ -232,6 +232,32 @@ b1='{
  "lanes":  ["lane(n3,n1,40)","lane(n1,n3,40)",
             "lane(n3,n2,18)","lane(n2,n3,18)",
             "lane(n4,n1,36)","lane(n1,n4,36)",
+	          "lane(n4,n3,37)","lane(n3,n4,37)",
+            "lane(n5,n2,24)","lane(n2,n5,24)",
+            "lane(n5,n3,26)","lane(n3,n5,26)"]
+          }'
+
+# changes: 
+# 1) agent naming: a1 -> ag1
+# 2) node name and distance: lane(n1,n3,40) -> lane(hub1,n3,30)
+#                            {"pick":"n1" ...}  -> {"pick":"hub1" ...}  
+# 3) new node next to n1: lane(depot0,hub1,1),lane(hub1,depot0,1)
+# 4) relocate agent ag1: from n1 to depot0
+# 5) capacity of ag2 from 3 to 1
+
+b2='{
+ "order":   {"da":"2024-02-06", "ta":"12:00", "tb":"16:00", 
+             "id":"2024-02-06-001"},
+ "agents": [{"location":"depot0", "capacity":2, "id":"ag1"},
+            {"location":"n2", "capacity":1, "id":"ag2"}],
+ "cargo":  [{"pick": "hub1", "drop":"n2", "id": "c1"},
+            {"pick": "hub1", "drop":"n2", "id": "c2"},
+            {"pick": "n3", "drop":"hub1", "id": "c3"},
+            {"pick": "n2", "drop":"n5", "id": "c4"}],
+ "lanes":  ["lane(depot0,hub1,3)","lane(hub1,depot0,3)",
+            "lane(n3,hub1,30)","lane(hub1,n3,30)",
+            "lane(n3,n2,18)","lane(n2,n3,18)",
+            "lane(n4,hub1,36)","lane(hub1,n4,36)",
 	          "lane(n4,n3,37)","lane(n3,n4,37)",
             "lane(n5,n2,24)","lane(n2,n5,24)",
             "lane(n5,n3,26)","lane(n3,n5,26)"]
@@ -275,7 +301,7 @@ api_bundle() {
  
  curl -s -X GET -H "$ct" $url/api/demo | "$pp"
 
- for i in {1..1}
+ for i in {1..2}
  do
    di="b$i"         # test selected
    d=$(echo ${!di}) # evaluated

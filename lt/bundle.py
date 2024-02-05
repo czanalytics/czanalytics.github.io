@@ -55,63 +55,116 @@ def demo_est(d, mod):
     return demo_dict, doc
 
 
-def plan_picat(d):
+def plan_picat(d, fconf="/Picat/bundle_conf.pi", fplan= "/Picat/plan.txt"):
     """
-    PDP bundlin implemented using Picat backend.
+    PDP bundling implemented using Picat backend.
+    We create a Picat input file, fconf, from user specified conf, req.json.
+    Plan file, fplan, is created.
     """
+
+    runcmd("rm -f /Picat/req.json") # clean start
+    runcmd("rm -f /Picat/plan.txt")
+    runcmd("rm -f /Picat/bundle_conf.*")
 
     with open('/Picat/req.json', 'w') as jsonfile:
         json.dump(d, jsonfile)
 
     agents = d["agents"]
+    cargo = d["cargo"]
+    lanes = d["lanes"]
 
-    f1 = open("/Picat/input.pi", "w")
-    L = ["[n1,[],2,a1],", "[n2,[],3,a2],"]
-    f1.writelines(L)
-    f1.close()
+    f = open(fconf, "w")
 
+    # header
+    f.write("module bundle_conf.\n\n")
 
-    #f2 = open("/Picat/input2.pi", "w")
-    #f2.writelines("[")
-    #for a in agents:
-      #s = "[" + agents["location"] + ",[]," + agents["capasity"] + "],"
-    #  f2.writelines(a)
+    # cargo
+    f.write("conf_cargo(Cargo) => Cargo = [")
+    for c in cargo[:-1]:
+        pick = c["pick"]
+        drop = c["drop"]
+        #name = c["id"]  # TBD
+        log.debug('cargo %s pick:%s drop:%s', c, pick, drop)
+        s = "(" + pick + "," + drop + "),"
+        f.write(s)
 
-    #f2.writelines("]")
-    #f2.close()
+    # the last cargo, with no comma
+    c = cargo[-1]
+    pick = c["pick"]
+    drop = c["drop"]
+    #name = c["id"]  # TBD
+    log.debug('cargo %s pick:%s drop:%s', c, pick, drop)
+    s = "(" + pick + "," + drop + ")" # NO COMMA
+    f.write(s)
 
-    #for a in agents:
-    #    log.debug('agent: %s', a)
-    #    #print('a={:d}, b={:d}'.format(f(x,n),g(x,n)))
+    f.write("].\n\n")
 
-    with open('/Picat/req_agents.json', 'w') as jsonfile:
-        json.dump(agents, jsonfile)
-
-    #data = json.loads('/Picat/req_agents.json')
-
-    f2 = open("/Picat/input2.pi", "w")
-    # Iterate through the JSON array
-    for a in agents:
+    # agents
+    f.write("conf_agents(Agents) => Agents = [")
+    for a in agents[:-1]:
         loc = a["location"]
         cap = a["capacity"]
-        log.debug('agent: %s loc:%s cap:%s', a, loc, cap)
-        s =  "[" + loc + ",[]," + str(cap) + "]"
-        f2.write(s)
+        name = a["id"]
+        log.debug('agent: %s loc:%s cap:%s name:%s', a, loc, cap, name)
+        s = "[" + loc + ",[]," + str(cap) + "," + name + "],"
+        f.write(s)
 
-    #f2.writelines("[")
-    #for a in agents:
-      #s = "[" + agents["location"] + ",[]," + agents["capasity"] + "],"
-    #  f2.writelines(a)
-    #f2.writelines("]")
-    f2.close()
+    # the last agent
+    a = agents[-1] # last
+    loc = a["location"]
+    cap = a["capacity"]
+    name = a["id"]
+    log.debug('agent: %s loc:%s cap:%s name:%s', a, loc, cap, name)
+    s = "[" + loc + ",[]," + str(cap) + "," + name + "]"  # NO COMMA 
+    f.write(s)
+    f.write("].\n\n")
 
-    runcmd("rm -f /Picat/plan.txt")
+    # lanes
+    f.write("conf_lanes(Lanes) => Lanes = $[")
 
-    runcmd('cd Picat; ./picat bundle.pi >> plan.txt', verbose=True)
+    for l in lanes[:-1]:
+        log.debug('lane: %s', l)
+        s = l + ","
+        f.write(s)
 
-    with open('/Picat/plan.txt','r') as f:
+    # the last lane
+    l = lanes[-1]
+    pick_loc = "nn"
+    drop_loc = "mm"
+    dist = 10
+    log.debug('lane %s from:%s to:%s dist:%s', l, pick_loc, drop_loc, dist)
+    s = l # NO COMMA
+    f.write(s)
+
+    f.write("].\n")
+
+    f.close()
+
+
+    runcmd('cd Picat; ./picat bundle.pi >> /Picat/plan.txt', verbose=True)
+    #runcmd('cd Picat; ./picat bundle.pi >> ' + fplan, verbose=True)
+
+    import os
+    import time
+
+    time_to_wait = 24
+    time_counter = 0
+
+    while not os.path.exists(fplan):
+        time.sleep(1)
+        time_counter += 1
+        if time_counter > time_to_wait:break
+
+    log.debug('waiting the plan: time:%s of max:%s sec', time_counter, time_to_wait)
+
+    import time
+    tag = time.strftime("%Y%m%d-%H%M%S")
+    #file"$(date +'%Y%m%d_%I%M%S').log"
+    runcmd('cp /Picat/plan.txt /Picat/plan.tex' + tag, verbose=True)
+
+    with open(fplan,'r') as f:
         doc = f.read()
-    #doc = "foo & bar"
+
     doc2 = doc.replace("'", "\"")
     d = json.loads(doc2)
     ds = dict(sorted(d.items()))
