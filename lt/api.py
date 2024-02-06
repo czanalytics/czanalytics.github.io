@@ -48,7 +48,7 @@ class intro(Resource):
     def get(self):
        #key_check(request.headers.get('Api-Key')) # key disabled
 
-       msg = {'api': 'lane v0.50',
+       msg = {'api': 'lane',
             'version': conf["version"],
             'endpoints': ['price', 'eta', 'co'],
             'schema_expected': conf["schema"],
