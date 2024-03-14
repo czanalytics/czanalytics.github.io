@@ -1,0 +1,221 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8" />
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+        <meta name="theme-color" content="#000000" />
+        <meta name="name" content="Fuel price" />
+
+        <title>Fuel price</title>
+
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" type="text/css"/>
+        <link rel="stylesheet" href="https://unpkg.com/@holoviz/panel@0.13.1/dist/css/widgets.css" type="text/css"/>
+        <link rel="stylesheet" href="https://unpkg.com/@holoviz/panel@0.13.1/dist/css/markdown.css" type="text/css"/>
+
+        <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/vega@5"></script>
+        <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/vega-lite@5"></script>
+        <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/vega-embed@6"></script>
+        <script type="text/javascript" src="https://unpkg.com/tabulator-tables@4.9.3/dist/js/tabulator.js"></script>
+        <script type="text/javascript" src="https://cdn.bokeh.org/bokeh/release/bokeh-2.4.3.js"></script>
+        <script type="text/javascript" src="https://cdn.bokeh.org/bokeh/release/bokeh-widgets-2.4.3.min.js"></script>
+        <script type="text/javascript" src="https://cdn.bokeh.org/bokeh/release/bokeh-tables-2.4.3.min.js"></script>
+        <script type="text/javascript" src="https://unpkg.com/@holoviz/panel@0.13.1/dist/panel.min.js"></script>
+
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.1/dist/css/bootstrap.min.css"/>
+        <link rel="stylesheet" href="https://unpkg.com/@holoviz/panel@0.13.1/dist/bundled/bootstraptemplate/bootstrap.css"/>
+        <link rel="stylesheet" href="https://unpkg.com/@holoviz/panel@0.13.1/dist/bundled/defaulttheme/default.css"/>
+
+        <style>
+            #sidebar {
+                width: 250px;
+            }
+        </style>
+
+        <script src="https://cdn.jsdelivr.net/npm/jquery@3.5.1/dist/jquery.slim.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.1/dist/js/bootstrap.bundle.min.js"></script>
+
+        <link rel="stylesheet" href="https://pyscript.net/latest/pyscript.css"/>
+
+        <script defer src="https://pyscript.net/latest/pyscript.js"></script>
+    </head>
+
+    <body>
+        <section class="pyscript">
+            <div class="row overflow-hidden" id="content">
+                <div class="sidenav" id="sidebar">
+                    <ul class="nav flex-column">
+                        <div class="bk-root" id="from"></div>
+                        <div class="bk-root" id="fuel"></div>
+                        <div class="bk-root" id="model"></div>
+                        <div class="bk-root" id="trend"></div>
+                    </ul>
+                </div>
+
+                <div class="col mh-100 float-left" id="main">
+                    <div class="bk-root" id="intro"></div>
+                    <div class="bk-root" id="table"></div>
+                </div>
+            </div>
+
+<py-config>
+    packages = [
+    "https://cdn.holoviz.org/panel/0.14.3/dist/wheels/bokeh-2.4.3-py3-none-any.whl",
+    "altair",
+    "numpy",
+    "pandas",
+    "scikit-learn",
+    "panel==0.13.1"
+    ]
+    plugins = []
+    [[fetch]]
+        files = ["./fuel.py"]
+</py-config>
+
+<py-script>
+    from fuel import fuel_conf, file_info
+    fc = fuel_conf()
+    ms = fc['models']
+
+    print(fc)
+    print(ms)
+</py-script>    
+
+<py-script>
+    import os
+    import asyncio
+    import time
+    import warnings # no need to cofigure
+
+    warnings.filterwarnings("ignore")
+
+    import altair as alt
+    import panel as pn
+    import numpy as np
+    import pandas as pd
+    import datetime as dt
+
+    from pyodide.http import open_url
+    from pyodide.http import pyfetch
+
+    pn.config.sizing_mode = 'stretch_width'
+ 
+    u0 = fc['url'] + "catalog.csv"
+    d0 = pd.read_csv(open_url(u0))
+    d0.head()
+    print(d0.head())
+    print(d0['file'])
+    fs = d0['file']
+
+    async def get_file(f):
+        u = fc['url'] + f
+        print("reading", f)
+
+        df = pd.read_csv(open_url(u))
+        
+        dir = '/tmp/'+f
+        print("saving", dir)
+        df.to_csv(dir)
+        return 1
+
+    async def coro(fs):
+      d = [get_file(f) for f in fs]
+      return await asyncio.gather(*d, return_exceptions=True)
+
+    async def inspect():
+      await asyncio.sleep(1)
+      df = [pd.read_csv(('/tmp/'+ f)) for f in fs]
+      d = pd.concat(df)
+      print(d)
+
+      d.to_csv('/tmp/fuel_price.csv')
+      print("file_info")
+      file_info()
+      return 1
+
+    #asyncio.ensure_future(coro(fs))
+    #asyncio.ensure_future(inspect())
+</py-script>
+
+<py-script>
+async def dd(fs):
+    await coro(fs)
+    await inspect()
+    
+    print("read")
+    d = pd.read_csv('/tmp/fuel_price.csv')
+
+    d['date'] = pd.to_datetime(d.date, format='%Y-%m-%d')
+    d['price_model'] = d['price']
+
+    cn = d.country.unique().tolist()
+    fs = d.fuel.unique().tolist()
+    gr = ['country', 'date']
+    gr = []
+    lnf = pn.widgets.Select(name='country', options=cn, value='NL').servable(target='from')
+    fuels = pn.widgets.Select(name='fuels', options=fs, value='Euro-super 95').servable(target='fuel')
+
+    multi_choice = pn.widgets.MultiChoice(name='models', value=['price'], options=ms).servable(target='model')
+
+    intro = pn.pane.Markdown("Weekly fuel prices in EU").servable(target='intro')
+
+    tbl = pn.widgets.Tabulator(d, groupby=gr,  pagination='remote', page_size=10).servable(target='table')
+    tbl.add_filter(lnf, 'country')
+    tbl.add_filter(fuels, 'fuel')
+
+    def trend(xx, yy) :
+       d = tbl.current_view
+       print(d.shape)
+       p = d['price'].to_numpy()
+       data = {'x': [1,2,3], 'y':[1.8, 1.9, 1.8]}
+       data = {'x': np.arange(p.size), 'y': p}
+       # https://panel.holoviz.org/reference/indicators/Trend.html
+       #pn.indicators.Trend(title='Price', data=data, width=150, height=150).servable(target='trend')
+       tr=pn.indicators.Trend(title='Price', data=data, width=150, height=150)
+       return tr
+
+    d = tbl.selected_dataframe # always 0 rows ?
+    
+    foo_funck = pn.bind(trend, lnf, fuels)
+    pn.panel(foo_funck).servable(target='trend')
+
+
+asyncio.ensure_future(dd(fs))
+</py-script>
+
+
+<py-script>
+    import importlib
+    from pathlib import Path
+
+    Path("mymodule.py").write_text("""\
+    def hello():
+      print("he-hellou!")
+    """
+    )
+
+    importlib.invalidate_caches() # Esure Python notices the .py file
+    from mymodule import hello
+ 
+    hello()
+</py-script>
+
+</section>
+
+<script>
+    $(document).ready(function () {
+        $("#sidebarCollapse").on("click", function () {
+            $("#sidebar").toggleClass("active");
+            $(this).toggleClass("active");
+            var interval = setInterval(function () {
+                window.dispatchEvent(new Event("resize"));
+            }, 10);
+            setTimeout(function () {
+                clearInterval(interval);
+            }, 210);
+        });
+    });
+</script>
+
+ </body>
+</html>

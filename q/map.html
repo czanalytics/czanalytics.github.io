@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <title>Lane Map</title>
+    <meta charset="utf-8" />
+  <link rel="icon" type="image/x-icon" href="./favicon.png" />
+    <link
+        rel="stylesheet"
+        href="https://pyscript.net/latest/pyscript.css"/>
+    <script defer src="https://pyscript.net/latest/pyscript.js"></script>
+    <link rel="stylesheet" href="./assets/css/examples.css" />
+</head>
+
+<body>
+<section class="pyscript">
+  <div id="folium"></div>
+   
+<py-config>
+  packages = [
+  "https://cdn.holoviz.org/panel/0.14.3/dist/wheels/bokeh-2.4.3-py3-none-any.whl",
+  "folium", "pandas", "numpy", "panel==0.13.1"]
+  plugins = ["https://pyscript.net/latest/plugins/python/py_tutor.py"]
+</py-config>
+        
+<py-script>
+</py-script>
+
+<py-script>
+# https://python-charts.com/spatial/interactive-maps-folium/
+# https://github.com/leakyMirror/map-of-europe
+# https://raw.githubusercontent.com/python-visualization/folium/main/examples/data/us-states.json
+# https://github.com/python-visualization/folium/blob/main/tests/us-states.json?short_path=3036216
+# us-states.json had "id":"AL" and id:AK ..
+# https://github.com/python-visualization/folium/blob/main/examples/data/US_Unemployment_Oct2012.csv?plain=1
+# csv
+# State, Unemployment
+# AL, 7
+# AK, 10
+
+import folium
+from folium import plugins
+from pyodide.http import open_url
+import json
+import pandas as pd
+import numpy as np
+
+url = ("https://raw.githubusercontent.com/python-visualization/folium/master/examples/data")
+state_geo = f"{url}/us-states.json"
+state_unemployment = f"{url}/US_Unemployment_Oct2012.csv"
+
+state_data = pd.read_csv(open_url(state_unemployment))
+geo_json = json.loads(open_url(state_geo).read())
+
+url_nuts2 = 'https://raw.githubusercontent.com/czanalytics/multimodal-shipping/main/dat/nuts2.json'
+geo_nuts2= json.loads(open_url(url_nuts2).read())
+g = geo_nuts2
+
+url_nuts3 = 'https://raw.githubusercontent.com/czanalytics/multimodal-shipping/main/dat/nuts3.json'
+geo_nuts3= json.loads(open_url(url_nuts3).read())
+
+m = folium.Map(location=[52.3776, 4.8246], zoom_start=5, control_scale=True) 
+
+#folium.GeoJson(geo_nuts2, name="NUTS2/transport").add_to(m)
+
+folium.GeoJson(geo_nuts3, name="NUTS3").add_to(m)
+
+nuts_ids = ['AT11', 'AT12', 'AT13']
+from_ids = ['FI19', 'FI20']
+to_ids = ['BE10', 'BE21', 'BE22', 'BE23', 'BE24']
+
+filter_ids = from_ids + to_ids # areas of interest
+g['features'] = [r for r in g['features'] if r['properties']['NUTS_ID'] in filter_ids] # filter
+
+folium.GeoJson(
+  g, 
+  name="from / to",
+  style_function=lambda x: {
+    'fillColor': 'red'
+    if x['properties']['NUTS_ID'] in from_ids
+    else 'green',
+    'fillOpacity': .5
+    if x['properties']['NUTS_ID'] in to_ids 
+    else 0.1,
+    'weight': 0.1 
+  },
+).add_to(m)
+
+d = {'nuts_id': to_ids, 'price': [3, 4, 5, 7,8]}
+d_price = pd.DataFrame(data=d)
+
+folium.Choropleth(
+    geo_data=g,
+    name="price estimate",
+    data=d_price,
+    columns=["nuts_id", "price"], 
+    key_on="feature.properties.NUTS_ID",
+    fill_color="YlGn",
+    fill_opacity=0.7,
+    line_opacity=0.2,
+    legend_name="Price",
+).add_to(m)
+
+# https://www.nagarajbhat.com/post/folium-visualization/
+d0 = {'id': [1, 2], 'lat': [52.37, 53.52], 'lon': [4.8, 13.4], 'price': [1000, 2000]}
+dp = pd.DataFrame(data=d0)
+
+for i in range(0, len(dp)):
+   folium.Circle(
+     location=[dp.iloc[i]['lat'], dp.iloc[i]['lon']],
+     popup="lane " + str(dp.iloc[i]['id']) + ": " + str(dp.iloc[i]['price']) + "EUR",
+     radius=float(dp.iloc[i]['price']*20),
+     color='white', 
+     fill=True,
+     fill_color='red').add_to(m)
+
+x = 'Load Tripping'
+latLong = [
+(52.37760, 4.82460, x),
+(52.52, 13.40, x),
+(59.85, 17.64, x)]
+
+# point_layer name list
+all_gp = []
+for x in range(len(latLong)):
+  pg = latLong[x][2]
+  all_gp.append(pg)
+
+# Create point_layer object
+unique_gp = list(set(all_gp))
+
+vlist = []
+for i,k in enumerate(unique_gp):
+  locals()[f'point_layer{i}'] = folium.FeatureGroup(name=k)
+  vlist.append(locals()[f'point_layer{i}'])
+
+# Creating list for point_layer
+pl_group = []
+for n in all_gp:
+  for v in vlist:
+    if n == vars(v)['layer_name']:
+      pl_group.append(v)
+
+for (lat,lng,nameP), pg in zip(latLong, pl_group):
+  folium.CircleMarker(location=[lat, lng], radius=5,
+    popup=str(nameP) + " Lat: " + str(lat) + " , Long: " + str(lng),
+    tooltip=str(nameP) + " Lat: " + str(lat) + " , Long: " + str(lng),
+    fill=True,  # Set fill to True
+    color='green',
+    fill_opacity=1.0).add_to(pg)
+
+pg.add_to(m)
+
+m.add_child(folium.LayerControl(collapsed=False))
+
+folium.Marker(location = [52.3776, 4.8246],
+ popup="Load Tripping HQ",
+ icon=folium.Icon(color="blue", icon="info-sign"),).add_to(m)
+
+folium.Marker(
+ location=[60.45, 26.22],
+ popup="LT price calculator / Google ",
+ icon=folium.Icon(icon="cloud"), ).add_to(m)
+
+""" 
+folium.CircleMarker(
+  location=[52.52, 13.40],
+  radius=100,
+  popup="Price calc. range=100",
+  color="#3186cc",
+  fill=True,
+  fill_color="#3186cc",  ).add_to(m)
+"""
+
+x1=52.42
+x2=13.40
+lane_coord = [
+  (x1, x2),
+  (x1-1, x2-1),
+  (x1-2, x2-1),
+  (x1-2, x2-2),
+  (x1-3, x2-2)]
+
+folium.PolyLine(lane_coord, 
+ color="#bb8833",
+ opacity=0.7,
+ tooltip="Lane ID 001").add_to(m)
+
+plugins.Fullscreen(
+  position="topright",
+  title="Expand me",
+  title_cancel="Exit full screen",
+  force_separate_button=True,
+).add_to(m)
+
+plugins.Geocoder().add_to(m)
+plugins.LocateControl().add_to(m)
+
+minimap = plugins.MiniMap()
+m.add_child(minimap)
+
+#data = np.array([np.random.uniform(low = 25, high = 50, size = 100),
+# np.random.uniform(low = -125, high = -70, size = 100)]).T
+# m = folium.Map([40, -100], zoom_start = 3)
+#plugins.MarkerCluster(data).add_to(m)
+
+display(m, target="folium")
+</py-script>
+
+</section>
+
+<section>
+
+<py-script>
+import panel as pn
+
+from1 = pn.widgets.Select(name='country', options=['FI', 'SE', 'BR'], value='FI')
+from1
+</py-script>  
+
+</section>
+
+</body>
+

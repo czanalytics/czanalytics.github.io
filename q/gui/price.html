@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <title>Price</title>
+    <meta charset="utf-8" />
+  <link rel="icon" type="image/x-icon" href="./favicon.png" />
+    <link
+        rel="stylesheet"
+        href="https://pyscript.net/latest/pyscript.css"/>
+    <script defer src="https://pyscript.net/latest/pyscript.js"></script>
+    <link rel="stylesheet" href="./assets/css/examples.css" />
+</head>
+
+<body>
+<section class="pyscript">
+  <div id="folium"></div>
+   
+<py-config>
+  packages = [
+  "https://cdn.holoviz.org/panel/0.14.3/dist/wheels/bokeh-2.4.3-py3-none-any.whl",
+  "pytholog", "folium", "pandas", "numpy", "panel==0.13.1"]
+  plugins = ["https://pyscript.net/latest/plugins/python/py_tutor.py"]
+  [[fetch]]
+        files = ["./price.py", "./request.py"]
+</py-config>
+
+<py-script>
+import logging as log
+
+log.basicConfig(format='%(asctime)s, %(levelname)s, %(message)s', level=log.DEBUG)
+
+log.debug('This message should appear on the console')
+log.info('So should this')
+log.warning('And this, too')
+</py-script>
+
+<py-script>
+log.info('KB conf. ')
+
+import pytholog as pl
+
+graph = pl.KnowledgeBase("graph")
+graph([
+        "edge(a, b, 6)", "edge(a, c, 1)", "edge(b, e, 4)",
+        "edge(b, f, 3)", "edge(c, d, 3)", "edge(d, e, 8)",
+        "edge(e, f, 2)",
+        "path(X, Y, W) :- edge(X , Y, W)",
+        "path(X, Y, W) :- edge(X, Z, W1), path(Z, Y, W2), W is W1 + W2"])
+
+log.info('KB set')
+
+answer, path = graph.query(pl.Expr("path(a, f, W)"), show_path = True)
+
+rules = graph.rule_search(pl.Expr("edge(From, To, Dist)"))
+print(rules)
+print(answer)
+print([x for x in path if str(x) > "Z"])
+
+log.debug('KB goals done')
+</py-script>
+
+<py-script>    
+from price import approx # specify foo(), as import price doesn't work
+
+print( approx(2023.117) )
+
+#model_conf = co2_foo()
+#ms = model_conf['models']
+</py-script>    
+
+<py-script>
+import asyncio
+import json
+from request import request  # import our request function.
+
+import json
+
+from pyodide.http import pyfetch
+
+#from price import lane_api 
+
+async def lane_api():
+  print("main_api()")
+
+  url = "https://assurance-orchestrator.runblade.host"
+
+  id = "231201-001"
+  da = "23-12-01"
+  lat1 = 48.48 # 48.86471
+  lon1 = 2.34 # 2.23901
+ 
+  da = str(document.getElementById("da").value)
+  lat1 = float(document.getElementById("lat1").value)
+  lon1 = float(document.getElementById("lon1").value)
+
+  payload = {"id": id, "da": da, "lat1": lat1, "lon1": lon1, "lat2": 52.36760, "lon2": 4.90410, "meta": "par-ams"}
+  
+  print(f"{url}/api/price")
+  print("payload: ", payload)
+
+  body = json.dumps(payload)
+
+  headers = {"Content-type": "application/json"}
+
+  r = await request(f"{url}/api", method="GET", headers=headers)
+  print(f"GET /api request status:{r.status}, json:{await r.json()}")
+  
+  t = await request(f"{url}/api/price", body=body, method="POST", headers=headers)
+  j = await t.json()
+
+  print(f"POST /api/price request status:{t.status}, json:{j}")
+  print(f"price = {j['price']} EUR  ({j['price_lo']}, {j['price_hi']})")
+
+  document.getElementById("flight-info").innerText = \
+  f"Price from API: {j['price']} EUR ({j['price_lo']}, {j['price_hi']})."
+
+  print("lane_api")
+
+asyncio.ensure_future(lane_api()) # 
+</py-script>    
+
+
+<py-script>    
+import json
+from pyodide.http import pyfetch
+
+from price import login 
+
+import asyncio
+
+async def api_foo():
+  print('api_foo')
+
+async def api_get():
+  print('api_get')
+  p = await login("foo", "bar")
+  print(p)
+
+async def main():
+  _ = await asyncio.gather(api_foo(), api_get())
+
+#asyncio.ensure_future(main())
+</py-script>    
+
+<div class="grid grid-rows-4 p-4 bg-blue-100 border-2 justify-items-left">
+  
+    <div>
+        API url <input id="url" class="w-3/4 bg-white border-4" value="https://assurance-orchestrator.runblade.host">
+        <a href="https://assurance-orchestrator.runblade.host">Browse the API info => json</a>
+    </div>
+
+   <div>      
+        <select name="flight-mode" id="flight-mode-select">
+            <option value="one">EUR</option>
+            <option value="gbp">GBP</option>
+            <option value="sek">SEK</option>
+            <option value="sek">CHF</option>
+            <option value="usd">USD</option>
+        </select>
+    </div>
+
+    <div>
+        <h4 class="font-semibold">When</h4>
+        <input id="da" class="w-3/4 bg-white border-4" value="23-10-01"> 
+    </div>
+
+    <div>
+        <h4 class="font-semibold">From</h4>
+        country<input id="dep" class="w-3/4 bg-white border-4" value="fi"> 
+        lat<input id="lat1" class="w-3/4 bg-white border-4" value="48.8"> 
+        lon<input id="lon1" class="w-3/4 bg-white border-4" value="2.2"> 
+    </div>
+
+    <div>
+        <h4 class="font-semibold">To</h4>
+        <input id="ret" class="w-3/4 bg-white border-4" value="se">
+    </div>
+
+    <div>
+        <button id="book-flight" class="p-2 my-2 bg-green-200 border-2 border-gray-400 rounded-lg">Get Price</button>
+        <p id="flight-info" class="italic"> Avg. price with 68% conf. range (low, high) </p>
+    </div>
+</div>
+
+<!--  
+-->
+
+<py-script>
+import js
+from js import document
+from pyodide.ffi import create_proxy
+
+from price import price_est # !
+from price import _flight_mode_change, _book_flight, _lane_api
+
+flight_mode_change = create_proxy(_flight_mode_change)
+
+document.getElementById("flight-mode-select").addEventListener("input", flight_mode_change)
+
+book_flight = create_proxy(_lane_api)
+#book_flight = create_proxy(_book_flight)
+
+document.getElementById("book-flight").addEventListener("click", book_flight)
+
+flight_mode_change()
+</py-script>
+
+<py-script>
+import pandas as pd
+
+from price import get_data # !
+
+d = get_data()
+
+d_ = d.loc[(d['Origin'] == 'ES70') & (d['Destination'] == 'PT11') ]
+
+print (d_)
+</py-script>
+
+</body>

@@ -1,0 +1,22 @@
+price_payload_1:
+  id: '231101-001'
+  da: '23-11-01'
+  lat1: 48.86471
+  lon1: 2.2   #2.23901
+  lat2: 52.36760
+  lon2:  4.90410
+  meta: 'loc1-loc2'
+
+param:
+  acrId: ''
+  imageKB: ''
+  acrPswd: ''
+
+steps:
+- script: docker build -f Dockerfile.kb -t ${{ param.acrId }}.azurecr.io/${{ param.imageKB }}:latest .
+  displayName: 'docker build kb'
+
+- script: |
+    docker login -u ${{ param.acrId }} -p ${{ param.acrPswd }} ${{ param.acrId }}.azurecr.io
+    docker push ${{ param.acrId }}.azurecr.io/${{ param.imageKB }}
+  displayName: 'docker push kb' 

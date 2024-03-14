@@ -1,0 +1,131 @@
+<html>
+
+<head>
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/vega@5"></script>
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/vega-lite@5"></script>
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/vega-embed@6"></script>
+    <script type="text/javascript" src="https://unpkg.com/tabulator-tables@4.9.3/dist/js/tabulator.js"></script>
+    <script type="text/javascript" src="https://cdn.bokeh.org/bokeh/release/bokeh-2.4.2.js"></script>
+    <script type="text/javascript" src="https://cdn.bokeh.org/bokeh/release/bokeh-widgets-2.4.2.min.js"></script>
+    <script type="text/javascript" src="https://cdn.bokeh.org/bokeh/release/bokeh-tables-2.4.2.min.js"></script>
+    <script type="text/javascript" src="https://unpkg.com/@holoviz/panel@0.13.0/dist/panel.min.js"></script>
+    <script type="text/javascript">
+      Bokeh.set_log_level("info");
+    </script>
+
+    <link rel="stylesheet" href="https://pyscript.net/alpha/pyscript.css" />
+    <script defer src="https://pyscript.net/alpha/pyscript.js"></script>
+
+    <py-env>
+        - numpy
+        - pandas
+        - panel==0.13.1a2
+        - cryptography
+    </py-env>
+</head>
+
+<body>
+<h1>Calibrated EU price estimates</h1>  
+
+<p>
+With a key to decrypt the price model, you can upload relevant price data, and get calibrated EU prices.
+</p>
+
+<div id="decrypt"></div>
+<div id="key"></div>
+
+<div id="fileinput"></div>
+<div id="upload"></div>
+<div id="table"></div>
+                 
+<div id="calibrate"></div>
+<div id="price"></div>
+
+
+<py-repl output="replOutput">
+# Script execution with SHIFT + ENTER
+
+print('Better prices!')
+
+d = prices
+d.describe()
+</py-repl>
+
+<div id="replOutput"></div>
+
+
+<py-script>
+import asyncio
+import panel as pn
+import pandas as pd
+from panel.io.pyodide import show
+from cryptography.fernet import Fernet
+
+fileInput     = pn.widgets.FileInput(accept='.csv')
+uploadButton  = pn.widgets.Button(name='Upload', button_type = 'primary')
+table         = pn.widgets.Tabulator(pagination='remote', page_size=10)
+
+calButton     = pn.widgets.Button(name='Calibrate', button_type = 'primary')
+price         = pn.widgets.Tabulator(pagination='remote', page_size=10)
+
+decryptButton = pn.widgets.Button(name='Decrypt', button_type = 'primary')
+key           = pn.widgets.TextInput(name='Key', placeholder = 'yC2Ua-rnm00zoC_wv-ghIOmmDM0a_4sh1TdZsFvI-3Y=')
+
+document.getElementById('table').style.display = 'none'
+
+def process_file(event):
+    global prices
+
+    if fileInput.value is not None:
+        prices = pd.read_csv(io.BytesIO(fileInput.value))
+        table.value = prices
+        document.getElementById('table').style.display = 'block'
+
+uploadButton.on_click(process_file)
+
+def calibrate_price(event):
+        price.value = table.value
+
+calButton.on_click(calibrate_price)
+
+def crypt_csv(event):
+    k = Fernet.generate_key()
+    fernet = Fernet(k)
+
+    if fileInput.value is not None:
+        original = fileInput.value
+    encrypted = fernet.encrypt(original)
+    key.value = str(encrypted) # b'' 
+    #key.value = str(k)
+
+def decrypt_csv(event):
+    k = key.value
+    #fernet = Fernet(k)
+    fernet = Fernet("yC2Ua-rnm00zoC_wv-ghIOmmDM0a_4sh1TdZsFvI-3Y=")
+    
+    if fileInput.value is not None:
+        enc_file = fileInput.value
+ 
+    d = fernet.decrypt(enc_file)
+    s = str(d) # a
+
+    x = d.decode('utf-8') # b
+    key.value = x
+    price.value = pd.read_csv(x)
+
+
+decryptButton.on_click(decrypt_csv)
+
+await show(fileInput,     'fileinput')
+await show(uploadButton,  'upload')
+await show(table,         'table')
+
+await show(calButton,     'calibrate')
+await show(price,         'price')
+
+await show(decryptButton, 'decrypt')
+await show(key,           'key')
+</py-script>
+
+</body>
+</html>

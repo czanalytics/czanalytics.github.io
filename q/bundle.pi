@@ -1,0 +1,127 @@
+% bundle.pi bundle cargo in PDP
+% shortest_dist from http://www.picat-lang.org/papers/ictai17.pdf
+
+import planner.
+import bundle_conf.
+
+% distance optimized
+table (+,+,min)
+shortest_dist(X,X,Dist) => 
+	Dist=0.
+shortest_dist(X,Y,Dist) =>
+	lane(X,Z,DistXZ),
+	shortest_dist(Z,Y,DistZY),
+	Dist = DistXZ+DistZY.
+
+% target: no waiting or loaded cargo
+final({Agents,[]}) => 
+  foreach([_Loc,Dests|_] in Agents)
+    Dests == []
+  end.
+
+% drop cargo
+action({Agents,Cargo},NextState,Action,ActionCost),
+select([Loc,Dests,Cap,Agent],Agents,AgentsR),
+select(Loc,Dests,DestsR) => % unload deterministically
+	Action = $drop(Agent,Loc),
+	ActionCost = 1,
+	NewAgents = insert_ordered(AgentsR,[Loc,DestsR,Cap,Agent]),
+	NextState = {NewAgents,Cargo}.
+
+action({Agents,Cargo},NextState,Action,ActionCost) ?=>
+	Action = $drop(Agent,Loc),
+	ActionCost = 1,
+	select([Loc,Dests,Cap,Agent],Agents,AgentsR),
+	select(Dest,Dests,DestsR),
+	NewAgents = insert_ordered(AgentsR,[Loc,DestsR,Cap,Agent]),
+	NewCargo = insert_ordered(Cargo,(Loc,Dest)),
+	NextState = {NewAgents,NewCargo}.
+
+% pick cargo
+action({Agents,Cargo},NextState,Action,ActionCost) ?=>
+	Action = $pick(Agent,Loc),
+	ActionCost = 1,
+	select([Loc,Dests,Cap,Agent],Agents,AgentsR),
+	length(Dests) < Cap,
+	select((Loc,Dest),Cargo,CargoR), % cargo and agent in same location
+	NewAgents = insert_ordered(AgentsR,[Loc,insert_ordered(Dests,Dest),Cap,Agent]),
+	NextState = {NewAgents,CargoR}.
+
+% move cargo from Loc to NextLoc
+action({Agents,Cargo},NextState,Action,ActionCost) =>
+	Action = $move(Agent,Loc,NextLoc),
+	select([Loc, Dests,Cap,Agent],Agents,AgentsR),
+	lane(Loc,NextLoc,ActionCost),
+	NewAgents = insert_ordered(AgentsR,[NextLoc,Dests,Cap,Agent]),
+	NextState = {NewAgents,Cargo},
+	estimate_cost(NextState) =< current_resource()-ActionCost.
+
+% cost
+table
+estimate_cost({Agents,Cargo}) = Cost =>
+	LoadedCargo = [(Loc,Dest) : [Loc,Dests,_,_] in Agents, Dest in Dests],
+	NumLoadedCargo = length(LoadedCargo),
+	AgentLocs = [Loc : [Loc|_] in Agents],
+	travel_cost(AgentLocs,LoadedCargo,Cargo,0,TCost),
+	Cost = TCost+NumLoadedCargo+length(Cargo)*2. % load and unload costs
+
+% the maximum of the minimum cost of transporting cargo unit
+travel_cost(_Agents,[],[],Cost0,Cost) => 
+	Cost=Cost0.
+
+travel_cost(Agents,[(PLoc,PDest)|Cargo],Cargo2,Cost0,Cost) =>
+	Cost1 = min([D1+D2 : TLoc in Agents,
+	shortest_dist(TLoc,PLoc,D1),
+	shortest_dist(PLoc,PDest,D2)]),
+	travel_cost(Agents,Cargo,Cargo2,max(Cost0,Cost1),Cost).
+
+travel_cost(Agents,[],Cargo2,Cost0,Cost) =>
+	travel_cost(Agents,Cargo2,[],Cost0,Cost).
+
+main => % Bundling for (Cargo, Agents, Lanes) -configuration
+
+	conf_cargo(Cargo),
+  conf_agents(Agents),
+  conf_lanes(Lanes),
+
+  %println(cargo=Cargo),
+  %println(agents=Agents),
+  %println(lanes=Lanes),
+
+	cl_facts(Lanes,[$lane(+,-,-)]),
+
+	best_plan({sort(Agents),sort(Cargo)},Plan,PlanCost),
+	printf("{"),
+	foreach ({I,Action} in zip(1..len(Plan),Plan))
+		printf("'%03d':'%w', ",I,Action)
+		%printf("%03d %w\n",I,Action)
+	end,
+	printf("'steps':%d, ", len(Plan)),
+	printf("'tot':%w}", PlanCost).
+	%println(tot = PlanCost).
+
+% Bundling for (Cargo, Agents, Lanes) -configuration
+%main =>
+%
+%	Cargo = [(n1,n2),(n1,n2),(n3,n1),(n2,n5)],    % (pickup,delivery) nodes
+%
+%	Agents = [[n1,[],2,a1],
+%	          [n2,[],3,a2]],                      % [depot node,cargo,capacity,id]
+%
+%	Lanes = $[
+%	lane(n3,n1,40),lane(n1,n3,40),lane(n3,n2,18), % lane(from node,to node,dist/time) 
+%	lane(n2,n3,18),lane(n4,n1,36),lane(n1,n4,36),
+%	lane(n4,n3,37),lane(n3,n4,37),lane(n5,n2,24),
+%	lane(n2,n5,24),lane(n5,n3,26),lane(n3,n5,26)],
+%
+%	cl_facts(Lanes,[$lane(+,-,-)]),
+%
+%	best_plan({sort(Agents),sort(Cargo)},Plan,PlanCost),
+%		printf("{"),
+%		foreach ({I,Action} in zip(1..len(Plan),Plan))
+%			printf("'%03d':'%w', ",I,Action)
+%			%printf("%03d %w\n",I,Action)
+%		end,
+%		printf("'steps':%d, ", len(Plan)),
+%		printf("'tot':%w}", PlanCost).
+%		%println(tot = PlanCost).

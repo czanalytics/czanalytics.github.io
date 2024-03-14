@@ -1,0 +1,69 @@
+# Microservice for accessing and serving weekly fuel data updates
+
+FROM python:3
+#FROM ubuntu:latest
+
+RUN apt-get update
+RUN apt-get -y install cron
+
+# lane generics START >>> 
+
+# optional files
+#ADD .key /
+#ADD .key_conf /
+
+ARG D=tmp
+
+ADD ${D}/ODMatrix2021_N2.csv /
+ADD ${D}/nuts-names-21.csv /
+ADD ${D}/nuts.csv /
+ADD ${D}/nuts3.json /
+ADD ${D}/nuts_centroid.csv /
+
+ADD conf_lite.json /
+ADD api.py /
+ADD lane.py /
+ADD net.py /
+
+RUN pip install flask
+RUN pip install flask_restful
+RUN pip install flask-expects-json
+RUN pip install flask-cors
+
+RUN pip install pandas
+RUN pip install numpy
+RUN pip install geopy
+RUN pip install datetime
+RUN pip install geopy
+
+## << lane generics END
+
+## fuel specific START >>>
+
+# libraries for accessing & editing Excel data 
+RUN pip install wget
+RUN pip install openpyxl
+
+# remove warning of future pandas dependancy
+RUN pip install pyarrow
+
+# set crontab
+ADD crontab /etc/cron.d/fuel-price-cron
+
+ADD fuel.sh /home/fuel.sh
+ADD get_fuel_price.py /home/get_fuel_price.py
+ADD api_fuel.py /
+
+# give execute rights
+RUN chmod 0644 /etc/cron.d/fuel-price-cron 
+RUN chmod 0644 /home/fuel.sh
+
+# create log file to be able to run tail
+RUN touch /var/log/cron.log
+
+# Option 1: regular runs
+#CMD cron && tail -f /var/log/cron.log
+
+# Option 2: API
+CMD ["python", "./api_fuel.py"]
+
