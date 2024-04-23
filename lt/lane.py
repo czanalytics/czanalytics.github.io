@@ -48,28 +48,30 @@ conf_model = {'price': 'price_lite', 'eta': 'eta_lite','co': 'co_simple'}      #
 # fuel conf
 conf_fuel = {'price': 'fuel_simple'}
 
+# dev conf
+conf_dev = {'routing':'picat2', 'demo':'demo2'}
+
 # bundling conf
-conf_bundle= {'routing': 'picat', 'demo':'demo1'}
-#conf_bundle= {'routing': 'picat', 'demo':'demo2'}
-#conf_bundle= {'routing': 'google', 'demo':'demo3'} # TBD
+conf_bundle = {'routing':'picat', 'demo':'demo1'}
+#conf_bundle= {'routing':'google', 'demo':'demo3'} # TBD
 
 # route conf TBD
-conf_route = {'service': 'route_streetmap', 'foo': 'bar'}
-#conf_route = {'service': 'route_openroute'}
-#conf_route = {'service': 'route_googlemaps'}
+conf_route = {'service':'route_streetmap', 'foo': 'bar'}
+#conf_route = {'service':'route_openroute'}
+#conf_route = {'service':'route_googlemaps'}
 
 # routing conf TBD
-conf_routing = {'service': 'routing_consolidate', 'foo': 'bar'}
-#conf_routing = {'service': 'routing_multimodal'}
-#conf_routing = {'service': 'routing_fleet'}
+conf_routing = {'service':'routing_consolidate', 'foo': 'bar'}
+#conf_routing = {'service':'routing_multimodal'}
+#conf_routing = {'service':'routing_fleet'}
 
 # management confs TBD
-conf_config = {'config': 'foo'} # manage these configs as files
-conf_status = {'status': 'foo'}
-conf_report = {'report': 'foo'}
+conf_config = {'config':'foo'} # manage these configs as files
+conf_status = {'status':'foo'}
+conf_report = {'report':'foo'}
 
 # integrated config
-conf = {'version':  0.06,
+conf = {'version':  0.17,
         'app_ip':   '0.0.0.0',
         #'app_port':    3333,    #prod
         'kb_port':     5555,
@@ -82,6 +84,7 @@ conf = {'version':  0.06,
         'route':    conf_route,
         'routing':  conf_routing,
         'bundle':   conf_bundle,
+        'dev':      conf_dev,
         'fuel':     conf_fuel,
         'config':   conf_config,
         'status':   conf_status,

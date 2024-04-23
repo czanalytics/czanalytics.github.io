@@ -19,6 +19,8 @@ def bundle_est(d, mod):
     match mod:
         case 'picat':
             plan_dict, doc = plan_picat(d)
+        case 'picat2':
+            plan_dict, doc = plan_picat2(d)
         case 'google':
             plan_dict, doc = fd, "null"
             #plan_dict, doc = plan_google(d) # TBD
@@ -44,8 +46,8 @@ def demo_est(d, mod):
         case 'demo2':
             demo_dict, doc = demo2(d)
         case 'demo3':
-            demo_dict, doc = fd, "null"
-            #demo_dict, doc = demo3(d)
+            #demo_dict, doc = fd, "null"
+            demo_dict, doc = demo3(d)
         case _:
             demo_dict, doc = fd, "null"
             #log.ERROR('unknown demo') 
@@ -54,6 +56,33 @@ def demo_est(d, mod):
 
     return demo_dict, doc
 
+
+def plan_picat2(d, fconf="/Picat/bundle_conf.pi", fplan= "/Picat/plan.txt"):
+    """
+    PDP bundling implemented using Picat backend.
+    We create a Picat input file, fconf, from user specified conf, req.json.
+    Plan file, fplan, is created.
+    """
+
+    runcmd("rm -f /Picat/req.json") # clean start
+    runcmd("rm -f /Picat/plan.txt")
+    runcmd("rm -f /Picat/bundle_conf.*")
+
+    with open('/Picat/req.json', 'w') as jsonfile:
+        json.dump(d, jsonfile)
+
+    agents = d["agents"]
+    carriers = d["carriers"]
+    gps = d["gps"]
+    cargo = d["cargo"]
+    lanes = d["lanes"]
+    attributes = d["attributes"]
+    routes = d["routes"]
+
+    ds = {"agents": agents, "carriers":carriers, "gps":gps,
+          "cargo": cargo, "lanes": lanes, "attributes": attributes, "routes": routes}
+    doc = "plan_picat2"
+    return ds, doc
 
 def plan_picat(d, fconf="/Picat/bundle_conf.pi", fplan= "/Picat/plan.txt"):
     """
@@ -140,7 +169,6 @@ def plan_picat(d, fconf="/Picat/bundle_conf.pi", fplan= "/Picat/plan.txt"):
 
     f.close()
 
-
     runcmd('cd Picat; ./picat bundle.pi >> /Picat/plan.txt', verbose=True)
     #runcmd('cd Picat; ./picat bundle.pi >> ' + fplan, verbose=True)
 
@@ -186,16 +214,16 @@ def demo3(d):
     """
     TBD
     """
-    d = {"foo": "bar"}
+    d = {"foo": "demo3"}
     doc = "foo & bar"
 
     return d, doc
 
-
 def demo2(d):
     """
+    Dev demo
     """
-    d = {"foo": "bar"}
+    d = {"foo": "deiiiimo2"}
     doc = "foo & bar"
 
     return d, doc
@@ -219,7 +247,7 @@ def demo1(d):
 
     #doc2 = doc.replace("'", "\"")
     #d = json.loads(doc2)
-    d = {"foo": "bar"}
+    d = {"foo": "demoooo1"}
 
     return d, doc
 

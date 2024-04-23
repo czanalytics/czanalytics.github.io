@@ -27,14 +27,20 @@ URL      := http://0.0.0.0:8000
 SHELL    := /bin/bash
 D = ./tmp
 
+api_dev:
+	source api.sh && api_dev  2>&1 | tee $(D)/log-dev.txt
+
+api_bundle:
+	source api.sh && api_bundle  2>&1 | tee $(D)/log-bundle.txt
+
+api_local:
+	source api.sh && api_local   2>&1 | tee $(D)/log-local.txt
+
 api_docker_hub:
 	source api.sh && api_docker_hub  2>&1 | tee $(D)/log-docker-hub.txt
 
 api_fuel:
 	source api.sh && api_fuel    2>&1 | tee $(D)/log-fuel.txt
-
-api_bundle:
-	source api.sh && api_bundle  2>&1 | tee $(D)/log-bundle.txt
 
 api_clean:
 	source api.sh && api_clean   2>&1 | tee $(D)/log-clean.txt
@@ -44,9 +50,6 @@ api_data:
 
 api_kb:
 	source api.sh && api_kb      2>&1 | tee $(D)/log-kb.txt
-
-api_local:
-	source api.sh && api_local   2>&1 | tee $(D)/log-local.txt
 
 api_model:
 	source api.sh && api_model   2>&1 | tee $(D)/log-models.txt

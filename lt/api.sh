@@ -213,12 +213,158 @@ api_fuel() {
  echo "time elapsed `expr $t1 - $t0` sec."
 }
 
+# API schema for optimized bundling. v17
+# Order. Execution date and time.
+# Agents. Allocated vehicles for the delivery.
+# Carrier: Additional info.
+# GPS. Network node latitude & longitude and additional info.
+# Lanes. Network graph, with arch attributes price/dist/eta/co2/risk.
+# Scheduled. Timetable for regular train, ship, plane traffic.
+# Timetable. Details of fixed schedules.
+# Rules. Specific constraints.
+# Optimize. Specifics of optimization goals.
 
-# order -  pickup & delivery order optional
-# agents - id optional; location = inial loc. depot node etc.
-# cargo - id optional
-# lanes - lane(from node,to node,dist/time) 
-#         (ni,nj) is symmetric to (nj,ni)
+bx='{
+ "order":   {"da":"2024-02-05", "ta":"12:00", "tb":"15:00", 
+             "id":"2024-02-05-001"},
+ "agents": [{"location":"n1", "capacity":2, "id":"a1"},
+            {"location":"n2", "capacity":3, "id":"a2"}],
+ "cargo":  [{"pick": "n1", "drop":"n2", "id": "c1"},
+            {"pick": "n1", "drop":"n2", "id": "c2"},
+            {"pick": "n3", "drop":"n1", "id": "c3"},
+            {"pick": "n2", "drop":"n5", "id": "c4"}],
+ "lanes":  ["lane(n3,n1,40)","lane(n1,n3,40)",
+            "lane(n3,n2,18)","lane(n2,n3,18)",
+            "lane(n4,n1,36)","lane(n1,n4,36)",
+	          "lane(n4,n3,37)","lane(n3,n4,37)",
+            "lane(n5,n2,24)","lane(n2,n5,24)",
+            "lane(n5,n3,26)","lane(n3,n5,26)"]
+          }'
+
+# changes: 
+# 1) agent naming: a1 -> ag1
+# 2) node name and distance: lane(n1,n3,40) -> lane(hub1,n3,30)
+#                            {"pick":"n1" ...}  -> {"pick":"hub1" ...}  
+# 3) new node next to n1: lane(depot0,hub1,1),lane(hub1,depot0,1)
+# 4) relocate agent ag1: from n1 to depot0
+# 5) capacity of ag2 from 3 to 1
+
+b3='{
+ "order":  {"id":"2024-04-16", "da":"2024-04-23", "ta":"09:00", "tb":"21:00"},
+
+ "agents":[
+   {"id":"ag1", "loc":"depot1", "cap":12, "l":12,    "w":2.2, "h":3.5, "kg":12000},
+   {"id":"ag2", "loc":"depot1", "cap":12, "l":12,    "w":2.2, "h":3.5, "kg":15000},
+   {"id":"ag3", "loc":"depot2", "cap":20, "l":25.25, "w":2.5, "h":4.0, "kg":20000}],
+
+ "carriers":[
+   {"id":"ag1", "type":"car-carrier", "name":"eurolohr-200", "url":"https://www.lohr.fr/catalogue/eurolohr-200/"},
+   {"id":"ag2", "type":"car-carrier", "name":"eurolohr-300", "url":"https://www.lohr.fr/catalogue/eurolohr-300/"},
+   {"id":"ag3", "type":"car-carrier", "name":"trsp-25.25",   "url":"https://www.lohr.fr/catalogue/trsp-25-25/"}],
+
+ "gps":[
+   {"id":"depot0", "lat":48.8566, "lon":2.3522, "type":"depot", "name":"paris"},
+   {"id":"depot1", "lat":52.0759, "lon":4.3094, "type":"depot", "name":"hague"},
+   {"id":"hub2",   "lat":45.7640, "lon":4.8357, "type":"",      "name":"lyon"},
+   {"id":"n2",     "lat":45.7772, "lon":3.0870, "type":"order", "name":"clermont-ferrand"}],
+
+ "cargo":[
+   {"id":"c001-clio", "pick":"hub1", "drop":"n2", "l":4.052, "w":1.798, "h":1.440, "kg":995},
+   {"id":"c002-clio", "pick":"hub1", "drop":"n2", "l":4.052, "w":1.798, "h":1.440, "kg":995},
+   {"id":"c101-fiat", "pick":"hub2", "drop":"n2", "l":3.571, "w":1.627, "h":1.488, "kg":500},
+   {"id":"c102-fiat", "pick":"hub2", "drop":"n3", "l":3.571, "w":1.627, "h":1.488, "kg":500},
+   {"id":"c201-tsla", "pick":"hub3", "drop":"n4", "l":5.057, "w":1.999, "h":1.680, "kg":2335},
+   {"id":"c201-tsla", "pick":"hub3", "drop":"n4", "l":5.057, "w":1.999, "h":1.680, "kg":2335}],
+
+ "lanes":[
+   {"id":"l001", "a":"depot0", "b":"hub1", "attr":[3 ,     10,  0.0]},
+   {"id":"l002", "a":"hub1",   "b":"n3",   "attr":[30,    100,  0.0]},
+   {"id":"l003", "a":"n3",     "b":"n4",   "attr":[100,   200,  0.0]},
+   {"id":"l004", "a":"n3",     "b":"n4",   "attr":[80,    200,  0.0]},
+   {"id":"l005", "a":"n4",     "b":"n5",   "attr":[100,   300,  0.2]},
+   {"id":"l006", "a":"n5",     "b":"n4",   "attr":[100,   300,  0.2]},
+   {"id":"l007", "a":"hub1",   "b":"hub3", "attr":[1000, 1000,  0.0]}],
+
+ "routes":[".", "...", "..."],
+
+ "attributes":["dist", "cost", "risk"],
+
+ "timetable":[
+   {"id":"tt1", "lane":"l003", "day":[6,7],       "dep":["13:00","18:00"], "arr":["15:00","21:00"], "mode":"truck", "url":""},
+   {"id":"tt2", "lane":"l004", "day":[1,2,3,4,5], "dep":["06:00","10:00"], "arr":["07:00","11:10"], "mode":"rail",  "url":""},
+   {"id":"tt3", "lane":"l005", "day":[1,2,3,4,5], "dep":["08:00","10:00"], "arr":["08:30","10:30"], "mode":"ferry", "url":""},
+   {"id":"tt4", "lane":"l006", "day":[1,2,3,4,5], "dep":["09:00","12:00"], "arr":["09:30","12:30"], "mode":"ferry", "url":""},
+   {"id":"tt5", "lane":"l007", "day":[1,3,5],     "dep":["13:00"],         "arr":["17:40"],         "mode":"air",   "url":""}],
+
+ "rules":[
+   {"id":"r1", "rule":"time < 12"},
+   {"id":"r2", "rule":"cost < 1000"},
+   {"id":"r3", "rule":"co2 < 10000"},
+   {"id":"r6", "rule":"ta > 9 & ta < 10"},
+   {"id":"r7", "rule":"tb < 21"},
+   {"id":"r8", "rule":"use(ferry)"},
+   {"id":"r9", "rule":"compliance(agent)"}],
+
+"optimize":[
+  {"id":"run1", "goal":"cost"},
+  {"id":"run2", "goal":"time",           "rules":["r1"]},
+  {"id":"run4", "goal":"resource-usage", "rules":["r8", "r9"]},
+  {"id":"run6", "goal":"cost",                                  "routing":"ms"},
+  {"id":"run7", "goal":"cost-and-risk",                         "routing":"google", "weather":"noaa"}]
+}'
+
+api_dev() { 
+ echo "test bundle api extension"
+ echo "fn:"${FUNCNAME[*]}
+ echo $(date)
+ t0=$(date +%s)
+ set -x # shell echo, set +x unsets
+ 
+ ia=1; ib=8
+
+ ci="lane_dev" # image
+ cn="$ci"_api  # container name
+
+ #key="Api-Key: "`cat .key` # optional
+ ip="0.0.0.0"; p="6666"; url="http://$ip:$p" # unique dev port
+ 
+ ct="Content-type: application/json"
+ pp="json_pp" # prettyprinter
+
+ docker stop $cn # clean
+ docker rm   $cn
+ docker rmi  $ci
+
+ docker build -t $ci . -f Dockerfile.bundle --force-rm=true 
+ docker run -d -p $p:$p --name $cn $ci  # -d for detached mode in bg
+ 
+ sleep 3
+
+ curl -s "$url"     | "$pp" # request pp with silent -s
+ curl -s "$url"/api | "$pp" 
+ 
+ curl -s -X GET -H "$ct" $url/api/demo | "$pp"
+ curl -s -X GET -H "$ct" $url/api/demodev | "$pp"
+
+# for i in {3..3}
+i=3 
+#do
+   di="b$i"         # test selected
+   d=$(echo ${!di}) # evaluated
+
+   curl -s -X GET  -H "$ct" $url/api/bundledev --data "$d" | "$pp"
+# done
+
+ set +x
+ docker logs -t $cn
+
+ echo $(date)
+ t1=$(date +%s)
+ echo "time elapsed `expr $t1 - $t0` sec."
+}
+
+
+# data for api_bundle()
 
 b1='{
  "order":   {"da":"2024-02-05", "ta":"12:00", "tb":"15:00", 
