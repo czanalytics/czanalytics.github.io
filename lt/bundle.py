@@ -79,10 +79,12 @@ def plan_picat2(d, fconf="/Picat/bundle_conf.pi", fplan= "/Picat/plan.txt"):
     attributes = d["attributes"]
     routes = d["routes"]
 
-    ds = {"agents": agents, "carriers":carriers, "gps":gps,
+    ds = {"agents": agents, "carriers": carriers, "gps": gps,
           "cargo": cargo, "lanes": lanes, "attributes": attributes, "routes": routes}
     doc = "plan_picat2"
+
     return ds, doc
+
 
 def plan_picat(d, fconf="/Picat/bundle_conf.pi", fplan= "/Picat/plan.txt"):
     """
@@ -236,9 +238,7 @@ def demo1(d):
     """
 
     runcmd("ls -lat /Picat")
-
     runcmd("rm -f /Picat/demo1.txt")
-
     runcmd('cd Picat; ./picat pdp.pi >> demo1.txt', verbose=True)
 
     with open('/Picat/demo1.txt','r') as f:

@@ -28,6 +28,8 @@ RUN curl -L >picat.tar.gz http://picat-lang.org/download/picat36_linux64.tar.gz 
  && tar -xzvf picat.tar.gz \
  && rm picat.tar.gz
 
+ADD match.pi /Picat/
+ADD kb.pi /Picat/
 ADD bundle.pi /Picat/
 ADD lane.pi /Picat/
 ADD pdp.pi /Picat/

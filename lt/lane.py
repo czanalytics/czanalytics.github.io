@@ -71,7 +71,7 @@ conf_status = {'status':'foo'}
 conf_report = {'report':'foo'}
 
 # integrated config
-conf = {'version':  0.17,
+conf = {'version':  0.18,
         'app_ip':   '0.0.0.0',
         #'app_port':    3333,    #prod
         'kb_port':     5555,

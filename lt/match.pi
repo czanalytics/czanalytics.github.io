@@ -1,0 +1,44 @@
+% match.pi match carrier to freight 
+
+import kb.
+
+info(Xs) =>
+  foreach (X in Xs)
+    printf("%w ",X)
+  end.
+
+f_info =>
+  println('freight:'),
+  kb_freight(Freight),
+  foreach (F in Freight)
+    println(F)
+  end.
+
+c_info => 
+  println('carrier:'),
+  kb_carrier(Carrier),
+  foreach (C in Carrier)
+    println(C)
+  end.
+
+match(Fr) =>
+  m(Fr, Ca),
+  printf("\n  %w: %w", Fr, Ca).
+
+main =>
+  println("\nFreight:"),
+  kb_freight(Freight),
+  info(Freight),
+  
+  println("\nCarrier:"),
+  kb_carrier(Carrier),
+  info(Carrier),
+
+  println("\nMatching:"),
+  match(meal),
+  match(person),
+  match(pallet),
+  match(container),
+  match(car),
+  match(truck).
+
