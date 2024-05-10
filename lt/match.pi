@@ -1,4 +1,4 @@
-% match.pi match carrier to freight 
+% match.pi match carrier to freight
 
 import kb.
 
@@ -14,7 +14,7 @@ f_info =>
     println(F)
   end.
 
-c_info => 
+c_info =>
   println('carrier:'),
   kb_carrier(Carrier),
   foreach (C in Carrier)
@@ -25,20 +25,47 @@ match(Fr) =>
   m(Fr, Ca),
   printf("\n  %w: %w", Fr, Ca).
 
-main =>
+db_cars(M) =>
+  %println(C),
+  car(M,L,W,H),
+  printf("\n {'model'='%w', l=%w, w=%w, h=%w},", M,L,W,H).
+
+match_h(M, Hmax) =>
+  car(M,_,_,H),
+  H < Hmax,
+  printf("\n  %w H=%w", M, H).
+
+go ?=>
   println("\nFreight:"),
   kb_freight(Freight),
   info(Freight),
-  
+
   println("\nCarrier:"),
   kb_carrier(Carrier),
   info(Carrier),
 
-  println("\nMatching:"),
+  println("\n\nMatching:"),
   match(meal),
   match(person),
   match(pallet),
   match(container),
   match(car),
-  match(truck).
+  match(truck),
 
+  printf("\n\n Cars:\n"),
+  db_cars(M),
+  fail.
+
+go => println("\n Done.").
+
+go2 ?=>
+  match_h(M,1.7), fail.
+
+go2 => println("\n Done.").
+
+main => println("Matching..."),
+go,
+Hmax = 1.7,
+printf("\n Height criteria H<%w:\n",  Hmax),
+  match_h(M,Hmax),
+go2.
