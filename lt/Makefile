@@ -27,6 +27,9 @@ URL      := http://0.0.0.0:8000
 SHELL    := /bin/bash
 D = ./tmp
 
+api_shell:
+	docker exec -it lane_dev_api bash
+
 api_dev:
 	source api.sh && api_dev  2>&1 | tee $(D)/log-dev.txt
 

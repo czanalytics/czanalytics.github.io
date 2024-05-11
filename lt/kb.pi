@@ -1,14 +1,14 @@
 module kb.
 
-kb_freight(Freight) => Freight = [meal,groceries,person,pallet,container,car,truck,steel,special_freight].
+kb(Freight) => Freight = [meal,groceries,person,pallet,container,car,truck,steel,special_freight].
 
-kb_carrier(Carrier) => Carrier = [courier,scooter,bike,taxi,car,bus,truck,car_carrier,train,ship,airplaine, special_transport].
+kb(Carrier) => Carrier = [courier,scooter,bike,taxi,car,bus,truck,car_carrier,train,ship,airplaine, special_transport].
 
 m(meal, [courier]).
 m(person, [scooter,bike,taxi,car,bus,train,ship,airplane]).
 m(pallet, [truck]).
-m(container, [truck,ship]).
-m(car, [car_carrier,ship]).
+m(container, [truck,train,ship]).
+m(car, [car_carrier,train,ship]).
 m(truck, [train,ship]).
 m(special_freight, [special_transport]).
 
