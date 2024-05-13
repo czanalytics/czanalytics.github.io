@@ -50,7 +50,27 @@ go2 ?=>
 
 go2 => println("\n Done.").
 
+go3 ?=> match(_,_), fail.
+go3 => println("\n Done.").
+
+go4 ?=> match(carrier1,_), fail.
+go4=> println("\n Done.").
+
+go5 ?=> match(carrier2,_), fail.
+go5 => println("\n Done.").
+
+go6 ?=> match(carrier3,_), fail.
+go6=> println(".. ok.").
+
+go7 ?=> match(_,opel_corsa), fail.
+go7 => println(".. ok").
+
+go8 ?=> match(_,toyota_yaris), fail.
+go8 => println(".. ok").
+
 main => println("Matching..."),
   go,
-  go2.
+  go2,
+  go3, 
+  go4,go5,go6,go7,go8.
 

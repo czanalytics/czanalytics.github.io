@@ -12,18 +12,18 @@ m(car, [car_carrier,train,ship]).
 m(truck, [train,ship]).
 m(special_freight, [special_transport]).
 
-cc(car,car01).
-cc(car_carrier,carrier01).
-cc(truck,truck1).
-cc(ship,ship01).
+%cc(car,car01).
+%cc(car_carrier,carrier01).
+%cc(truck,truck1).
+%cc(ship,ship01).
 
 % carrier_cabin: top, lo, hi
 % trailer: lo, hi
-%cabin_top(), 
+%cabin_top(),
 
-% dimensions rounded to upper value with tolerance 0.1 m 
+% dimensions rounded to upper value with tolerance 0.1 m
 
-car(opel_corsa   , 4.1, 1.8, 1.5). % L W H 
+car(opel_corsa   , 4.1, 1.8, 1.5). % L W H
 car(peugeot_308  , 4.3, 1.8, 1.5).
 car(peugeot_3008 , 4.5, 1.8, 1.7).
 car(toyota_proace, 5.0, 1.8, 1.9).
@@ -38,19 +38,58 @@ cabin_hi(   c3, 3.0, 2.0).
 trailer_hi( c4, 2.5, 2.0).
 trailer_lo( c5, 0.5, 2.0).
 
-%lohr(c1, X) = cabin_lo(), cabin_hi()
-%lohr(c2, X) = cabin_lo(), cabin_hi(), cabin_top()
-%lohr(c3, X) = cabin_lo(), cabin_hi, trailer_lo(), trailer_hi()
-%lohr(c4, X) = cabin_lo(), cabin_hi, cabin_hi(), trailer_lo(), trailer_hi()
+%slot(L,H,X0,Y0,Angle).
+
+%% Car-carrier slots
+cc(carrier1,1000,[slot1(4.5,1.5)]).
+cc(carrier2,2000,[slot1(4.5,1.5), slot2(4.5,1.5)]).
+cc(carrier3,3000,[slot1(4.5,1.5), slot2(4.5,1.5), slot3(5.0,2.0)]).
 
 
-% dimensions rounded to upper value with tolerance 0.1 m 
+slot(Carrier, S) =>
+        cc(Carrier,_,Slots),
+        member(S,Slots).
+
+dim(Carrier, Slot,L,H)  =>
+  slot(Carrier, S),
+  S =.. Sc,
+  Slot = Sc[1],
+  L = Sc[2],
+  H = Sc[3].
+
+
+match(Carrier,Model) =>
+ dim(Carrier, Slot,L,H),
+ car(Model,Lc,_,Hc),
+ Lc =< L,
+ Hc =< H,
+ writef("\n %w %w %w/%w: %w %w/%w",Carrier, Slot,L,H, Model,Lc,Hc),
+ fail.
+
+
+%ll(sl(L,_), L) => L. % length of slot
+
+
+ccm(S) =>
+   slot(S),
+   ll(S,L),
+   L>1.5.
+
+carrier(id,kg,[]).
+
+%carrier(c1, X) = cabin_lo(), cabin_hi()
+%carrier(c2, X) = cabin_lo(), cabin_hi(), cabin_top()
+%carrier(c3, X) = cabin_lo(), cabin_hi, trailer_lo(), trailer_hi()
+%carrier(c4, X) = cabin_lo(), cabin_hi, cabin_hi(), trailer_lo(), trailer_hi()
+
+
+% dimensions rounded to upper value with tolerance 0.1 m
 % cabine 2-4 + 4-7
-% Lg 
+% Lg
 % vans 2+4 Renault Kangoo L1 <4.5 (4321) L2 <5.0 (4705) W <1.5 H<1.9
 % above-cabin (1), behind-cabin (2-3), trailer-top 2-3, trailer-bottom 3-4
 % behid cabin: bottom 1+ tilt + top OR bottom + top+ tilt
-% trailer-bottom: 3 or 2 + tilt 1-2 
+% trailer-bottom: 3 or 2 + tilt 1-2
 % top row 2 x <5.0
 % low roe 3x4.6  or 2*4.4+4.9
 % Carrier H<4.5  L 21.7
