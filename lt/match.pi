@@ -41,36 +41,37 @@ go ?=>
   db_cars(M),
   fail.
 
-go => println("\n Done.").
+go => println(" ok").
 
 go2 ?=>
   Hmax = 1.7,
   printf("\n Height criteria H<%w:\n",  Hmax),
   match_h(M,Hmax), fail.
 
-go2 => println("\n Done.").
+go2 => println(" ok").
 
 go3 ?=> match(_,_), fail.
-go3 => println("\n Done.").
+go3 => println(" ok").
 
 go4 ?=> match(carrier1,_), fail.
-go4=> println("\n Done.").
+go4=> println(" ok").
 
 go5 ?=> match(carrier2,_), fail.
-go5 => println("\n Done.").
+go5 => println(" ok").
 
 go6 ?=> match(carrier3,_), fail.
-go6=> println(".. ok.").
+go6=> println(" ok").
 
 go7 ?=> match(_,opel_corsa), fail.
-go7 => println(".. ok").
+go7 => println(" ok").
 
 go8 ?=> match(_,toyota_yaris), fail.
-go8 => println(".. ok").
+go8 => println(" ok").
 
 main => println("Matching..."),
   go,
+  kbcar,kbcc,
   go2,
-  go3, 
+  go3,
   go4,go5,go6,go7,go8.
 

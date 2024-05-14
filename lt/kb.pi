@@ -12,18 +12,10 @@ m(car, [car_carrier,train,ship]).
 m(truck, [train,ship]).
 m(special_freight, [special_transport]).
 
-%cc(car,car01).
-%cc(car_carrier,carrier01).
-%cc(truck,truck1).
-%cc(ship,ship01).
 
-% carrier_cabin: top, lo, hi
-% trailer: lo, hi
-%cabin_top(),
-
-% dimensions rounded to upper value with tolerance 0.1 m
-
-car(opel_corsa   , 4.1, 1.8, 1.5). % L W H
+% car(Model,L,W,H)
+% dimensions rounded to higher value with 0.1 m tolerance.
+car(opel_corsa   , 4.1, 1.8, 1.5).
 car(peugeot_308  , 4.3, 1.8, 1.5).
 car(peugeot_3008 , 4.5, 1.8, 1.7).
 car(toyota_proace, 5.0, 1.8, 1.9).
@@ -32,59 +24,60 @@ car(toyota_c_hr  , 4.4, 1.8, 1.6).
 car(bmw_serie_4  , 4.8, 1.8, 1.4).
 car(citroen_c4   , 4.5, 1.8, 1.7).
 
-cabin_top(  c1, 3.0, 1.5). % bottom_level, max. height
-cabin_lo(   c2, 1.0, 2.0).
-cabin_hi(   c3, 3.0, 2.0).
-trailer_hi( c4, 2.5, 2.0).
-trailer_lo( c5, 0.5, 2.0).
+%Car carrier cc(Name,MaxWeight, Slots) with slotname(L,H,loc(X,Y,Angle))
+cc(carrier1,1000,[slot1(4.5,1.5,loc(3,1,0))]).
+cc(carrier2,2000,[slot1(4.5,1.5,loc(3,3,0)), slot2(4.5,1.5,loc(3,1,0))]).
+cc(carrier3,3000,[slot1(4.5,1.5,loc(3,3,0)), slot2(4.5,1.5,loc(3,1,0)), slot3(5.0,2.0,loc(5,1,3))]).
+cc(carrier6,6000,[slot1(4.5,1.5,loc(3.3,0)), slot2(4.5,1.5,loc(3,1,0)), slot3(5.0,2.0,loc(5,1,3)),
+                  slot4(4.5,1.5,loc(8,3,0)), slot5(4.5,1.5,loc(8,1,0)), slot6(5.0,2.0,loc(12,1,0))]).
 
-%slot(L,H,X0,Y0,Angle).
+cars =>
+ car(Model,Lc,_,Hc),
+ writef("\n %w %w %w",Model,Lc,Hc).
 
-%% Car-carrier slots
-cc(carrier1,1000,[slot1(4.5,1.5)]).
-cc(carrier2,2000,[slot1(4.5,1.5), slot2(4.5,1.5)]).
-cc(carrier3,3000,[slot1(4.5,1.5), slot2(4.5,1.5), slot3(5.0,2.0)]).
+carriers =>
+ cc(Carrier,KgMax,Slots),
+ writef("\n %w %w %w",Carrier,KgMax,Slots).
+
+kbcar ?=> cars, fail.
+kbcar => println(" ok").
+kbcc ?=> carriers, fail.
+kbcc => println(" ok").
 
 
-slot(Carrier, S) =>
+% unique slots & cars
+% slot2(carrier1) > false
+% slot2(carrier2) > true
+slot2(Carrier) =>
+        cc(Carrier,_,Ss),
+        %cc(carrier2,_,Ss),
+        member(S1,Ss),
+        member(S2,Ss),
+        S1 != S2,
+        writef("\n %w %w",S1,S2).
+
+
+slot(Carrier,Sl) =>
         cc(Carrier,_,Slots),
-        member(S,Slots).
+        member(Sl,Slots).
 
-dim(Carrier, Slot,L,H)  =>
-  slot(Carrier, S),
-  S =.. Sc,
-  Slot = Sc[1],
-  L = Sc[2],
-  H = Sc[3].
-
+dim(Carrier,Slot,L,H,Loc)  =>
+  slot(Carrier,Sl),
+  Sl =.. S,
+  Slot = S[1],
+  L = S[2],
+  H = S[3],
+  Loc = S[4].
 
 match(Carrier,Model) =>
- dim(Carrier, Slot,L,H),
+ dim(Carrier,Sl,L,H,Loc),
  car(Model,Lc,_,Hc),
  Lc =< L,
  Hc =< H,
- writef("\n %w %w %w/%w: %w %w/%w",Carrier, Slot,L,H, Model,Lc,Hc),
+ writef("\n %w %w %w/%w %w: %w %w/%w",Carrier,Sl,L,H,Loc, Model,Lc,Hc),
  fail.
 
-
-%ll(sl(L,_), L) => L. % length of slot
-
-
-ccm(S) =>
-   slot(S),
-   ll(S,L),
-   L>1.5.
-
-carrier(id,kg,[]).
-
-%carrier(c1, X) = cabin_lo(), cabin_hi()
-%carrier(c2, X) = cabin_lo(), cabin_hi(), cabin_top()
-%carrier(c3, X) = cabin_lo(), cabin_hi, trailer_lo(), trailer_hi()
-%carrier(c4, X) = cabin_lo(), cabin_hi, cabin_hi(), trailer_lo(), trailer_hi()
-
-
-% dimensions rounded to upper value with tolerance 0.1 m
-% cabine 2-4 + 4-7
+% cabin 2-4 + 4-7
 % Lg
 % vans 2+4 Renault Kangoo L1 <4.5 (4321) L2 <5.0 (4705) W <1.5 H<1.9
 % above-cabin (1), behind-cabin (2-3), trailer-top 2-3, trailer-bottom 3-4
@@ -99,3 +92,4 @@ carrier(id,kg,[]).
 % Twizy L 2.4 W 1.2 H 1.4
 % Rolls L <6.0 W <2.2 H<1.7
 % Vans L ~5 [3.8,7.4], W ~1.2 [,], H ~2.0 [1.7,2.9]
+
