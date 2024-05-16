@@ -2,6 +2,11 @@
 
 import kb.
 
+info2(Xs) =>
+  foreach (X in Xs)
+    printf("\n%w ",X)
+  end.
+
 info(Xs) =>
   foreach (X in Xs)
     printf("%w ",X)
@@ -19,6 +24,13 @@ match_h(M, Hmax) =>
   car(M,_,_,H),
   H < Hmax,
   printf("\n  %w H=%w", M, H).
+
+go9 ?=>
+  println("\nContour:"),
+  contour(Car1),
+  info2(Car1).
+
+go9 => println(" ok").
 
 go ?=>
   println("\nFreight:"),
@@ -73,5 +85,5 @@ main => println("Matching..."),
   kbcar,kbcc,
   go2,
   go3,
-  go4,go5,go6,go7,go8.
-
+  go4,go5,go6,go7,go8,
+  go9.
