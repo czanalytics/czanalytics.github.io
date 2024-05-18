@@ -1,4 +1,5 @@
 module kb.
+import sat. % for #>
 
 kb(Freight) => Freight = [meal,groceries,person,pallet,container,car,truck,steel,special_freight].
 
@@ -65,6 +66,30 @@ cc(carrier6,6000,[slot1(4.5,1.5,loc(3.3,0)), slot2(4.5,1.5,loc(3,1,0)), slot3(5.
                   slot4(4.5,1.5,loc(8,3,0)), slot5(4.5,1.5,loc(8,1,0)), slot6(5.0,2.0,loc(12,1,0))]).
 
 
+side(Dx,Dy) = Mesh =>
+  St = new_array(Dx,Dy),
+  foreach (I in 1..Dx, J in 1..Dy)
+    St[I,J] = 0
+  end,
+  Mesh = St.
+
+tilt(Deg) =>
+  S = {{1,1,1,1},{0,0,0,0},{0,0,0,0}},
+  N = length(S),
+  M = length(S[1]),
+  St = side(15,15),
+  foreach (I in 1..N, J in 1..M)
+     %S[I,J] > 0,
+     A = to_radians(Deg),
+     Y = round(I*cos(A)-J*sin(A))+10,
+     X = round(I*sin(A)+J*cos(A))+10,
+     V = cond(S[I,J]>0,1,0),
+     printf("\n(%w,%w) -> (%w,%w) value %w",I,J,X,Y,V),
+     St[X,Y] := V,
+  end,
+  foreach (R in St)
+   writeln(R)
+  end.
 
 % ~0.2 x 0.2 m mesh
 contour(Car1) => Car1 =
@@ -137,4 +162,3 @@ match(Carrier,Model) =>
 % Twizy L 2.4 W 1.2 H 1.4
 % Rolls L <6.0 W <2.2 H<1.7
 % Vans L ~5 [3.8,7.4], W ~1.2 [,], H ~2.0 [1.7,2.9]
-
