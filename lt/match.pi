@@ -87,4 +87,9 @@ main => println("Matching..."),
   go3,
   go4,go5,go6,go7,go8,
   go9,
-  tilt(0), tilt(10), tilt(20), tilt(45), tilt(90).
+  contour(Car2),
+  X0=1,Y0=1,tilt(Car2,X0,Y0,0),
+  X1=3,Y1=1,tilt(Car2,X1,Y1,10),
+  X2=1,Y2=4,tilt(Car2,X2,Y2,20).
+
+  %tilt(Car,1,2,10), tilt(Car2,2,2,20), tilt(Car2,1,1,30).
