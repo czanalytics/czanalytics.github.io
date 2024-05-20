@@ -77,21 +77,33 @@ side(Dx,Dy) = Mesh =>
 tilt(S,X0,Y0,Deg) =>
   N = length(S),
   M = length(S[1]),
-  St = side(40,80),
+  St = side(60,120),
   printf("\nloc(%w,%w,%w):\n",X0,Y0,Deg),
+  foreach (K in 1..2)
   foreach (I in 1..N, J in 1..M)
      %S[I,J] > 0,
      A = to_radians(Deg),
-     X = round(I*cos(A)-J*sin(A) + N/0.2- X0/0.2),
+     X = round(I*cos(A)-J*sin(A) + (K-1)*10 + N/0.2- X0/0.2),
      Y = round(I*sin(A)+J*cos(A) + Y0/0.2),
      V = cond(S[I,J]>0,1,0),
      %printf("\n(%w,%w) -> (%w,%w) value %w",I,J,X,Y,V),
      St[X,Y] := V,
   end,
-  foreach (R in St)
-   writeln(R)
-  end.
+  end,
+  print_cc(St).
 
+
+print_cc(S) =>
+  N = length(S),
+  M = length(S[1]),
+  foreach (I in 1..N)
+   foreach(J in 1..M)
+    X = S[I,J],
+    if X=0 then printf(".") else printf("o") end
+   end,
+   nl
+  end,
+  nl.
 
 contour(Car2) => Car2 = {
  {0,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0},
