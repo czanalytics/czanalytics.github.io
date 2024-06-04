@@ -90,6 +90,7 @@ main => println("Matching..."),
   contour(Car2),
   X0=1,Y0=1,tilt(Car2,X0,Y0,0),
   X1=3,Y1=1,tilt(Car2,X1,Y1,10),
-  X2=1,Y2=4,tilt(Car2,X2,Y2,20).
+  X2=1,Y2=4,tilt(Car2,X2,Y2,20),
+  foo_facts.
 
   %tilt(Car,1,2,10), tilt(Car2,2,2,20), tilt(Car2,1,1,30).
