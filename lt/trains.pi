@@ -1,0 +1,16 @@
+% select possible paths from schedule
+
+go =>
+   threepath(1,4,Ps,TotTime),
+   println(Ps),
+   println(total_time=TotTime), nl.
+
+trains(Schedule) => % {From,To,StartTime,EndTime}
+  Schedule = [{1,2,0,1},{2,3,4,5},{2,3,0,1},{3,4,5,6},{3,4,2,3},{3,4,8,9}].
+ 
+threepath(A,D,Ps,TotTime) =>
+   Ps = [{A,B,_T0,T1},{B,C,T2,T3},{C,D,T4,_T5}], % pattern from A to D
+   T2 #> T1, T4 #> T3, % time criteria
+   trains(Ts),
+   table_in(Ps,Ts), % pick possible plan
+	 TotTime #= sum([ End-Start : (_,_,Start,End) in Ps]).
