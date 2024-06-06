@@ -71,13 +71,13 @@ def plan_picat2(d, fconf="/Picat/bundle_conf.pi", fplan= "/Picat/plan.txt"):
     with open('/Picat/req.json', 'w') as jsonfile:
         json.dump(d, jsonfile)
 
-    agents = d["agents"]
-    carriers = d["carriers"]
-    gps = d["gps"]
+    agents = d["agent"]
+    carriers = d["carrier"]
+    gps = d["loc"]
     cargo = d["cargo"]
-    lanes = d["lanes"]
-    attributes = d["attributes"]
-    routes = d["routes"]
+    lanes = d["lane"]
+    attributes = d["attribute"]
+    routes = d["route"]
 
     ds = {"agents": agents, "carriers": carriers, "gps": gps,
           "cargo": cargo, "lanes": lanes, "attributes": attributes, "routes": routes}

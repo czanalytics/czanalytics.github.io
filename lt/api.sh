@@ -250,33 +250,95 @@ bx='{
 # 5) capacity of ag2 from 3 to 1
 
 b3='{
- "order":  {"id":"2024-04-16", "da":"2024-04-23", "ta":"09:00", "tb":"21:00"},
+ "order":  {"id":"2024-06-06", "da":"2024-06-07", "ta":"09:00", "tb":"21:00"},
 
- "agents":[
-   {"id":"ag1", "loc":"depot1", "cap":12, "l":12,    "w":2.2, "h":3.5, "kg":12000},
-   {"id":"ag2", "loc":"depot1", "cap":12, "l":12,    "w":2.2, "h":3.5, "kg":15000},
-   {"id":"ag3", "loc":"depot2", "cap":20, "l":25.25, "w":2.5, "h":4.0, "kg":20000}],
+ "agent":[
+   {"id":"ag01", "carrier":"cr01", "loc":"l01"},
+   {"id":"ag02", "carrier":"cr02", "loc":"l01"},
+   {"id":"ag03", "carrier":"cr03", "loc":"l01"}],
 
- "carriers":[
-   {"id":"ag1", "type":"car-carrier", "name":"eurolohr-200", "url":"https://www.lohr.fr/catalogue/eurolohr-200/"},
-   {"id":"ag2", "type":"car-carrier", "name":"eurolohr-300", "url":"https://www.lohr.fr/catalogue/eurolohr-300/"},
-   {"id":"ag3", "type":"car-carrier", "name":"trsp-25.25",   "url":"https://www.lohr.fr/catalogue/trsp-25-25/"}],
+ "carrier":[
+   {"id":"cr01", "type":"car-carrier", "l":12.0, "w":2.2, "h":3.5, "kg":12000, "name":"eurolohr-200", "url":"https://www.lohr.fr/catalogue/eurolohr-200/"},
+   {"id":"cr02", "type":"car-carrier", "l":13.3, "w":2.2, "h":3.5, "kg":15000, "name":"eurolohr-300", "url":"https://www.lohr.fr/catalogue/eurolohr-300/"},
+   {"id":"cr03", "type":"car-carrier", "l":25.3, "w":2.5, "h":4.0, "kg":20000, "name":"trsp-25.25"  , "url":"https://www.lohr.fr/catalogue/trsp-25-25/"}],
 
- "gps":[
-   {"id":"depot0", "lat":48.8566, "lon":2.3522, "type":"depot", "name":"paris"},
-   {"id":"depot1", "lat":52.0759, "lon":4.3094, "type":"depot", "name":"hague"},
-   {"id":"hub2",   "lat":45.7640, "lon":4.8357, "type":"",      "name":"lyon"},
-   {"id":"n2",     "lat":45.7772, "lon":3.0870, "type":"order", "name":"clermont-ferrand"}],
+ "loc":[
+   {"id":"l00", "lat":45.7640, "lon":4.8357, "type":"depot", "name":"lyon-depot"},
+   {"id":"l01", "lat":48.8420, "lon":2.2489, "type":"depot", "name":"paris-depot"},
+   {"id":"l11", "lat":48.8303, "lon":2.2964, "type":"capacity", "name":"paris-clio"},
+   {"id":"l12", "lat":50.3369, "lon":3.2956, "type":"capacity", "name":"belgium-duster"},
+   {"id":"l13", "lat":45.7623, "lon":4.6898, "type":"capacity", "name":"lyon-fiat"},
+   {"id":"l14", "lat":52.0413, "lon":4.3517, "type":"capacity", "name":"hague-tesla"},
+   {"id":"l20", "lat":45.6190, "lon":4.5350, "type":"demand", "name":"lyon-dealer"},
+   {"id":"l21", "lat":49.5453, "lon":5.8190, "type":"demand", "name":"luxemburg-dealer"},
+   {"id":"l22", "lat":52.3867, "lon":4.9226, "type":"demand", "name":"amsterdam-dealer"},
+   {"id":"l23", "lat":52.0094, "lon":4.3116, "type":"demand", "name":"hague-dealer"},
+   {"id":"l24", "lat":43.5591, "lon":3.8353, "type":"demand", "name":"lattes-dealer"},
+   {"id":"l25", "lat":45.3194, "lon":4.8075, "type":"demand", "name":"chanas-dealer"},
+   {"id":"l26", "lat":48.3334, "lon":4.0944, "type":"demand", "name":"lavau-dealer"},
+   {"id":"l27", "lat":45.7858, "lon":3.1222, "type":"demand", "name":"clermont-ferrand-dealer"},
+   {"id":"l28", "lat":42.6800, "lon":2.8109, "type":"demand", "name":"perpignan-dealer"},
+   {"id":"l29", "lat":50.3872, "lon":3.5498, "type":"demand", "name":"saint-aulve-dealer"}],
 
- "cargo":[
-   {"id":"c001-clio", "pick":"hub1", "drop":"n2", "l":4.052, "w":1.798, "h":1.440, "kg":995},
-   {"id":"c002-clio", "pick":"hub1", "drop":"n2", "l":4.052, "w":1.798, "h":1.440, "kg":995},
-   {"id":"c101-fiat", "pick":"hub2", "drop":"n2", "l":3.571, "w":1.627, "h":1.488, "kg":500},
-   {"id":"c102-fiat", "pick":"hub2", "drop":"n3", "l":3.571, "w":1.627, "h":1.488, "kg":500},
-   {"id":"c201-tsla", "pick":"hub3", "drop":"n4", "l":5.057, "w":1.999, "h":1.680, "kg":2335},
-   {"id":"c201-tsla", "pick":"hub3", "drop":"n4", "l":5.057, "w":1.999, "h":1.680, "kg":2335}],
+ "item":[
+   {"id":"i001", "l":4.1, "w":1.8, "h":1.5, "kg":995,  "name":"renault-clio"},
+   {"id":"i002", "l":4.4, "w":1.9, "h":1.7, "kg":995,  "name":"dacia-duster"},
+   {"id":"i003", "l":3.6, "w":1.7, "h":1.5, "kg":500,  "name":"fiat-500"},
+   {"id":"i004", "l":5.1, "w":2.0, "h":1.7, "kg":2335, "name":"tesla-x"}],
 
- "lanes":[
+ "cargo":  [
+   {"id":"c201", "units": 5, "item":"i001", "pick":"l11", "drop":"l20"},
+   {"id":"c202", "units": 5, "item":"i002", "pick":"l12", "drop":"l20"},
+   {"id":"c203", "units":10, "item":"i003", "pick":"l13", "drop":"l20"},
+   {"id":"c204", "units": 1, "item":"i004", "pick":"l14", "drop":"l20"},
+
+   {"id":"c211", "units": 9, "item":"i001", "pick":"l11", "drop":"l21"},
+   {"id":"c212", "units":10, "item":"i002", "pick":"l12", "drop":"l21"},
+   {"id":"c213", "units": 7, "item":"i003", "pick":"l13", "drop":"l21"},
+   {"id":"c214", "units": 3, "item":"i004", "pick":"l14", "drop":"l21"},
+ 
+   {"id":"c221", "units": 5, "item":"i001", "pick":"l11", "drop":"l22"},
+   {"id":"c222", "units":10, "item":"i002", "pick":"l12", "drop":"l22"},
+   {"id":"c223", "units": 7, "item":"i003", "pick":"l13", "drop":"l22"},
+   {"id":"c224", "units": 3, "item":"i004", "pick":"l14", "drop":"l22"},
+
+   {"id":"c231", "units": 4, "item":"i001", "pick":"l11", "drop":"l23"},
+   {"id":"c232", "units": 3, "item":"i002", "pick":"l12", "drop":"l23"},
+   {"id":"c233", "units": 8, "item":"i003", "pick":"l13", "drop":"l23"},
+   {"id":"c234", "units": 1, "item":"i004", "pick":"l14", "drop":"l23"},
+
+   {"id":"c241", "units": 6, "item":"i001", "pick":"l11", "drop":"l24"},
+   {"id":"c242", "units": 6, "item":"i002", "pick":"l12", "drop":"l24"},
+   {"id":"c243", "units": 2, "item":"i003", "pick":"l13", "drop":"l24"},
+   
+   {"id":"c251", "units":11, "item":"i001", "pick":"l11", "drop":"l25"},
+   {"id":"c252", "units": 4, "item":"i002", "pick":"l12", "drop":"l25"},
+   {"id":"c253", "units": 8, "item":"i003", "pick":"l13", "drop":"l25"},
+   {"id":"c254", "units": 2, "item":"i004", "pick":"l14", "drop":"l25"},
+  
+   {"id":"c261", "units": 9, "item":"i001", "pick":"l11", "drop":"l26"},
+   {"id":"c262", "units": 8, "item":"i002", "pick":"l12", "drop":"l26"},
+   {"id":"c263", "units": 8, "item":"i003", "pick":"l13", "drop":"l26"},
+   {"id":"c264", "units": 3, "item":"i004", "pick":"l14", "drop":"l26"},
+     
+   {"id":"c271", "units":10, "item":"i001", "pick":"l11", "drop":"l27"},
+   {"id":"c272", "units":10, "item":"i002", "pick":"l12", "drop":"l27"},
+   {"id":"c273", "units": 7, "item":"i003", "pick":"l13", "drop":"l27"},
+   {"id":"c274", "units": 3, "item":"i004", "pick":"l14", "drop":"l27"},
+  
+   {"id":"c281", "units": 9, "item":"i001", "pick":"l11", "drop":"l28"},
+   {"id":"c282", "units":10, "item":"i002", "pick":"l12", "drop":"l28"},
+   {"id":"c283", "units": 7, "item":"i003", "pick":"l13", "drop":"l28"},
+   {"id":"c284", "units": 3, "item":"i004", "pick":"l14", "drop":"l28"},
+
+   {"id":"c291", "units":10, "item":"i001", "pick":"l11", "drop":"l29"},
+   {"id":"c292", "units": 9, "item":"i002", "pick":"l12", "drop":"l29"},
+   {"id":"c293", "units":14, "item":"i003", "pick":"l13", "drop":"l29"},
+   {"id":"c294", "units": 2, "item":"i004", "pick":"l14", "drop":"l29"}],
+
+ "attribute":["dist", "cost", "risk"],
+ 
+ "lane":[
    {"id":"l001", "a":"depot0", "b":"hub1", "attr":[3 ,     10,  0.0]},
    {"id":"l002", "a":"hub1",   "b":"n3",   "attr":[30,    100,  0.0]},
    {"id":"l003", "a":"n3",     "b":"n4",   "attr":[100,   200,  0.0]},
@@ -285,9 +347,7 @@ b3='{
    {"id":"l006", "a":"n5",     "b":"n4",   "attr":[100,   300,  0.2]},
    {"id":"l007", "a":"hub1",   "b":"hub3", "attr":[1000, 1000,  0.0]}],
 
- "routes":[".", "...", "..."],
-
- "attributes":["dist", "cost", "risk"],
+ "route":[".", "...", "..."],
 
  "timetable":[
    {"id":"tt1", "lane":"l003", "day":[6,7],       "dep":["13:00","18:00"], "arr":["15:00","21:00"], "mode":"truck", "url":""},
@@ -296,21 +356,20 @@ b3='{
    {"id":"tt4", "lane":"l006", "day":[1,2,3,4,5], "dep":["09:00","12:00"], "arr":["09:30","12:30"], "mode":"ferry", "url":""},
    {"id":"tt5", "lane":"l007", "day":[1,3,5],     "dep":["13:00"],         "arr":["17:40"],         "mode":"air",   "url":""}],
 
- "rules":[
-   {"id":"r1", "rule":"time < 12"},
-   {"id":"r2", "rule":"cost < 1000"},
-   {"id":"r3", "rule":"co2 < 10000"},
-   {"id":"r6", "rule":"ta > 9 & ta < 10"},
-   {"id":"r7", "rule":"tb < 21"},
-   {"id":"r8", "rule":"use(ferry)"},
-   {"id":"r9", "rule":"compliance(agent)"}],
+ "rule":[
+   {"id":"r001", "rule":"plan(Cost,ETA,CO), Cost < 1000"},
+   {"id":"r003", "rule":"plan(Cost,ETA,CO), ETA < 10, CO < 10000"},
+   {"id":"r004", "rule":"item(L,W,H,Weight), Weight < 2000"},
+   {"id":"r005", "rule":"lane(risk) < 0.2"},
+   {"id":"r006", "rule":"timetable(Lane,Departure,Arrival,ferry), Arrival < 17"},
+   {"id":"r010", "rule":"carrier(Type,L,W,H), L < 15"}],
 
-"optimize":[
-  {"id":"run1", "goal":"cost"},
-  {"id":"run2", "goal":"time",           "rules":["r1"]},
-  {"id":"run4", "goal":"resource-usage", "rules":["r8", "r9"]},
-  {"id":"run6", "goal":"cost",                                  "routing":"ms"},
-  {"id":"run7", "goal":"cost-and-risk",                         "routing":"google", "weather":"noaa"}]
+ "optimize":[
+   {"id":"r01", "goal":"cost"},
+   {"id":"r02", "goal":"time",           "rules":["r001"]},
+   {"id":"r03", "goal":"resource-usage", "rules":["r008", "r009"]},
+   {"id":"r04", "goal":"cost",                                  "routing":"ms"},
+   {"id":"r05", "goal":"cost-and-risk",                         "routing":"google", "weather":"noaa"}]
 }'
 
 api_dev() { 
