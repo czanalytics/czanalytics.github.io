@@ -73,14 +73,106 @@ def plan_picat2(d, fconf="/Picat/bundle_conf.pi", fplan= "/Picat/plan.txt"):
 
     agents = d["agent"]
     carriers = d["carrier"]
-    gps = d["loc"]
+    locs = d["loc"]
+    items = d["item"]
     cargo = d["cargo"]
     lanes = d["lane"]
     attributes = d["attribute"]
+    timetables = d["timetable"]
     routes = d["route"]
+    rules = d["rule"]
+    opt = d["optimize"]
 
-    ds = {"agents": agents, "carriers": carriers, "gps": gps,
-          "cargo": cargo, "lanes": lanes, "attributes": attributes, "routes": routes}
+    f = open(fconf, "w")
+
+    # header
+    f.write("module bundle_conf.\n\n")
+
+    for a in agents:
+        i = a["id"]
+        carrier = a["carrier"]
+        loc = a["loc"]
+        log.debug('agent: %s', a)
+        s = "agent(" + i + "," + carrier + "," + loc + ").\n"
+        f.write(s)
+
+    f.write("\n")
+
+    for c in carriers:
+        i = c["id"]
+        t = c["type"]
+        l = str(c["l"])
+        w = str(c["w"])
+        h = str(c["h"])
+        kg = str(c["kg"])
+        name = c["name"]
+        log.debug('carrier: %s', c)
+        s = "carrier("+ i +","+ t +","+ l +","+ w +","+ h +","+ kg +","+ name +").\n"
+        f.write(s)
+
+    f.write("\n")
+
+    for l in locs:
+        i = l["id"]
+        t = l["type"]
+        lat = str(l["lat"])
+        lon = str(l["lon"])
+        name = l["name"]
+        log.debug('loc: %s', l)
+        s = "loc("+ i +","+ t +","+ lat +","+ lon +","+ name +").\n"
+        f.write(s)
+
+    f.write("\n")
+
+    for i in items:
+        it = i["id"]
+        l = str(i["l"])
+        w = str(i["w"])
+        h = str(i["h"])
+        kg = str(i["kg"])
+        name = i["name"]
+        log.debug('item: %s', i)
+        s = "item("+ it +","+ l +","+ w +","+ h +","+ kg +","+ name +").\n"
+        f.write(s)
+
+    f.write("\n")
+
+    for c in cargo:
+        i = c["id"]
+        us = c["units"]
+        units = str(c["units"])
+        item = c["item"]
+        pick = c["pick"]
+        drop = c["drop"]
+        log.debug('cargo: %s', c)
+
+        for u in range(us):
+            ii = i +"_"+ str(u)
+            s = "cargo("+ ii +","+ item +","+ pick +","+ drop +").\n"
+            f.write(s)
+
+    f.write("\n")
+
+    """
+    # DO embed rules clauses
+    for r in rules:
+        i = r["id"]
+        rule = str(r["rule"])
+        log.debug('rule: %s', r)
+        s = "rule("+ i +","+ rule +").\n"
+        f.write(s)
+
+    f.write("\n")
+    """
+
+    f.close()
+
+    #runcmd('cd Picat; ./picat bundle.pi >> /Picat/plan.txt', verbose=True)
+
+
+    ds = {"agents": agents, "carriers": carriers, "locs": locs,
+          "items":items, "cargo": cargo, "lanes": lanes, "attributes": attributes, 
+          "routes": routes, "rules":rules, "optimize":opt}
     doc = "plan_picat2"
 
     return ds, doc

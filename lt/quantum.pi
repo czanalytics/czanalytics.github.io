@@ -1,0 +1,42 @@
+% http://retina.inf.ufsc.br/picat_guide/
+% Picat> F = findall(foo(X), member(X,[1,2,3]))
+
+% Picat> F = findall(foo(A,B,C), agent(A,B,C) )
+% F = [foo(ag01,cr01,l01),foo(ag02,cr02,l01),foo(ag03,cr03,l01)]
+
+% Picat> F = findall([C,[],C,6], agent(A,_,C) )
+% F = [[l01,'[]',l01,6],[l01,'[]',l01,6],[l01,'[]',l01,6]]
+
+% F = findall(lane(A,B,2), cargo(_,_,A,B))
+
+%  dist(LatA,LonA,LatB,LonB, Dist) =>  Dist = round(10*(abs(LatA-LatB)+ abs(LonA-LonB))).
+% F = findall(lane(A,B,D), (cargo(_,_,A,B),loc(A,_,LatA,LonA,_), loc(B,_,LatB,LonB,_),dist(LatA,LonA,LatB,LonA,D)))
+% lane(l14,l29,470)]
+
+module quantum.
+import sat. % for #>
+import bundle_conf.
+
+% L = findall(X,member(X,[1,2,3])) % [1,2,3]
+% Foos = findall(foo(C,bar), member(C,[car1,car2,car3])). % [foo(car1,bar), ...]
+% Slots = findall(S, slot(carrier3,S))
+
+foo_facts =>
+   F = findall(foo(a,X,2), member(X, [1,2,3])), % [foo(a,1,2), foo(a,2,2), foo(a,3,2)]
+   Fs = $F, cl_facts(Fs, [$foo(+,-,-)]). % instantiation; testing foo(Bar,_,_)
+
+
+do_lanes0 =>
+  F = findall(lane(A,B,2), cargo(_,_,A,B)),
+  Fs = $F, cl_facts(Fs, [$lane(+,-,-)]).
+
+
+dist(LatA,LonA,LatB,LonB,Dist) =>  Dist = round(10*(abs(LatA-LatB)+ abs(LonA-LonB))).
+
+do_lanes =>
+  F = findall(lane(A,B,D), (cargo(_,_,A,B),
+                            loc(A,_,LatA,LonA,_), 
+                            loc(B,_,LatB,LonB,_), 
+                            dist(LatA,LonA,LatB,LonA,D))),
+  Fs = $F, cl_facts(Fs, [$lane(+,-,-)]).
+
