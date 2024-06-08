@@ -147,8 +147,9 @@ def plan_picat2(d, fconf="/Picat/bundle_conf.pi", fplan= "/Picat/plan.txt"):
         log.debug('cargo: %s', c)
 
         for u in range(us):
+
             ii = i +"_"+ str(u)
-            s = "cargo("+ ii +","+ item +","+ pick +","+ drop +").\n"
+            s = "cargo("+ ii +","+ str(u) +","+ item +","+ pick +","+ drop +").\n"
             f.write(s)
 
     f.write("\n")
@@ -167,7 +168,7 @@ def plan_picat2(d, fconf="/Picat/bundle_conf.pi", fplan= "/Picat/plan.txt"):
 
     f.close()
 
-    runcmd('cd Picat; ./picat bundle_quantum.pi >> /Picat/plan.txt', verbose=True)
+    #runcmd('cd Picat; ./picat bundle_quantum.pi >> /Picat/plan.txt', verbose=True)
 
     ds = {"agents": agents, "carriers": carriers, "locs": locs,
           "items":items, "cargo": cargo, "lanes": lanes, "attributes": attributes,

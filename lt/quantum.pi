@@ -11,10 +11,10 @@
 % Picat> F = findall([C,[],C,6], agent(A,_,C) )
 % F = [[l01,'[]',l01,6],[l01,'[]',l01,6],[l01,'[]',l01,6]]
 
-% F = findall(lane(A,B,2), cargo(_,_,A,B))
+% F = findall(lane(A,B,2), cargo(_,_,_,A,B))
 
 %  dist(LatA,LonA,LatB,LonB, Dist) =>  Dist = round(10*(abs(LatA-LatB)+ abs(LonA-LonB))).
-% F = findall(lane(A,B,D), (cargo(_,_,A,B),loc(A,_,LatA,LonA,_), loc(B,_,LatB,LonB,_),dist(LatA,LonA,LatB,LonA,D)))
+% F = findall(lane(A,B,D), (cargo(_,_,_,A,B),loc(A,_,LatA,LonA,_), loc(B,_,LatB,LonB,_),dist(LatA,LonA,LatB,LonA,D)))
 % lane(l14,l29,470)]
 
 module quantum. 
@@ -32,7 +32,7 @@ foo_facts =>
 
 
 do_lanes0 =>
-  F = findall(lane(A,B,2), cargo(_,_,A,B)),
+  F = findall(lane(A,B,2), cargo(_,_,_,A,B)),
   Fs = $F, cl_facts(Fs, [$lane(+,-,-)]).
 
 dist(LatA,LonA,LatB,LonB,Dist) =>
@@ -45,23 +45,51 @@ dist(LatA,LonA,LatB,LonB,Dist) =>
   Dist = round(R*C).
 
 do_lanes =>
-  F = findall(lane(A,B,D), (cargo(_,_,A,B),
+  F = findall(lane(A,B,D), (cargo(_,_,_,A,B),
                             loc(A,_,LatA,LonA,_), 
                             loc(B,_,LatB,LonB,_), 
-                            dist(LatA,LonA,LatB,LonA,D))),
+                            dist(LatA,LonA,LatB,LonB,D))),
   Fs = $F, cl_facts(Fs, [$lane(+,-,-)]).
 
 % F = findall(lane(A,B,D), lane(A,B,D))
 
-
 % Configure Agents, Cargo, Lanes
 
-conf_agents(Agents) => Agents = findall([Loc,[],6,Name], agent(Name,_,Loc)).
-
-conf_cargo(Cargo) => Cargo = findall((A,B), cargo(_,_,A,B)).
+%conf_agents(Agents) => Agents = findall([Loc,[],6,Name], agent(Name,_,Loc)).
+%conf_cargo(Cargo) => Cargo = findall((A,B), cargo(_,0,i004,A,B)).
+%conf_cargo(Cargo) => Cargo = findall((A,B), cargo(_,0,_,A,B)).
 
 conf_lanes(Lanes) => Lanes =
-    findall(lane(A,B,D), (cargo(_,_,A,B),
-                          loc(A,_,LatA,LonA,_),
+    findall($lane(A,B,D), (loc(A,_,LatA,LonA,_),
                           loc(B,_,LatB,LonB,_),
-                          dist(LatA,LonA,LatB,LonA,D))).
+                          A != B,
+                          Exclude = [l00,l01,l11,l12,l13],
+                          not member(A,Exclude),
+                          not member(B,Exclude),
+                          dist(LatA,LonA,LatB,LonB,D))).
+
+%conf_lanes(Lanes) => Lanes =
+%     findall($lane(A,B,D), (cargo(_,0,i004,A,B),
+%                          loc(A,_,LatA,LonA,_),
+%                          loc(B,_,LatB,LonB,_),
+%                          A != B,
+%                          dist(LatA,LonA,LatB,LonB,D))).
+
+% 2 agents, 5 deliveries, 15 nodes 
+%conf_agents(Agents) => Agents = [[l14,[],6,ag6]].
+conf_agents(Agents) => Agents = [[l14,[],6,ag6],[l14,[],3,ag3]].
+%conf_agents(Agents) => Agents = findall([Loc,[],6,Name], agent(Name,_,Loc)).
+
+%conf_cargo(Cargo) => Cargo = [(l14,l20),(l14,l21)]. % 1sec
+%conf_cargo(Cargo) => Cargo = [(l14,l20),(l14,l21),(l14,l22)]. % 5s
+%conf_cargo(Cargo) => Cargo = [(l14,l20),(l14,l21),(l14,l22),(l14,l23)]. % 10sec/1xag and 30sec/2xag
+conf_cargo(Cargo) => Cargo = [(l14,l20),(l14,l21),(l14,l22),(l14,l23),(l14,l25)]. % 30sec/1xag  3 min/2xage
+%conf_cargo(Cargo) => Cargo = [(l14,l20),(l14,l21),(l14,l22),(l14,l23),(l14,l25),(l14,l26)]. 5 min %sec/1xag
+%conf_cargo(Cargo) => Cargo = [(l14,l20),(l14,l21),(l14,l22),(l14,l23),(l14,l25),(l14,l26),(l14,l27),(l14,l28),(l14,l29)]. %Too slow.
+
+%conf_cargo(Cargo) => Cargo = findall((A,B), cargo(_,0,i004,A,B)).
+%conf_cargo(Cargo) => Cargo = findall((A,B), cargo(_,0,_,A,B)).
+
+% note $- usage
+%conf_lanes(Lanes) => Lanes = [$lane(l14,l20,714),$lane(l14,l21,296),$lane(l20,l14,714),$lane(l21,l14,296)].
+%conf_lanes(Lanes) => Lanes = $[lane(l14,l20,714),lane(l14,l21,296),lane(l14,l22,55),lane(l14,l23,4),lane(l14,l25,748),lane(l14,l26,413),lane(l14,l27,702),lane(l14,l28,1048),lane(l14,l29,192)].

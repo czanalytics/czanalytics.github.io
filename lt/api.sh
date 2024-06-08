@@ -253,9 +253,9 @@ b3='{
  "order":  {"id":"2024-06-06", "da":"2024-06-07", "ta":"09:00", "tb":"21:00"},
 
  "agent":[
-   {"id":"ag01", "carrier":"cr01", "loc":"l01"},
-   {"id":"ag02", "carrier":"cr02", "loc":"l01"},
-   {"id":"ag03", "carrier":"cr03", "loc":"l01"}],
+   {"id":"ag01", "carrier":"cr01", "loc":"l20"},
+   {"id":"ag02", "carrier":"cr02", "loc":"l20"},
+   {"id":"ag03", "carrier":"cr03", "loc":"l20"}],
 
  "carrier":[
    {"id":"cr01", "type":"car_carrier", "l":12.0, "w":2.2, "h":3.5, "kg":12000, "name":"eurolohr_200", "url":"https://www.lohr.fr/catalogue/eurolohr-200/"},
