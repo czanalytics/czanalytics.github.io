@@ -1,3 +1,7 @@
+% quantum.pi 
+% Creates Agents, Cargo, Lanes configuration
+% from raw facts for PDP optimizer, bundle_quantum.pi 
+
 % http://retina.inf.ufsc.br/picat_guide/
 % Picat> F = findall(foo(X), member(X,[1,2,3]))
 
@@ -13,9 +17,10 @@
 % F = findall(lane(A,B,D), (cargo(_,_,A,B),loc(A,_,LatA,LonA,_), loc(B,_,LatB,LonB,_),dist(LatA,LonA,LatB,LonA,D)))
 % lane(l14,l29,470)]
 
-module quantum.
+module quantum. 
+import math. % to_radians
 import sat. % for #>
-import bundle_conf.
+import bundle_conf. % facts from the API call
 
 % L = findall(X,member(X,[1,2,3])) % [1,2,3]
 % Foos = findall(foo(C,bar), member(C,[car1,car2,car3])). % [foo(car1,bar), ...]
@@ -30,8 +35,14 @@ do_lanes0 =>
   F = findall(lane(A,B,2), cargo(_,_,A,B)),
   Fs = $F, cl_facts(Fs, [$lane(+,-,-)]).
 
-
-dist(LatA,LonA,LatB,LonB,Dist) =>  Dist = round(10*(abs(LatA-LatB)+ abs(LonA-LonB))).
+dist(LatA,LonA,LatB,LonB,Dist) =>
+  Lat1 = to_radians(LatA), Lon1 = to_radians(LonA),
+  Lat2 = to_radians(LatB), Lon2 = to_radians(LonB),
+  LonD = Lon2-Lon1, LatD = Lat2-Lat1,
+  A = pow(sin(LatD/2),2) + cos(Lat1) * cos(Lat2) * pow(sin(LonD/2),2),
+  C = 2 * atan2(sqrt(A), sqrt(1-A)),
+  R = 6373.0,
+  Dist = round(R*C).
 
 do_lanes =>
   F = findall(lane(A,B,D), (cargo(_,_,A,B),
@@ -40,3 +51,17 @@ do_lanes =>
                             dist(LatA,LonA,LatB,LonA,D))),
   Fs = $F, cl_facts(Fs, [$lane(+,-,-)]).
 
+% F = findall(lane(A,B,D), lane(A,B,D))
+
+
+% Configure Agents, Cargo, Lanes
+
+conf_agents(Agents) => Agents = findall([Loc,[],6,Name], agent(Name,_,Loc)).
+
+conf_cargo(Cargo) => Cargo = findall((A,B), cargo(_,_,A,B)).
+
+conf_lanes(Lanes) => Lanes =
+    findall(lane(A,B,D), (cargo(_,_,A,B),
+                          loc(A,_,LatA,LonA,_),
+                          loc(B,_,LatB,LonB,_),
+                          dist(LatA,LonA,LatB,LonA,D))).

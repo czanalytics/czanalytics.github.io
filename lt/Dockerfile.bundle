@@ -35,6 +35,7 @@ ADD quantum.pi /Picat/
 ADD trains.pi /Picat/
 ADD match.pi /Picat/
 ADD kb.pi /Picat/
+ADD bundle_quantum.pi /Picat/
 ADD bundle.pi /Picat/
 ADD lane.pi /Picat/
 ADD pdp.pi /Picat/
