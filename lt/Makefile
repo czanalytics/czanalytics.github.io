@@ -30,6 +30,9 @@ D = ./tmp
 api_shell:
 	docker exec -it lane_dev_api bash
 
+api_getplan:
+	source api.sh && api_getplan 2>&1 | tee $(D)/log-getplan.txt
+
 api_dev:
 	source api.sh && api_dev  2>&1 | tee $(D)/log-dev.txt
 

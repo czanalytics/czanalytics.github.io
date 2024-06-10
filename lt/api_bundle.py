@@ -4,7 +4,7 @@ from flask_cors import CORS
 from datetime import datetime  # date
 
 from lane import conf
-from bundle import bundle_est, demo_est
+from bundle import bundle_est, demo_est, getplan
 
 app = Flask(__name__)
 
@@ -92,7 +92,7 @@ class bundle(Resource):
         return jsonify(msg)
 
 
-class bundledev(Resource):
+class bundleq(Resource):
     """
     Bundle transportation plant for cargo (pick, drop) -network.
     """
@@ -108,8 +108,8 @@ class bundledev(Resource):
             'bundle_conf': cnf,
             'plan': r,
             'datetime': datetime.now(),
-            'doc': doc,
-            'req': req}
+            'doc': doc
+        }
 
         return jsonify(msg)
 
@@ -126,8 +126,47 @@ class bundledev(Resource):
             'bundle_conf': cnf,
             'plan': r,
             'datetime': datetime.now(),
-            'doc': doc,
-            'req': req}
+            'doc': doc
+        }
+
+        return jsonify(msg)
+
+
+class plan(Resource):
+    """
+    Get plan
+    """
+    def get(self):
+        #key_check(request.headers.get('Api-Key'))
+
+        req =  {"planid": "plan.latest"}
+        #req = request.json
+        cnf = conf["dev"]["routing"]
+        r, doc = getplan(req, cnf) # !
+
+        msg = {
+            'version': conf["version"],
+            'plan': r,
+            'datetime': datetime.now(),
+            'doc': doc
+        }
+
+        return jsonify(msg)
+
+
+    def post(self):
+        #key_check(request.headers.get('Api-Key'))
+
+        req = request.json
+        cnf = conf["dev"]["routing"]
+        r, doc = getplan(req,cnf) # !
+
+        msg = {
+            'version': conf["version"],
+            'plan': r,
+            'datetime': datetime.now(),
+            'doc': doc
+        }
 
         return jsonify(msg)
 
@@ -225,7 +264,8 @@ api.add_resource(intro,  '/api',        endpoint='/api')
 api.add_resource(bundle, '/api/bundle', endpoint='/api/bundle')
 api.add_resource(demo,   '/api/demo',   endpoint='/api/demo')
 
-api.add_resource(bundledev, '/api/bundledev', endpoint='/api/bundledev')
+api.add_resource(plan, '/api/plan', endpoint='/api/plan')
+api.add_resource(bundleq, '/api/bundleq', endpoint='/api/bundleq')
 api.add_resource(demodev,   '/api/demodev',   endpoint='/api/demodev')
 
 if __name__ == '__main__':

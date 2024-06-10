@@ -19,7 +19,7 @@ def bundle_est(d, mod):
     match mod:
         case 'picat':
             plan_dict, doc = plan_picat(d)
-        case 'picat2':
+        case 'quantum':
             plan_dict, doc = plan_picat2(d)
         case 'google':
             plan_dict, doc = fd, "null"
@@ -71,6 +71,7 @@ def plan_picat2(d, fconf="/Picat/bundle_conf.pi", fplan= "/Picat/plan.txt"):
     with open('/Picat/req.json', 'w') as jsonfile:
         json.dump(d, jsonfile)
 
+    order = d["order"]
     agents = d["agent"]
     carriers = d["carrier"]
     locs = d["loc"]
@@ -168,12 +169,39 @@ def plan_picat2(d, fconf="/Picat/bundle_conf.pi", fplan= "/Picat/plan.txt"):
 
     f.close()
 
-    #runcmd('cd Picat; ./picat bundle_quantum.pi >> /Picat/plan.txt', verbose=True)
+    import time
+    tag = str(time.strftime("%y%m%d_%H%M%S"))
+    planid =  'plan.'+ tag
 
-    ds = {"agents": agents, "carriers": carriers, "locs": locs,
-          "items":items, "cargo": cargo, "lanes": lanes, "attributes": attributes,
-          "routes": routes, "rules":rules, "optimize":opt}
-    doc = "plan_picat2"
+    import os
+
+    os.system('cd Picat; ./picat bundle_quantum.pi >> /Picat/' + planid + ' &')
+    os.system('ln -s /Picat/' + planid + ' /Picat/plan.latest &')
+
+    ds = {"status":"started", "planid": planid, "order":order, "agents":agents}
+
+    doc = {"plan": planid, "status":"running"}
+
+    return ds, doc
+
+
+def getplan(d, foo):
+    """
+    Get the plan-file.
+    """
+
+    import os
+    import time
+
+    f = d["planid"]
+    fplan = "/Picat/" + f
+
+    with open(fplan,'r') as f:
+        doc = f.read()
+
+    doc2 = doc.replace("'", "\"")
+    d = json.loads(doc2)
+    ds = dict(sorted(d.items()))
 
     return ds, doc
 

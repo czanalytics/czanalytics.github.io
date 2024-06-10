@@ -49,7 +49,7 @@ conf_model = {'price': 'price_lite', 'eta': 'eta_lite','co': 'co_simple'}      #
 conf_fuel = {'price': 'fuel_simple'}
 
 # dev conf
-conf_dev = {'routing':'picat2', 'demo':'demo2'}
+conf_dev = {'routing':'quantum', 'demo':'demo2'}
 
 # bundling conf
 conf_bundle = {'routing':'picat', 'demo':'demo1'}
@@ -71,7 +71,7 @@ conf_status = {'status':'foo'}
 conf_report = {'report':'foo'}
 
 # integrated config
-conf = {'version':  0.20,
+conf = {'version':  0.24,
         'app_ip':   '0.0.0.0',
         #'app_port':    3333,    #prod
         'kb_port':     5555,

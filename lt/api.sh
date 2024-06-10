@@ -250,7 +250,7 @@ bx='{
 # 5) capacity of ag2 from 3 to 1
 
 b3='{
- "order":  {"id":"2024-06-06", "da":"2024-06-07", "ta":"09:00", "tb":"21:00"},
+ "order":  {"id":"2024-06-10", "da":"2024-06-13", "ta":"09:00", "tb":"21:00"},
 
  "agent":[
    {"id":"ag01", "carrier":"cr01", "loc":"l20"},
@@ -258,10 +258,19 @@ b3='{
    {"id":"ag03", "carrier":"cr03", "loc":"l20"}],
 
  "carrier":[
-   {"id":"cr01", "type":"car_carrier", "l":12.0, "w":2.2, "h":3.5, "kg":12000, "name":"eurolohr_200", "url":"https://www.lohr.fr/catalogue/eurolohr-200/"},
-   {"id":"cr02", "type":"car_carrier", "l":13.3, "w":2.2, "h":3.5, "kg":15000, "name":"eurolohr_300", "url":"https://www.lohr.fr/catalogue/eurolohr-300/"},
-   {"id":"cr03", "type":"car_carrier", "l":25.3, "w":2.5, "h":4.0, "kg":20000, "name":"trsp_25"  , "url":"https://www.lohr.fr/catalogue/trsp-25-25/"}],
+   {"id":"cr01", "type":"car_carrier", "l":12.0, "w":2.2, "h":3.5, "kg":12000, 
+     "name":"eurolohr_200", "url":"https://www.lohr.fr/catalogue/eurolohr-200/"},
+   {"id":"cr02", "type":"car_carrier", "l":13.3, "w":2.2, "h":3.5, "kg":15000, 
+     "name":"eurolohr_300", "url":"https://www.lohr.fr/catalogue/eurolohr-300/"},
+   {"id":"cr03", "type":"car_carrier", "l":25.3, "w":2.5, "h":4.0, "kg":20000, 
+     "name":"trsp_25"  , "url":"https://www.lohr.fr/catalogue/trsp-25-25/"}],
 
+ "item":[
+   {"id":"i001", "l":4.1, "w":1.8, "h":1.5, "kg":995,  "name":"renault_clio"},
+   {"id":"i002", "l":4.4, "w":1.9, "h":1.7, "kg":995,  "name":"dacia_duster"},
+   {"id":"i003", "l":3.6, "w":1.7, "h":1.5, "kg":500,  "name":"fiat_500"},
+   {"id":"i004", "l":5.1, "w":2.0, "h":1.7, "kg":2335, "name":"tesla_x"}],
+ 
  "loc":[
    {"id":"l00", "lat":45.7640, "lon":4.8357, "type":"depot", "name":"lyon_depot"},
    {"id":"l01", "lat":48.8420, "lon":2.2489, "type":"depot", "name":"paris_depot"},
@@ -276,15 +285,9 @@ b3='{
    {"id":"l24", "lat":43.5591, "lon":3.8353, "type":"demand", "name":"lattes_dealer"},
    {"id":"l25", "lat":45.3194, "lon":4.8075, "type":"demand", "name":"chanas_dealer"},
    {"id":"l26", "lat":48.3334, "lon":4.0944, "type":"demand", "name":"lavau_dealer"},
-   {"id":"l27", "lat":45.7858, "lon":3.1222, "type":"demand", "name":"clermont_ferrand_dealer"},
+   {"id":"l27", "lat":45.7880, "lon":3.1222, "type":"demand", "name":"clermont_ferrand_dealer"},
    {"id":"l28", "lat":42.6800, "lon":2.8109, "type":"demand", "name":"perpignan_dealer"},
    {"id":"l29", "lat":50.3872, "lon":3.5498, "type":"demand", "name":"saint_aulve_dealer"}],
-
- "item":[
-   {"id":"i001", "l":4.1, "w":1.8, "h":1.5, "kg":995,  "name":"renault_clio"},
-   {"id":"i002", "l":4.4, "w":1.9, "h":1.7, "kg":995,  "name":"dacia_duster"},
-   {"id":"i003", "l":3.6, "w":1.7, "h":1.5, "kg":500,  "name":"fiat_500"},
-   {"id":"i004", "l":5.1, "w":2.0, "h":1.7, "kg":2335, "name":"tesla_x"}],
 
  "cargo":  [
    {"id":"c201", "units": 5, "item":"i001", "pick":"l11", "drop":"l20"},
@@ -372,6 +375,30 @@ b3='{
    {"id":"r05", "goal":"cost-and-risk",                         "routing":"google", "weather":"noaa"}]
 }'
 
+
+b4='{"planid":"plan.latest"}'
+
+api_getplan() {
+ echo "get plan"
+ echo "fn:"${FUNCNAME[*]}
+ echo $(date)
+ t0=$(date +%s)
+ set -x # shell echo, set +x unsets
+
+ ci="lane_dev" # image
+ cn="$ci"_api  # container name
+
+ ip="0.0.0.0"; p="6666"; url="http://$ip:$p" # unique dev port
+ 
+ ct="Content-type: application/json"
+ pp="json_pp" # prettyprinter
+
+ i=4 
+ di="b$i"         # test selected
+ d=$(echo ${!di}) # evaluated
+ curl -s -X GET  -H "$ct" $url/api/plan --data "$d" | "$pp"
+}
+
 api_dev() { 
  echo "test bundle api extension"
  echo "fn:"${FUNCNAME[*]}
@@ -411,7 +438,7 @@ i=3
    di="b$i"         # test selected
    d=$(echo ${!di}) # evaluated
 
-   curl -s -X GET  -H "$ct" $url/api/bundledev --data "$d" | "$pp"
+   curl -s -X GET  -H "$ct" $url/api/bundleq --data "$d" | "$pp"
 # done
 
  set +x
