@@ -43,6 +43,10 @@ truck(mercedes_sprinter,2000,[slot1(4,2,2)]).
 
 % car(Model,L,W,H)
 % dimensions rounded to higher value with 0.1 m tolerance.
+car(tesla_x      , 5.1, 2.0, 1.7).
+car(dacia_duster , 4.4, 1.9, 1.7).
+car(renault_clio , 4.1, 1.8, 1.5).
+car(fiat_500     , 3.6, 1.8, 1.5).
 car(opel_corsa   , 4.1, 1.8, 1.5).
 car(peugeot_308  , 4.3, 1.8, 1.5).
 car(peugeot_3008 , 4.5, 1.8, 1.7).

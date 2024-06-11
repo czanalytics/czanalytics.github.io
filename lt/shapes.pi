@@ -1,4 +1,4 @@
-module shapes.
+module shapes. % cargo item shapes for packaging
 
 import sat. % for #>
 
@@ -8,6 +8,32 @@ side(Dx,Dy) = Mesh =>
     St[I,J] = 0
   end,
   Mesh = St.
+
+pack(SS,LocX,LocY,LocA) =>
+  L = length(LocX),
+  St = side(60,120),
+  foreach (K in 1..L)
+     S = SS[K],
+     N = length(S),
+     M = length(S[1]),
+     Xc = LocX[K],
+     Yc = LocY[K],
+     Ac = LocA[K],
+  foreach (I in 1..N, J in 1..M)
+     A = to_radians(Ac),
+     X = round(I*cos(A)-J*sin(A) + Yc*5),
+     Y = round(I*sin(A)+J*cos(A) + Xc*5),
+     V = cond(S[I,J]>0,1,0),
+     St[X,Y] := V + St[X,Y],
+  end,
+  end,
+  print_cc(St).
+
+% testing
+pack1 => sha(tesla_ct,T),sha(fiat_500,F), pack([T,F,T,F], [2,2,6,6], [2,0.5,2,0.5], [0,0,0,0]).
+pack2 => sha(tesla_ct,T), sha(fiat_500,F),pack([T,F,T,F], [2,2,7,7], [2,0.5,2,0.5], [0,0,0,-6]).
+pack3 => sha(tesla_ct,T), flip(T,Tt), sha(fiat_500,F), pack([T,F,Tt,F], [2,2,7,7], [2,0.5,2,0.5], [0,0,0,-4]).
+pack4 => sha(tesla_ct,T), sha(fiat_500,F), flip(F,Ff), pack([T,F,T,F,Ff], [5,5,9,9,12], [2.5,1,2.5,1,1], [0,6,0,6,-6]).
 
 tilt(S,X0,Y0,Deg) =>
   N = length(S),
@@ -37,36 +63,66 @@ tilt(S,X0,Y0,Deg) =>
   end,
   print_cc(St).
 
+flip(S,Sf) =>
+  N = length(S),
+  M = length(S[1]),
+  Sf = S,
+  foreach (I in 1..N)
+   foreach(J in 1..M)
+    K = M-J+1,
+    Sf[I,K] := S[I,J],
+   end,
+  end.
+
 print_cc(S) =>
   N = length(S),
   M = length(S[1]),
   foreach (I in 1..N)
    foreach(J in 1..M)
     X = S[I,J],
-    if X=0 then printf(".") else printf("o") end
+    if X=0 then printf(".") end,
+    if X=1 then printf("o") end,
+    if X>1 then printf("X") end,
    end,
    nl
   end,
   nl.
 
-contour(Car2) => Car2 = {
- {0,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0},
- {0,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0},
- {0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0},
- {1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1},
- {0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1},
- {0,0,1,1,1,0,0,0,0,0,0,0,1,1,1,0,0}}.
+sha(Car,Shape) => shape(Car,S), shape_matrix(S,Shape).
 
+shape_matrix(S, SS) =>
+  N = length(S),
+  M = length(S[1]),
+  SS = S,
+  foreach (I in 1..N)
+   foreach(J in 1..M)
+    if  S[I,J] = ' ' then SS[I,J] := 0 else SS[I,J] := 1 end
+   end,
+  end.
 
-% ~0.2 x 0.2 m mesh
-contour(Car1) => Car1 =
- [g__xxxxxxxx__________,
-  f__xxxxxxxxxx________,
-  e__xxxxxxxxxxxxxxx___,
-  d_xxxxxxxxxxxxxxxxx__,
-  c__xxxxxxxxxxxxxxxx__,
-  b___xxx_______xxx____,
-  a_123456789_123456789].
+% 0.2 x 0.2 m mesh
+shape(fiat_500, Shape) => Shape =
+ ["  11111111          ",  % 6
+  "  1111111111        ",  % 5
+  "  111111111111111   ",  % 4
+  " 11111111111111111  ",  % 3
+  "  1111111111111111  ",  % 2
+  "   111       111    "]. % 1
+
+% 0         1         2         3         4        5         6
+% 012345678901234567890123456789012345678901234567801234567890
+
+shape(tesla_ct, Shape) => Shape =
+ ["            111        ",
+  "         11111111      ",
+  "     11111111111111    ",
+  " 11111111111111111111  ",
+  " 111111111111111111111 ",
+  " 111111111111111111111 ",
+  "   111          111    "].
+
+test_shape => shape(fiat_500,S), shape_matrix(S,Sm), print_cc(Sm).
+
 
 % cabin 2-4 + 4-7
 % Lg
