@@ -1,6 +1,7 @@
 % match.pi match carrier to freight
 
 import kb.
+import shapes.
 
 info2(Xs) =>
   foreach (X in Xs)

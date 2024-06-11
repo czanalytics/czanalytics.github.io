@@ -33,6 +33,7 @@ RUN curl -L >picat.tar.gz http://picat-lang.org/download/picat36_linux64.tar.gz 
 
 ADD quantum.pi /Picat/
 ADD trains.pi /Picat/
+ADD shapes.pi /Picat/
 ADD match.pi /Picat/
 ADD kb.pi /Picat/
 ADD bundle_quantum.pi /Picat/

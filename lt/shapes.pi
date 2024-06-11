@@ -1,0 +1,85 @@
+module shapes.
+
+import sat. % for #>
+
+side(Dx,Dy) = Mesh =>
+  St = new_array(Dx,Dy),
+  foreach (I in 1..Dx, J in 1..Dy)
+    St[I,J] = 0
+  end,
+  Mesh = St.
+
+tilt(S,X0,Y0,Deg) =>
+  N = length(S),
+  M = length(S[1]),
+  St = side(60,120),
+  LocX = [5,5,9,9],
+  LocY = [3,1,3,1],
+  LocA = [0,0,0,-5],
+  printf("\nloc(%w,%w,%w):\n",X0,Y0,Deg),
+  foreach (K in 1..4)
+     Xc = LocX[K],
+     Yc = LocY[K],
+     Ac = LocA[K],
+  foreach (I in 1..N, J in 1..M)
+     %S[I,J] > 0,
+     A = to_radians(Ac),
+     %A = to_radians(Deg),
+     X = round(I*cos(A)-J*sin(A) + Yc*5),
+     %X = round(I*cos(A)-J*sin(A) + (K-1)*10 + N/0.2- X0/0.2),
+     Y = round(I*sin(A)+J*cos(A) + Xc*5),
+     %Y = round(I*sin(A)+J*cos(A) + Y0/0.2),
+
+     V = cond(S[I,J]>0,1,0),
+     %printf("\n(%w,%w) -> (%w,%w) value %w",I,J,X,Y,V),
+     St[X,Y] := V,
+  end,
+  end,
+  print_cc(St).
+
+print_cc(S) =>
+  N = length(S),
+  M = length(S[1]),
+  foreach (I in 1..N)
+   foreach(J in 1..M)
+    X = S[I,J],
+    if X=0 then printf(".") else printf("o") end
+   end,
+   nl
+  end,
+  nl.
+
+contour(Car2) => Car2 = {
+ {0,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0},
+ {0,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0},
+ {0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0},
+ {1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1},
+ {0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1},
+ {0,0,1,1,1,0,0,0,0,0,0,0,1,1,1,0,0}}.
+
+
+% ~0.2 x 0.2 m mesh
+contour(Car1) => Car1 =
+ [g__xxxxxxxx__________,
+  f__xxxxxxxxxx________,
+  e__xxxxxxxxxxxxxxx___,
+  d_xxxxxxxxxxxxxxxxx__,
+  c__xxxxxxxxxxxxxxxx__,
+  b___xxx_______xxx____,
+  a_123456789_123456789].
+
+% cabin 2-4 + 4-7
+% Lg
+% vans 2+4 Renault Kangoo L1 <4.5 (4321) L2 <5.0 (4705) W <1.5 H<1.9
+% above-cabin (1), behind-cabin (2-3), trailer-top 2-3, trailer-bottom 3-4
+% behid cabin: bottom 1+ tilt + top OR bottom + top+ tilt
+% trailer-bottom: 3 or 2 + tilt 1-2
+% top row 2 x <5.0
+% low roe 3x4.6  or 2*4.4+4.9
+% Carrier H<4.5  L 21.7
+% Cabin height <3.2
+
+% Length ~4.5 [3.4,5.3] Width ~1.8 [1.6,2.2] Height ~1.5 [1.4,2.0]
+% Twizy L 2.4 W 1.2 H 1.4
+% Rolls L <6.0 W <2.2 H<1.7
+% Vans L ~5 [3.8,7.4], W ~1.2 [,], H ~2.0 [1.7,2.9]
