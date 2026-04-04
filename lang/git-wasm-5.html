@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>git/browser</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/theme/dracula.min.css">
+<style>
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;600&display=swap');
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#05070a;--card:#0c0f14;--border:#1a1f2e;
+  --green:#00ff87;--blue:#00b4ff;--yellow:#ffd700;
+  --red:#ff4757;--dim:#3a4460;--text:#a8b2cc;--bright:#dde4f0;
+}
+html,body{height:100%;background:var(--bg);color:var(--text);
+  font-family:'IBM Plex Mono',monospace;font-size:13px;overflow:hidden;}
+body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:200;
+  background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,0.06) 2px,rgba(0,0,0,0.06) 4px);}
+.app{height:100vh;display:flex;flex-direction:column;}
+
+/* Header */
+header{padding:10px 14px;border-bottom:1px solid var(--border);
+  display:flex;align-items:center;gap:8px;flex-shrink:0;background:var(--card);}
+.logo{font-size:11px;font-weight:600;letter-spacing:0.2em;text-transform:uppercase;
+  color:var(--green);text-shadow:0 0 10px rgba(0,255,135,0.4);}
+.badge{font-size:9px;padding:2px 6px;border:1px solid var(--border);color:var(--dim);border-radius:2px;letter-spacing:0.08em;}
+.hstatus{margin-left:auto;display:flex;align-items:center;gap:5px;font-size:10px;color:var(--dim);}
+.dot{width:7px;height:7px;border-radius:50%;background:var(--dim);transition:background 0.4s,box-shadow 0.4s;}
+.dot.active{background:var(--green);box-shadow:0 0 8px var(--green);animation:blink 2s ease-in-out infinite;}
+.dot.busy{background:var(--yellow);box-shadow:0 0 8px var(--yellow);animation:blink 0.4s ease-in-out infinite;}
+.dot.err{background:var(--red);box-shadow:0 0 8px var(--red);}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0.4}}
+
+/* URL bar */
+.urlbar{padding:8px 14px;border-bottom:1px solid var(--border);display:flex;gap:6px;flex-shrink:0;}
+.urlbar input{flex:1;background:var(--card);border:1px solid var(--border);color:var(--bright);
+  font-family:'IBM Plex Mono',monospace;font-size:11px;padding:7px 9px;border-radius:3px;
+  outline:none;min-width:0;transition:border-color 0.2s;}
+.urlbar input:focus{border-color:var(--blue);}
+.btn-fetch{background:var(--green);color:#000;border:none;font-family:'IBM Plex Mono',monospace;
+  font-size:11px;font-weight:600;padding:7px 12px;border-radius:3px;cursor:pointer;
+  white-space:nowrap;letter-spacing:0.05em;transition:opacity 0.2s,transform 0.1s;}
+.btn-fetch:active{transform:scale(0.96);}
+.btn-fetch:disabled{opacity:0.3;cursor:not-allowed;}
+
+/* Tabs */
+.tabs{display:flex;border-bottom:1px solid var(--border);flex-shrink:0;background:var(--card);}
+.tab{padding:8px 14px;font-size:10px;letter-spacing:0.1em;text-transform:uppercase;
+  color:var(--dim);cursor:pointer;border-bottom:2px solid transparent;transition:color 0.15s,border-color 0.15s;}
+.tab.active{color:var(--green);border-bottom-color:var(--green);}
+.tab:hover:not(.active){color:var(--text);}
+
+/* Panels */
+.panels{flex:1;overflow:hidden;position:relative;}
+.panel{position:absolute;inset:0;display:none;flex-direction:column;overflow:hidden;}
+.panel.active{display:flex;}
+
+/* Terminal */
+.term{flex:1;overflow-y:auto;padding:10px 14px 14px;display:flex;flex-direction:column;gap:2px;}
+.line{display:flex;gap:8px;line-height:1.6;animation:fadein 0.12s ease;}
+@keyframes fadein{from{opacity:0;transform:translateY(2px)}to{opacity:1;transform:none}}
+.line .t{color:var(--dim);flex-shrink:0;font-size:10px;padding-top:2px;}
+.line .m{color:var(--text);word-break:break-all;}
+.line.ok .m{color:var(--green);}
+.line.info .m{color:var(--blue);}
+.line.warn .m{color:var(--yellow);}
+.line.err .m{color:var(--red);}
+.line.head .m{color:var(--bright);font-weight:600;}
+.line.dim .m{color:var(--dim);font-size:11px;}
+hr.sep{border:none;border-top:1px solid var(--border);margin:5px 0;}
+.block{background:var(--card);border:1px solid var(--border);border-radius:3px;padding:7px 9px;margin:3px 0;font-size:11px;line-height:1.9;}
+.commit{background:var(--card);border-left:2px solid var(--green);padding:5px 9px;margin:2px 0;font-size:11px;line-height:1.7;}
+.commit .sha{color:var(--yellow)}.commit .author{color:var(--blue)}.commit .msg{color:var(--bright)}.commit .date{color:var(--dim);font-size:10px;}
+
+/* Actions bar inside terminal tab */
+.actions{padding:6px 14px;display:flex;gap:5px;flex-shrink:0;overflow-x:auto;
+  border-bottom:1px solid var(--border);scrollbar-width:none;}
+.actions::-webkit-scrollbar{display:none}
+.act{background:var(--card);border:1px solid var(--border);color:var(--text);
+  font-family:'IBM Plex Mono',monospace;font-size:10px;padding:4px 9px;border-radius:2px;
+  cursor:pointer;white-space:nowrap;transition:border-color 0.15s,color 0.15s;letter-spacing:0.05em;}
+.act:hover:not(:disabled){border-color:var(--blue);color:var(--blue);}
+.act:disabled{opacity:0.25;cursor:not-allowed;}
+
+/* Editor panel */
+.editor-toolbar{padding:6px 14px;display:flex;align-items:center;gap:8px;
+  border-bottom:1px solid var(--border);flex-shrink:0;background:var(--card);}
+.breadcrumb{display:flex;align-items:center;gap:4px;font-size:10px;color:var(--dim);flex:1;min-width:0;overflow:hidden;}
+.breadcrumb .crumb{color:var(--blue);cursor:pointer;white-space:nowrap;}
+.breadcrumb .crumb:hover{color:var(--green);}
+.breadcrumb .bsep{color:var(--dim);}
+.filebrowser{border-bottom:1px solid var(--border);max-height:200px;overflow-y:auto;background:var(--bg);flex-shrink:0;}
+.fb-entry{display:flex;align-items:center;gap:8px;padding:6px 14px;font-size:11px;cursor:pointer;transition:background 0.1s;border-bottom:1px solid rgba(255,255,255,0.03);}
+.fb-entry:hover{background:var(--card);}
+.fb-entry.is-dir{color:var(--blue);}
+.fb-entry.is-file{color:var(--text);}
+.fb-entry.is-up{color:var(--dim);}
+.fb-loading{padding:8px 14px;font-size:10px;color:var(--dim);}
+.editor-toolbar .btn-open{background:var(--blue);color:#000;border:none;
+  font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:600;padding:4px 10px;
+  border-radius:2px;cursor:pointer;white-space:nowrap;}
+.editor-toolbar .btn-open:disabled{opacity:0.3;cursor:not-allowed;}
+.editor-wrap{flex:1;overflow:hidden;position:relative;}
+.editor-wrap .CodeMirror{height:100%;background:#1a1a2e;font-family:'IBM Plex Mono',monospace;font-size:12px;}
+.editor-wrap .CodeMirror-scroll{height:100%;}
+.editor-empty{display:flex;align-items:center;justify-content:center;height:100%;
+  color:var(--dim);font-size:11px;letter-spacing:0.1em;text-transform:uppercase;}
+
+::-webkit-scrollbar{width:3px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--border)}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <header>
+    <span class="logo">git/browser</span>
+    <span class="badge">GitHub API</span>
+    <span class="badge">CodeMirror</span>
+    <div class="hstatus">
+      <div class="dot active" id="dot"></div>
+      <span id="statusTxt">ready</span>
+    </div>
+  </header>
+
+  <div class="urlbar">
+    <input id="url" type="url"
+      value="https://github.com/czanalytics/czanalytics.github.io"
+      placeholder="https://github.com/owner/repo"
+      spellcheck="false" autocorrect="off" autocapitalize="off"/>
+    <button class="btn-fetch" id="btnFetch">FETCH</button>
+  </div>
+
+  <div class="tabs">
+    <div class="tab active" data-tab="terminal">terminal</div>
+    <div class="tab" data-tab="editor">editor</div>
+  </div>
+
+  <div class="panels">
+
+    <!-- Terminal panel -->
+    <div class="panel active" id="panel-terminal">
+      <div class="actions">
+        <button class="act" id="btnLog"      disabled>log</button>
+        <button class="act" id="btnBranches" disabled>branches</button>
+        <button class="act" id="btnFiles"    disabled>files</button>
+        <button class="act" id="btnReadme"   disabled>readme</button>
+        <button class="act" id="btnClear">clear</button>
+      </div>
+      <div class="term" id="term"></div>
+    </div>
+
+    <!-- Editor panel -->
+    <div class="panel" id="panel-editor">
+      <div class="editor-toolbar">
+        <div class="breadcrumb" id="breadcrumb"><span class="crumb" data-path="">~</span></div>
+      </div>
+      <div class="filebrowser" id="filebrowser">
+        <div class="fb-loading">fetch a repo first</div>
+      </div>
+      <div class="editor-wrap" id="editorWrap">
+        <div class="editor-empty" id="editorEmpty">tap a file to open</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/javascript/javascript.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/htmlmixed/htmlmixed.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/css/css.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/markdown/markdown.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/python/python.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/shell/shell.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/xml/xml.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/keymap/vim.min.js"></script>
+<script>
+// ── State ─────────────────────────────────────────────────────────────────
+const term   = document.getElementById('term');
+let repo     = null;
+let editor   = null;
+
+// ── Utils ─────────────────────────────────────────────────────────────────
+function ts() { return new Date().toTimeString().slice(3,8); }
+
+function log(msg, type='') {
+  const d = document.createElement('div');
+  d.className = 'line ' + type;
+  d.innerHTML = `<span class="t">${ts()}</span><span class="m">${esc(String(msg))}</span>`;
+  term.appendChild(d);
+  term.scrollTop = term.scrollHeight;
+}
+function sep() { const hr = document.createElement('hr'); hr.className='sep'; term.appendChild(hr); }
+function esc(s) { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+function setStatus(txt, state) {
+  document.getElementById('statusTxt').textContent = txt;
+  document.getElementById('dot').className = 'dot ' + state;
+}
+
+function setBusy(on) {
+  setStatus(on ? 'fetching…' : (repo ? repo.info.name : 'ready'), on ? 'busy' : 'active');
+  document.getElementById('btnFetch').disabled = on;
+  ['btnLog','btnBranches','btnFiles','btnReadme'].forEach(id =>
+    document.getElementById(id).disabled = on || !repo);
+}
+
+// ── Tabs ──────────────────────────────────────────────────────────────────
+document.querySelectorAll('.tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+    tab.classList.add('active');
+    document.getElementById('panel-' + tab.dataset.tab).classList.add('active');
+    if (tab.dataset.tab === 'editor' && editor) {
+      setTimeout(() => editor.refresh(), 50);
+    }
+  });
+});
+
+// ── GitHub API ────────────────────────────────────────────────────────────
+async function ghFetch(path) {
+  const res = await fetch('https://api.github.com' + path,
+    { headers: { 'Accept': 'application/vnd.github.v3+json' } });
+  if (!res.ok) throw new Error(`GitHub ${res.status} ${res.statusText}`);
+  return res.json();
+}
+
+function parseUrl(url) {
+  const m = url.match(/github\.com\/([^/]+)\/([^/?\s#]+)/);
+  if (m) return { owner: m[1], name: m[2].replace(/\.git$/, '') };
+  return null;
+}
+
+async function doFetch() {
+  const raw = document.getElementById('url').value.trim();
+  const parsed = parseUrl(raw);
+  if (!parsed) { log('Cannot parse GitHub URL', 'err'); return; }
+
+  sep();
+  log(`fetch ${parsed.owner}/${parsed.name}`, 'head');
+  setBusy(true);
+  try {
+    log('  → /repos', 'dim');
+    const info     = await ghFetch(`/repos/${parsed.owner}/${parsed.name}`);
+    log('  → /commits', 'dim');
+    const commits  = await ghFetch(`/repos/${parsed.owner}/${parsed.name}/commits?per_page=10`);
+    log('  → /branches', 'dim');
+    const branches = await ghFetch(`/repos/${parsed.owner}/${parsed.name}/branches`);
+    log('  → /contents', 'dim');
+    const contents = await ghFetch(`/repos/${parsed.owner}/${parsed.name}/contents/`);
+
+    repo = { info, commits, branches, contents };
+
+    log(`✓ ${info.full_name}`, 'ok');
+    if (info.description) log(`  ${info.description}`, 'dim');
+    log(`  ★ ${info.stargazers_count}   lang: ${info.language||'—'}   branch: ${info.default_branch}`, 'info');
+
+    populateFileSelect(contents);
+    showFiles();
+  } catch(e) {
+    log('failed: ' + e.message, 'err');
+    setStatus('error','err');
+  }
+  setBusy(false);
+}
+
+// ── Terminal ops ──────────────────────────────────────────────────────────
+function doLog() {
+  if (!repo) return; sep(); log('git log', 'head');
+  for (const c of repo.commits) {
+    const el = document.createElement('div'); el.className = 'commit';
+    const d = new Date(c.commit.author.date);
+    el.innerHTML =
+      `<div><span class="sha">${c.sha.slice(0,7)}</span>  <span class="msg">${esc(c.commit.message.split('\n')[0])}</span></div>`+
+      `<div><span class="author">${esc(c.commit.author.name)}</span>  <span class="date">${d.toLocaleDateString()}</span></div>`;
+    term.appendChild(el);
+  }
+  term.scrollTop = term.scrollHeight;
+}
+
+function doBranches() {
+  if (!repo) return; sep(); log('git branch', 'head');
+  const def = repo.info.default_branch;
+  for (const b of repo.branches)
+    log(`  ${b.name===def?'* ':'  '}${b.name}`, b.name===def?'ok':'');
+}
+
+function showFiles() {
+  if (!repo) return; sep(); log('ls /', 'head');
+  const block = document.createElement('div'); block.className = 'block';
+  const sorted = [...repo.contents].sort((a,b) =>
+    a.type===b.type ? a.name.localeCompare(b.name) : a.type==='dir'?-1:1);
+  for (const f of sorted) {
+    const row = document.createElement('div');
+    row.style.color = f.name.startsWith('.')?'var(--dim)':f.type==='dir'?'var(--blue)':'var(--text)';
+    row.textContent = (f.type==='dir'?'▸ ':'  ') + f.name;
+    block.appendChild(row);
+  }
+  term.appendChild(block); term.scrollTop = term.scrollHeight;
+}
+
+async function doReadme() {
+  if (!repo) return; sep(); log('cat README', 'head'); setBusy(true);
+  try {
+    const f = repo.contents.find(f => f.name.match(/^readme/i));
+    if (!f) { log('no README found','warn'); setBusy(false); return; }
+    const res = await fetch(f.download_url);
+    const text = await res.text();
+    const block = document.createElement('div'); block.className = 'block';
+    block.style.cssText = 'white-space:pre-wrap;font-size:10px;line-height:1.6;color:var(--text)';
+    block.textContent = text.slice(0,900)+(text.length>900?'\n…':'');
+    term.appendChild(block); term.scrollTop = term.scrollHeight;
+  } catch(e) { log('error: '+e.message,'err'); }
+  setBusy(false);
+}
+
+// ── Editor ────────────────────────────────────────────────────────────────
+function modeForFile(name) {
+  if (name.match(/\.(js|mjs|cjs|ts)$/i)) return 'javascript';
+  if (name.match(/\.(html|htm)$/i))       return 'htmlmixed';
+  if (name.match(/\.css$/i))              return 'css';
+  if (name.match(/\.(md|markdown)$/i))    return 'markdown';
+  if (name.match(/\.(py)$/i))             return 'python';
+  if (name.match(/\.(sh|bash)$/i))        return 'shell';
+  if (name.match(/\.(xml|svg)$/i))        return 'xml';
+  return null;
+}
+
+// ── File browser ──────────────────────────────────────────────────────────
+let currentPath = '';  // relative path from repo root, e.g. '' or 'lt' or 'lt/css'
+
+function renderBreadcrumb(path) {
+  const bc = document.getElementById('breadcrumb');
+  bc.innerHTML = '';
+  const parts = path ? path.split('/') : [];
+
+  const root = document.createElement('span');
+  root.className = 'crumb'; root.textContent = '~';
+  root.addEventListener('click', () => navigateTo(''));
+  bc.appendChild(root);
+
+  parts.forEach((p, i) => {
+    const sep = document.createElement('span');
+    sep.className = 'bsep'; sep.textContent = '/';
+    bc.appendChild(sep);
+    const crumb = document.createElement('span');
+    const fullPath = parts.slice(0, i+1).join('/');
+    if (i < parts.length - 1) {
+      crumb.className = 'crumb'; crumb.textContent = p;
+      crumb.addEventListener('click', () => navigateTo(fullPath));
+    } else {
+      crumb.style.color = 'var(--text)'; crumb.textContent = p;
+    }
+    bc.appendChild(crumb);
+  });
+}
+
+async function navigateTo(path) {
+  if (!repo) return;
+  currentPath = path;
+  renderBreadcrumb(path);
+  const fb = document.getElementById('filebrowser');
+  fb.innerHTML = '<div class="fb-loading">loading…</div>';
+
+  try {
+    const apiPath = `/repos/${repo.info.full_name}/contents/${path}`;
+    const contents = await ghFetch(apiPath);
+    renderFileBrowser(contents, path);
+  } catch(e) {
+    fb.innerHTML = `<div class="fb-loading" style="color:var(--red)">error: ${esc(e.message)}</div>`;
+  }
+}
+
+function renderFileBrowser(contents, path) {
+  const fb = document.getElementById('filebrowser');
+  fb.innerHTML = '';
+
+  // Up entry
+  if (path) {
+    const up = document.createElement('div');
+    up.className = 'fb-entry is-up';
+    up.innerHTML = '↑  ..';
+    const parent = path.includes('/') ? path.slice(0, path.lastIndexOf('/')) : '';
+    up.addEventListener('click', () => navigateTo(parent));
+    fb.appendChild(up);
+  }
+
+  const sorted = [...contents].sort((a,b) =>
+    a.type===b.type ? a.name.localeCompare(b.name) : a.type==='dir'?-1:1);
+
+  for (const f of sorted) {
+    const row = document.createElement('div');
+    row.className = f.type === 'dir' ? 'fb-entry is-dir' : 'fb-entry is-file';
+    row.innerHTML = (f.type==='dir' ? '▸ ' : '  ') + esc(f.name);
+    if (f.type === 'dir') {
+      row.addEventListener('click', () => navigateTo(f.path));
+    } else if (f.download_url) {
+      row.addEventListener('click', () => openFile(f.name, f.download_url));
+    }
+    fb.appendChild(row);
+  }
+}
+
+function populateFileSelect(contents) {
+  // Populate root and render browser
+  renderBreadcrumb('');
+  renderFileBrowser(contents, '');
+  document.getElementById('btnOpen') && (document.getElementById('btnOpen').disabled = false);
+}
+
+function initEditor() {
+  const wrap = document.getElementById('editorWrap');
+  const empty = document.getElementById('editorEmpty');
+  if (editor) return;
+  empty.style.display = 'none';
+  const ta = document.createElement('textarea');
+  wrap.appendChild(ta);
+  editor = CodeMirror.fromTextArea(ta, {
+    theme: 'dracula',
+    lineNumbers: true,
+    keyMap: 'vim',
+    lineWrapping: true,
+    autofocus: true,
+  });
+}
+
+async function openFile(name, downloadUrl) {
+  // Switch to editor tab
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelector('[data-tab="editor"]').classList.add('active');
+  document.getElementById('panel-editor').classList.add('active');
+
+  setStatus('opening…', 'busy');
+  try {
+    const res = await fetch(downloadUrl);
+    const text = await res.text();
+    initEditor();
+    const mode = modeForFile(name);
+    if (mode) editor.setOption('mode', mode);
+    editor.setValue(text);
+    editor.clearHistory();
+    setTimeout(() => { editor.refresh(); editor.focus(); }, 60);
+    setStatus(name, 'active');
+    log(`opened ${currentPath ? currentPath+'/' : ''}${name}`, 'ok');
+  } catch(e) {
+    log('open failed: '+e.message, 'err');
+    setStatus('error','err');
+  }
+}
+
+async function doOpenFile() {
+  // legacy — no longer used but keep to avoid errors
+}
+
+// ── Wire up ───────────────────────────────────────────────────────────────
+document.getElementById('btnFetch').addEventListener('click', doFetch);
+document.getElementById('btnLog').addEventListener('click', doLog);
+document.getElementById('btnBranches').addEventListener('click', doBranches);
+document.getElementById('btnFiles').addEventListener('click', showFiles);
+document.getElementById('btnReadme').addEventListener('click', doReadme);
+document.getElementById('btnClear').addEventListener('click', () => term.innerHTML = '');
+
+log('GitHub API + CodeMirror (vim keymap) ready', 'ok');
+log('Fetch a repo → editor tab → pick file → open', 'dim');
+log('Editor has vim keybindings built in', 'info');
+</script>
+</body>
+</html>
