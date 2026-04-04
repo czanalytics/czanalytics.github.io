@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WASM MicroQiskit Simulator</title>
+<script src="https://cdn.jsdelivr.net/pyodide/v0.26.1/full/pyodide.js"></script>
+<style>
+  body { font-family: system-ui, sans-serif; margin: 0; padding: 0; display: flex; flex-direction: column; height: 100vh; background: #1e1e1e; color: #fff; }
+  header { background: #2d2d2d; padding: 15px; border-bottom: 1px solid #444; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+  button, .file-upload-label { background: #007acc; color: white; border: none; padding: 8px 12px; cursor: pointer; border-radius: 4px; font-size: 14px; }
+  button:hover, .file-upload-label:hover { background: #005f9e; }
+  input[type="file"] { display: none; }
+  .container { display: flex; flex: 1; overflow: hidden; }
+  .panel { flex: 1; display: flex; flex-direction: column; padding: 10px; border-right: 1px solid #444; }
+  .panel:last-child { border-right: none; }
+  textarea { flex: 1; background: #252526; color: #d4d4d4; font-family: monospace; font-size: 14px; padding: 10px; border: 1px solid #444; resize: none; margin-bottom: 10px; border-radius: 4px; }
+  #run-btn { background: #28a745; font-size: 16px; font-weight: bold; }
+  #run-btn:hover { background: #218838; }
+  #run-btn:disabled { background: #555; cursor: not-allowed; }
+  .log-container { flex: 0.3; background: #000; color: #0f0; font-family: monospace; font-size: 12px; padding: 10px; overflow-y: auto; border: 1px solid #444; margin-bottom: 10px; border-radius: 4px; }
+  .results-container { flex: 0.7; background: #f3f3f3; color: #000; padding: 15px; overflow-y: auto; border: 1px solid #444; border-radius: 4px; }
+  h3 { margin-top: 0; font-size: 16px; }
+</style>
+</head>
+<body>
+
+<header>
+  <h2 style="margin: 0; margin-right: 20px;">⚛️ WASM MicroQiskit</h2>
+  <button onclick="loadSample(1)">Sample 1: Bell State Histogram</button>
+  <button onclick="loadSample(2)">Sample 2: FP Pipeline</button>
+  <label class="file-upload-label">
+    Upload .py File
+    <input type="file" id="file-upload" accept=".py" onchange="handleFileUpload(event)">
+  </label>
+</header>
+
+<div class="container">
+  <div class="panel">
+    <h3>Python REPL / Editor</h3>
+    <textarea id="code-editor" spellcheck="false"># Click a sample project above or write your code here...</textarea>
+    <button id="run-btn" onclick="runCode()" disabled>Loading WASM Environment...</button>
+  </div>
+
+  <div class="panel">
+    <h3>App Event Log</h3>
+    <div class="log-container" id="event-log"></div>
+    
+    <h3 style="color: #fff; margin-top: 10px;">Standard Out & Diagrams</h3>
+    <div class="results-container" id="results-output">
+      Run a simulation to see your print statements and Matplotlib diagrams here...
+    </div>
+  </div>
+</div>
+
+<script>
+  // 1) Logging System: Tracks all App events
+  function logEvent(message) {
+    const logBox = document.getElementById('event-log');
+    const time = new Date().toLocaleTimeString();
+    logBox.innerHTML += `[${time}] ${message}<br>`;
+    logBox.scrollTop = logBox.scrollHeight;
+    console.log(`[App Event]: ${message}`);
+  }
+
+  let pyodideInstance = null;
+
+  // Initialize Pyodide with the Virtual File System (VFS) bypass
+  async function initPyodide() {
+    try {
+      logEvent("Initializing WebAssembly Python runtime (Pyodide)...");
+      pyodideInstance = await loadPyodide();
+      
+      logEvent("Pre-loading native WASM C-extensions (Matplotlib)...");
+      await pyodideInstance.loadPackage(["matplotlib"]);
+      
+      logEvent("Loading micropip package manager...");
+      await pyodideInstance.loadPackage("micropip");
+      const micropip = pyodideInstance.pyimport("micropip");
+      
+      logEvent("Installing Toolz via PyPI...");
+      await micropip.install(['toolz']);
+      
+      logEvent("Fetching MicroQiskit directly from IBM's GitHub...");
+      
+      // THE FIX: Bypass PyPI. Download the raw Python script and inject it into the VFS.
+      const response = await fetch("https://raw.githubusercontent.com/qiskit-community/MicroQiskit/main/microqiskit.py");
+      if (!response.ok) throw new Error("Failed to download MicroQiskit from GitHub");
+      const microqiskitCode = await response.text();
+      
+      // Write the file directly to Pyodide's current working directory
+      pyodideInstance.FS.writeFile("microqiskit.py", microqiskitCode);
+      
+      logEvent("Environment ready! VFS injected and syntax mapped.");
+      const runBtn = document.getElementById('run-btn');
+      runBtn.disabled = false;
+      runBtn.innerText = "▶ Run Simulation";
+      
+    } catch (err) {
+      logEvent(`ERROR during initialization: ${err.message}`);
+    }
+  }
+
+  // File Upload handler
+  function handleFileUpload(event) {
+    const file = event.target.files[0];
+    if (file) {
+      logEvent(`Reading uploaded file: ${file.name}`);
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        document.getElementById('code-editor').value = e.target.result;
+        logEvent(`File ${file.name} loaded into the editor.`);
+      };
+      reader.readAsText(file);
+    }
+  }
+
+  // Pure Python samples mapped exactly to MicroQiskit's API
+  const samples = {
+    1: `from microqiskit import QuantumCircuit, simulate
+import matplotlib.pyplot as plt
+
+print("--- MicroQiskit Bell State Simulation ---")
+
+# Create a circuit with 2 qubits and 2 classical bits
+qc = QuantumCircuit(2, 2)
+qc.h(0)
+qc.cx(0, 1)
+
+# Measure both qubits into the classical registers
+qc.measure(0, 0)
+qc.measure(1, 1)
+
+# Simulate 1000 shots
+counts = simulate(qc, shots=1000, get='counts')
+print(f"Calculated Probabilities (1000 shots):\\n{counts}")
+
+# Generate a standard Matplotlib histogram
+plt.bar(counts.keys(), counts.values(), color='#8a2be2', width=0.4)
+plt.title('Bell State Measurement Results')
+plt.xlabel('Measured States')
+plt.ylabel('Frequency')
+`,
+    
+    2: `from microqiskit import QuantumCircuit, simulate
+import toolz
+import matplotlib.pyplot as plt
+
+print("--- Functional Programming Quantum Pipeline ---")
+
+# Wrapper functions for the FP pipeline
+def apply_h(qc, qubit):
+    qc.h(qubit)
+    return qc
+
+def apply_cx(qc, control, target):
+    qc.cx(control, target)
+    return qc
+
+def apply_measure(qc, qubit, cbit):
+    qc.measure(qubit, cbit)
+    return qc
+
+# Initialize base circuit
+base_qc = QuantumCircuit(2, 2)
+
+# Build the circuit functionally using toolz.pipe
+final_qc = toolz.pipe(
+    base_qc,
+    lambda qc: apply_h(qc, 0),
+    lambda qc: apply_cx(qc, 0, 1),
+    lambda qc: apply_measure(qc, 0, 0),
+    lambda qc: apply_measure(qc, 1, 1)
+)
+
+print("Circuit built via FP pipeline.")
+
+# Simulate
+counts = simulate(final_qc, shots=500, get='counts')
+print(f"Pipeline Execution Results: {counts}")
+
+# Plot results
+plt.bar(counts.keys(), counts.values(), color='#28a745', width=0.4)
+plt.title('FP Pipeline Results (500 shots)')
+`
+  };
+
+  function loadSample(id) {
+    document.getElementById('code-editor').value = samples[id];
+    logEvent(`Loaded Sample Project ${id} into REPL.`);
+  }
+
+  // Robust REPL Executor
+  async function runCode() {
+    const code = document.getElementById('code-editor').value;
+    const resultsDiv = document.getElementById('results-output');
+    
+    logEvent("Executing Python code via WASM...");
+    resultsDiv.innerHTML = "<em>Running simulation...</em>";
+    
+    // Safely inject the user's code into the Python global namespace
+    pyodideInstance.globals.set("user_code_str", code);
+
+    // The Python wrapper intercepts standard print() output and auto-extracts Matplotlib figures
+    const pythonWrapper = `
+import sys
+import io
+import base64
+import traceback
+import matplotlib.pyplot as plt
+from contextlib import redirect_stdout
+
+# Clear any previous plot states
+plt.clf()
+
+f = io.StringIO()
+with redirect_stdout(f):
+    try:
+        # Execute the user's code string within the global scope
+        exec(user_code_str, globals())
+    except Exception as e:
+        print("Execution Error:")
+        traceback.print_exc()
+
+output_str = f.getvalue()
+html_out = f"<pre style='background:#252526; color:#d4d4d4; padding:10px; border-radius:4px; white-space: pre-wrap;'>{output_str}</pre>"
+
+# Auto-detect if the user created a plot, encode it, and append it to the UI
+if plt.get_fignums():
+    buf = io.BytesIO()
+    plt.savefig(buf, format='png', bbox_inches="tight")
+    buf.seek(0)
+    img_str = base64.b64encode(buf.read()).decode('UTF-8')
+    plt.clf()
+    html_out += f"<img src='data:image/png;base64,{img_str}' style='max-width:100%; border-radius:4px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-top: 10px;'/>"
+
+html_out
+    `;
+    
+    try {
+      let result = await pyodideInstance.runPythonAsync(pythonWrapper);
+      resultsDiv.innerHTML = result;
+      logEvent("Simulation completed successfully.");
+    } catch (err) {
+      logEvent(`RUNTIME ERROR: ${err.message}`);
+      resultsDiv.innerHTML = `<span style="color:red;"><b>Python Error:</b><br><pre>${err.message}</pre></span>`;
+    }
+  }
+
+  // Boot up the environment when the page loads
+  initPyodide();
+</script>
+
+</body>
+</html>
