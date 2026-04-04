@@ -1,0 +1,899 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>WASM · SCI-CALC · MK-VII</title>
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --bg:        #070b0f;
+    --panel:     #0c1318;
+    --border:    #1a3a4a;
+    --glow:      #00d4ff;
+    --glow2:     #00ff9d;
+    --amber:     #ffb300;
+    --red:       #ff3a5c;
+    --dim:       #1e3a4a;
+    --text:      #c8f0ff;
+    --muted:     #3a6a80;
+    --btn-bg:    #0d1e28;
+    --btn-hover: #122838;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Share Tech Mono', monospace;
+    min-height: 100vh;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    gap: 20px;
+    padding: 40px 20px;
+    overflow-x: hidden;
+  }
+
+  body::before {
+    content: '';
+    position: fixed; inset: 0;
+    background: repeating-linear-gradient(
+      0deg, transparent, transparent 2px,
+      rgba(0,212,255,0.012) 2px, rgba(0,212,255,0.012) 4px
+    );
+    pointer-events: none;
+    z-index: 999;
+  }
+
+  body::after {
+    content: '';
+    position: fixed; inset: 0;
+    background-image:
+      linear-gradient(rgba(0,212,255,0.035) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,212,255,0.035) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+  }
+
+  /* ── CALCULATOR ── */
+  .calc-shell {
+    position: relative;
+    width: 400px;
+    flex-shrink: 0;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    box-shadow:
+      0 0 0 1px rgba(0,212,255,0.08),
+      0 0 40px rgba(0,212,255,0.07),
+      inset 0 1px 0 rgba(0,212,255,0.08);
+    padding: 22px;
+    animation: boot-in 0.5s cubic-bezier(0.22,1,0.36,1) both;
+  }
+
+  @keyframes boot-in {
+    from { opacity: 0; transform: translateY(10px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 18px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .model-id {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 11px; font-weight: 700;
+    letter-spacing: 0.18em;
+    color: var(--glow);
+    text-shadow: 0 0 10px var(--glow);
+  }
+
+  .status-row {
+    display: flex; align-items: center; gap: 7px;
+    font-size: 9px; color: var(--muted); letter-spacing: 0.1em;
+  }
+
+  .status-dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: var(--glow2); box-shadow: 0 0 7px var(--glow2);
+    animation: pulse 2s ease-in-out infinite;
+  }
+
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.25} }
+
+  .display-block {
+    background: #020608;
+    border: 1px solid var(--dim);
+    border-radius: 2px;
+    padding: 12px 14px 10px;
+    margin-bottom: 16px;
+    position: relative;
+  }
+
+  .wasm-badge {
+    position: absolute; top: 7px; left: 10px;
+    font-size: 8px; letter-spacing: 0.15em;
+    color: var(--glow2); opacity: 0.55;
+  }
+
+  .display-label {
+    font-size: 9px; letter-spacing: 0.2em;
+    color: var(--muted); margin-bottom: 3px;
+  }
+
+  .expression {
+    font-size: 11px; color: var(--muted);
+    min-height: 16px; text-align: right;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    letter-spacing: 0.04em;
+  }
+
+  .main-display {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 30px; font-weight: 400;
+    text-align: right;
+    color: var(--glow);
+    text-shadow: 0 0 18px rgba(0,212,255,0.55), 0 0 35px rgba(0,212,255,0.18);
+    letter-spacing: 0.04em;
+    min-height: 40px; line-height: 1.2;
+    word-break: break-all;
+    transition: color 0.12s;
+  }
+
+  .main-display.error {
+    color: var(--red);
+    text-shadow: 0 0 18px rgba(255,58,92,0.55);
+    font-size: 16px;
+  }
+
+  .mode-tabs { display: flex; gap: 4px; margin-bottom: 12px; }
+
+  .mode-tab {
+    flex: 1; background: transparent;
+    border: 1px solid var(--dim); color: var(--muted);
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 9px; letter-spacing: 0.14em;
+    padding: 5px 4px; cursor: pointer; border-radius: 2px;
+    transition: all 0.12s;
+  }
+
+  .mode-tab.active {
+    border-color: var(--glow); color: var(--glow);
+    background: rgba(0,212,255,0.05);
+    text-shadow: 0 0 7px var(--glow);
+  }
+
+  .btn-grid { display: grid; gap: 5px; }
+  .btn-grid.basic { grid-template-columns: repeat(4, 1fr); }
+  .btn-grid.sci   { grid-template-columns: repeat(5, 1fr); }
+
+  button {
+    background: var(--btn-bg);
+    border: 1px solid var(--border);
+    color: var(--text);
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 13px; padding: 12px 4px;
+    cursor: pointer; border-radius: 2px;
+    transition: all 0.09s;
+    position: relative; overflow: hidden;
+    letter-spacing: 0.02em;
+    user-select: none;
+  }
+
+  button:hover  { background: var(--btn-hover); border-color: var(--glow); color: var(--glow); box-shadow: 0 0 10px rgba(0,212,255,0.13); }
+  button:active { transform: scale(0.96); }
+
+  button.op     { color: var(--glow); border-color: var(--dim); }
+  button.op:hover { background: rgba(0,212,255,0.09); }
+
+  button.fn     { color: var(--glow2); font-size: 11px; border-color: var(--dim); }
+  button.fn:hover { color: var(--glow2); border-color: var(--glow2); box-shadow: 0 0 10px rgba(0,255,157,0.12); }
+
+  button.clear  { color: var(--red); border-color: var(--dim); }
+  button.clear:hover { border-color: var(--red); box-shadow: 0 0 10px rgba(255,58,92,0.18); }
+
+  button.equals {
+    background: rgba(0,212,255,0.07); border-color: var(--glow);
+    color: var(--glow); font-family: 'Orbitron', sans-serif; font-weight: 700;
+    text-shadow: 0 0 7px var(--glow); box-shadow: 0 0 14px rgba(0,212,255,0.09);
+  }
+  button.equals:hover { background: rgba(0,212,255,0.14); box-shadow: 0 0 22px rgba(0,212,255,0.22); }
+
+  button.mem    { color: var(--amber); font-size: 10px; border-color: var(--dim); }
+  button.mem:hover { border-color: var(--amber); box-shadow: 0 0 10px rgba(255,179,0,0.13); }
+
+  .footer {
+    margin-top: 16px; padding-top: 10px;
+    border-top: 1px solid var(--border);
+    display: flex; justify-content: space-between;
+    align-items: center; font-size: 9px; color: var(--muted);
+    letter-spacing: 0.1em;
+  }
+
+  .wasm-status { display: flex; align-items: center; gap: 6px; }
+  .wasm-led { width: 5px; height: 5px; border-radius: 50%; background: var(--muted); transition: all 0.3s; }
+  .wasm-led.ready { background: var(--glow2); box-shadow: 0 0 6px var(--glow2); }
+  .wasm-led.fail  { background: var(--red);   box-shadow: 0 0 6px var(--red); }
+
+  /* ── EVENT LOG ── */
+  .log-panel {
+    width: 360px; flex-shrink: 0;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    box-shadow: 0 0 0 1px rgba(0,212,255,0.06), 0 0 30px rgba(0,212,255,0.05);
+    display: flex; flex-direction: column;
+    max-height: 700px;
+    animation: boot-in 0.5s 0.12s cubic-bezier(0.22,1,0.36,1) both;
+  }
+
+  .log-header {
+    padding: 12px 14px;
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between;
+    flex-shrink: 0;
+  }
+
+  .log-title {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 10px; font-weight: 700;
+    letter-spacing: 0.16em; color: var(--amber);
+    text-shadow: 0 0 8px var(--amber);
+  }
+
+  .log-controls { display: flex; gap: 6px; align-items: center; }
+
+  .log-btn {
+    background: transparent; border: 1px solid var(--dim);
+    color: var(--muted); font-family: 'Share Tech Mono', monospace;
+    font-size: 8px; letter-spacing: 0.12em;
+    padding: 3px 8px; cursor: pointer; border-radius: 2px;
+    transition: all 0.1s;
+  }
+  .log-btn:hover { border-color: var(--amber); color: var(--amber); }
+
+  .log-counter { font-size: 9px; color: var(--muted); letter-spacing: 0.08em; min-width: 48px; text-align: right; }
+
+  .log-scroll {
+    flex: 1; overflow-y: auto; padding: 8px 0;
+    scrollbar-width: thin; scrollbar-color: var(--dim) transparent;
+  }
+  .log-scroll::-webkit-scrollbar { width: 4px; }
+  .log-scroll::-webkit-scrollbar-thumb { background: var(--dim); border-radius: 2px; }
+
+  .log-entry {
+    padding: 5px 12px;
+    border-left: 2px solid transparent;
+    font-size: 11px; line-height: 1.55;
+    transition: background 0.08s;
+  }
+  .log-entry:hover { background: rgba(0,212,255,0.025); }
+
+  .ev-input  { border-left-color: var(--glow); }
+  .ev-result { border-left-color: var(--glow2); }
+  .ev-wasm   { border-left-color: var(--amber); }
+  .ev-error  { border-left-color: var(--red); }
+  .ev-system { border-left-color: var(--muted); }
+  .ev-state  { border-left-color: #5555aa; }
+
+  .log-ts   { color: var(--muted); font-size: 9px; letter-spacing: 0.04em; margin-right: 5px; }
+
+  .log-tag  {
+    font-size: 8px; letter-spacing: 0.12em;
+    padding: 1px 5px; border-radius: 2px;
+    margin-right: 5px; display: inline-block; vertical-align: middle;
+  }
+  .tag-input  { background: rgba(0,212,255,0.12);  color: var(--glow); }
+  .tag-result { background: rgba(0,255,157,0.12);  color: var(--glow2); }
+  .tag-wasm   { background: rgba(255,179,0,0.12);  color: var(--amber); }
+  .tag-error  { background: rgba(255,58,92,0.14);  color: var(--red); }
+  .tag-system { background: rgba(58,106,128,0.18); color: var(--muted); }
+  .tag-state  { background: rgba(85,85,170,0.14);  color: #8888cc; }
+
+  .log-msg { color: var(--text); }
+  .log-msg .key { color: var(--muted); font-size: 10px; }
+  .log-msg .val { color: var(--glow2); }
+  .log-msg .op  { color: var(--glow); }
+  .log-msg .err { color: var(--red); }
+  .log-msg .dim { color: var(--muted); font-size: 10px; }
+
+  .log-detail {
+    margin-top: 1px; padding-left: 0;
+    font-size: 10px; color: var(--muted);
+  }
+
+  .log-footer {
+    padding: 8px 12px;
+    border-top: 1px solid var(--border);
+    flex-shrink: 0;
+  }
+
+  .log-filter { display: flex; gap: 4px; flex-wrap: wrap; }
+
+  .filter-btn {
+    background: transparent; border: 1px solid var(--dim);
+    color: var(--muted); font-family: 'Share Tech Mono', monospace;
+    font-size: 8px; letter-spacing: 0.1em;
+    padding: 3px 7px; cursor: pointer; border-radius: 2px;
+    transition: all 0.1s;
+  }
+  .filter-btn.on { background: rgba(0,212,255,0.06); border-color: var(--glow); color: var(--glow); }
+</style>
+</head>
+<body>
+
+<!-- ═══════════════ CALCULATOR ═══════════════ -->
+<div class="calc-shell">
+  <div class="header">
+    <div class="model-id">SCI-CALC · MK-VII</div>
+    <div class="status-row"><div class="status-dot"></div><span>ONLINE</span></div>
+  </div>
+
+  <div class="display-block">
+    <div class="wasm-badge">▸ WASM</div>
+    <div class="display-label">EXPRESSION</div>
+    <div class="expression" id="expression">—</div>
+    <div class="main-display" id="display">0</div>
+  </div>
+
+  <div class="mode-tabs">
+    <button class="mode-tab active" id="tab-basic" onclick="setMode('basic')">BASIC</button>
+    <button class="mode-tab"        id="tab-sci"   onclick="setMode('sci')">SCIENTIFIC</button>
+    <button class="mode-tab"        id="tab-mem"   onclick="setMode('mem')">MEMORY</button>
+  </div>
+
+  <div class="btn-grid basic" id="basic-section">
+    <button class="clear" onclick="press('AC')">AC</button>
+    <button class="op"    onclick="press('+/-')">±</button>
+    <button class="op"    onclick="press('%')">%</button>
+    <button class="op"    onclick="press('÷')">÷</button>
+    <button onclick="press('7')">7</button>
+    <button onclick="press('8')">8</button>
+    <button onclick="press('9')">9</button>
+    <button class="op" onclick="press('×')">×</button>
+    <button onclick="press('4')">4</button>
+    <button onclick="press('5')">5</button>
+    <button onclick="press('6')">6</button>
+    <button class="op" onclick="press('-')">−</button>
+    <button onclick="press('1')">1</button>
+    <button onclick="press('2')">2</button>
+    <button onclick="press('3')">3</button>
+    <button class="op" onclick="press('+')">+</button>
+    <button onclick="press('0')" style="grid-column:span 2">0</button>
+    <button onclick="press('.')">.</button>
+    <button class="equals" onclick="press('=')">=</button>
+  </div>
+
+  <div class="btn-grid sci" id="sci-section" style="display:none">
+    <button class="fn" onclick="press('sin(')">sin</button>
+    <button class="fn" onclick="press('cos(')">cos</button>
+    <button class="fn" onclick="press('tan(')">tan</button>
+    <button class="fn" onclick="press('ln(')">ln</button>
+    <button class="fn" onclick="press('log(')">log</button>
+    <button class="fn" onclick="press('asin(')">asin</button>
+    <button class="fn" onclick="press('acos(')">acos</button>
+    <button class="fn" onclick="press('atan(')">atan</button>
+    <button class="fn" onclick="press('sqrt(')">√</button>
+    <button class="fn" onclick="press('cbrt(')">∛</button>
+    <button class="fn" onclick="press('π')">π</button>
+    <button class="fn" onclick="press('e')">e</button>
+    <button class="fn" onclick="press('^')">xʸ</button>
+    <button class="fn" onclick="press('(')"> ( </button>
+    <button class="fn" onclick="press(')')"> ) </button>
+    <button class="fn"   onclick="press('!')">n!</button>
+    <button class="fn"   onclick="press('1/x')">1/x</button>
+    <button class="fn"   onclick="press('x²')">x²</button>
+    <button class="fn"   onclick="press('abs(')">|x|</button>
+    <button class="clear" onclick="press('⌫')">⌫</button>
+  </div>
+
+  <div class="btn-grid basic" id="mem-section" style="display:none">
+    <button class="mem" onclick="press('MC')">MC</button>
+    <button class="mem" onclick="press('MR')">MR</button>
+    <button class="mem" onclick="press('M+')">M+</button>
+    <button class="mem" onclick="press('M-')">M−</button>
+    <button onclick="press('7')">7</button>
+    <button onclick="press('8')">8</button>
+    <button onclick="press('9')">9</button>
+    <button class="op" onclick="press('÷')">÷</button>
+    <button onclick="press('4')">4</button>
+    <button onclick="press('5')">5</button>
+    <button onclick="press('6')">6</button>
+    <button class="op" onclick="press('×')">×</button>
+    <button onclick="press('1')">1</button>
+    <button onclick="press('2')">2</button>
+    <button onclick="press('3')">3</button>
+    <button class="op" onclick="press('-')">−</button>
+    <button onclick="press('0')" style="grid-column:span 2">0</button>
+    <button onclick="press('.')">.</button>
+    <button class="equals" onclick="press('=')">=</button>
+  </div>
+
+  <div class="footer">
+    <span>ANTHROPIC · WASM ENGINE v1.0</span>
+    <div class="wasm-status">
+      <div class="wasm-led" id="wasm-led"></div>
+      <span id="wasm-label">LOADING…</span>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════ EVENT LOG ═══════════════ -->
+<div class="log-panel">
+  <div class="log-header">
+    <div class="log-title">EVENT LOG</div>
+    <div class="log-controls">
+      <span class="log-counter" id="log-counter">0 events</span>
+      <button class="log-btn" onclick="clearLog()">CLEAR</button>
+    </div>
+  </div>
+  <div class="log-scroll" id="log-scroll"></div>
+  <div class="log-footer">
+    <div class="log-filter">
+      <button class="filter-btn on" data-filter="input"  onclick="toggleFilter('input')">INPUT</button>
+      <button class="filter-btn on" data-filter="result" onclick="toggleFilter('result')">RESULT</button>
+      <button class="filter-btn on" data-filter="wasm"   onclick="toggleFilter('wasm')">WASM</button>
+      <button class="filter-btn on" data-filter="error"  onclick="toggleFilter('error')">ERROR</button>
+      <button class="filter-btn on" data-filter="system" onclick="toggleFilter('system')">SYSTEM</button>
+      <button class="filter-btn on" data-filter="state"  onclick="toggleFilter('state')">STATE Δ</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════════════════
+//  WASM BINARY BUILDER
+//  Programmatically assembled — correct section lengths every time.
+// ═══════════════════════════════════════════════════════════════════
+function buildWasmBytes() {
+  // LEB128 unsigned
+  const uleb = n => {
+    const b = [];
+    do { let x = n & 0x7f; n >>>= 7; if (n) x |= 0x80; b.push(x); } while (n);
+    return b;
+  };
+
+  // section(id, content[])
+  const section = (id, content) => [id, ...uleb(content.length), ...content];
+
+  // func body: [locals_count=0, ...opcodes, end]
+  const body = (...ops) => {
+    const inner = [0x00, ...ops, 0x0b];
+    return [...uleb(inner.length), ...inner];
+  };
+
+  // Types: 0=(f64,f64)->f64   1=(f64)->f64
+  const typeContent = [
+    0x02,                              // 2 types
+    0x60, 0x02, 0x7c, 0x7c, 0x01, 0x7c,  // type 0 binary f64
+    0x60, 0x01, 0x7c,       0x01, 0x7c,  // type 1 unary  f64
+  ];
+
+  // 8 functions: add sub mul div mod neg abs sqrt
+  // types:        0   0   0   0   0   1   1    1
+  const funcContent = [0x08, 0,0,0,0,0, 1,1,1];
+
+  // Exports
+  const str = s => [...uleb(s.length), ...[...s].map(c => c.charCodeAt(0))];
+  const exp = (name, idx) => [...str(name), 0x00, ...uleb(idx)];
+  const exportContent = [
+    0x08,
+    ...exp('add',0), ...exp('sub',1), ...exp('mul',2), ...exp('div',3),
+    ...exp('mod',4), ...exp('neg',5), ...exp('abs',6), ...exp('sqrt',7),
+  ];
+
+  // Opcodes: get0=0x20,0x00  get1=0x20,0x01
+  // f64: add=0xa0 sub=0xa1 mul=0xa2 div=0xa3 floor=0x9c neg=0x9a abs=0x99 sqrt=0x9f
+  const G0 = [0x20,0x00], G1 = [0x20,0x01];
+
+  const bodies = [
+    body(...G0,...G1, 0xa0),                            // add
+    body(...G0,...G1, 0xa1),                            // sub
+    body(...G0,...G1, 0xa2),                            // mul
+    body(...G0,...G1, 0xa3),                            // div
+    body(...G0, ...G0,...G1,0xa3,0x9c, ...G1,0xa2, 0xa1), // mod: a-(floor(a/b)*b)
+    body(...G0, 0x9a),                                  // neg
+    body(...G0, 0x99),                                  // abs
+    body(...G0, 0x9f),                                  // sqrt
+  ];
+  const codeContent = [0x08, ...bodies.flat()];
+
+  return new Uint8Array([
+    0x00,0x61,0x73,0x6d, 0x01,0x00,0x00,0x00, // magic + version
+    ...section(0x01, typeContent),
+    ...section(0x03, funcContent),
+    ...section(0x07, exportContent),
+    ...section(0x0a, codeContent),
+  ]);
+}
+
+// ═══════════════════════════════════════════════════════════════════
+//  EVENT LOG  — pure functional: immutable entries, append-only
+// ═══════════════════════════════════════════════════════════════════
+let logEntries = [];
+let logFilters = new Set(['input','result','wasm','error','system','state']);
+let logSeq = 0;
+
+const mkEntry = (kind, msg, detail) =>
+  Object.freeze({ id: ++logSeq, kind, ts: new Date().toISOString().slice(11,23), msg, detail: detail || null });
+
+const entryHTML = e => {
+  const det = e.detail ? `<div class="log-detail">${e.detail}</div>` : '';
+  return `<div class="log-entry ev-${e.kind}" data-kind="${e.kind}">` +
+    `<span class="log-ts">${e.ts}</span>` +
+    `<span class="log-tag tag-${e.kind}">${e.kind.toUpperCase()}</span>` +
+    `<span class="log-msg">${e.msg}</span>${det}</div>`;
+};
+
+const log = (kind, msg, detail) => {
+  const e = mkEntry(kind, msg, detail);
+  logEntries = [...logEntries, e];   // immutable append
+  if (logFilters.has(kind)) {
+    const scroll = document.getElementById('log-scroll');
+    if (scroll) {
+      const div = document.createElement('div');
+      div.innerHTML = entryHTML(e);
+      scroll.appendChild(div.firstElementChild);
+      scroll.scrollTop = scroll.scrollHeight;
+    }
+  }
+  const ctr = document.getElementById('log-counter');
+  if (ctr) ctr.textContent = logEntries.length + ' events';
+  return e;
+};
+
+function clearLog() {
+  logEntries = []; logSeq = 0;
+  const s = document.getElementById('log-scroll');
+  if (s) s.innerHTML = '';
+  const c = document.getElementById('log-counter');
+  if (c) c.textContent = '0 events';
+  log('system', '<span class="dim">— log cleared —</span>');
+}
+
+function toggleFilter(kind) {
+  if (logFilters.has(kind)) logFilters.delete(kind);
+  else logFilters.add(kind);
+  const btn = document.querySelector(`[data-filter="${kind}"]`);
+  if (btn) btn.classList.toggle('on', logFilters.has(kind));
+  // re-render
+  const scroll = document.getElementById('log-scroll');
+  if (!scroll) return;
+  scroll.innerHTML = '';
+  logEntries.filter(e => logFilters.has(e.kind)).forEach(e => {
+    const div = document.createElement('div');
+    div.innerHTML = entryHTML(e);
+    scroll.appendChild(div.firstElementChild);
+  });
+  scroll.scrollTop = scroll.scrollHeight;
+}
+
+// ═══════════════════════════════════════════════════════════════════
+//  CALCULATOR — immutable state + pure reducer
+// ═══════════════════════════════════════════════════════════════════
+const initState = wasm => Object.freeze({
+  display: '0', expression: '—', buffer: '0',
+  operator: null, waitingNext: false, memory: 0, error: false, wasm
+});
+
+const fmt = n => {
+  if (isNaN(n))     return 'NaN';
+  if (!isFinite(n)) return n > 0 ? 'OVERFLOW' : '-OVERFLOW';
+  const s = parseFloat(n.toPrecision(12)).toString();
+  return s.length > 14 ? n.toExponential(6) : s;
+};
+
+const factorial = n =>
+  n < 0 || !Number.isInteger(n) ? NaN : n <= 1 ? 1 : n * factorial(n - 1);
+
+const wasmBinOp = (op, a, b, wasm) => {
+  const src = wasm ? 'WASM' : 'JS';
+  log('wasm',
+    `<span class="op">${op}</span>(<span class="val">${a}</span>, <span class="val">${b}</span>)`,
+    `▸ engine: ${src}`);
+  switch (op) {
+    case '+': return wasm ? wasm.add(a,b) : a+b;
+    case '-': return wasm ? wasm.sub(a,b) : a-b;
+    case '×': return wasm ? wasm.mul(a,b) : a*b;
+    case '÷': {
+      if (b === 0) { log('error','<span class="err">÷ 0 — division by zero</span>'); return NaN; }
+      return wasm ? wasm.div(a,b) : a/b;
+    }
+    case '%': return wasm ? wasm.mod(a,b) : a%b;
+    case '^': return Math.pow(a,b);
+    default:  return b;
+  }
+};
+
+const wasmUnary = (fn, x, wasm) => {
+  const useWasm = wasm && ['sqrt','abs','neg'].includes(fn);
+  log('wasm',
+    `<span class="op">${fn}</span>(<span class="val">${x}</span>)`,
+    `▸ ${useWasm ? 'WASM export' : 'JS Math'}`);
+  switch (fn) {
+    case 'sin':  return Math.sin(x);
+    case 'cos':  return Math.cos(x);
+    case 'tan':  return Math.tan(x);
+    case 'asin': return Math.asin(x);
+    case 'acos': return Math.acos(x);
+    case 'atan': return Math.atan(x);
+    case 'ln':   return Math.log(x);
+    case 'log':  return Math.log10(x);
+    case 'sqrt': return wasm ? wasm.sqrt(x) : Math.sqrt(x);
+    case 'cbrt': return Math.cbrt(x);
+    case 'abs':  return wasm ? wasm.abs(x) : Math.abs(x);
+    case 'neg':  return wasm ? wasm.neg(x) : -x;
+    default:     return x;
+  }
+};
+
+// Pure reducer — no mutations
+const reduce = (state, action) => {
+  const { display, buffer, operator, waitingNext, memory, wasm } = state;
+
+  log('input',
+    `press <span class="val">"${action}"</span>`,
+    `display=${display}  op=${operator??'∅'}  waiting=${waitingNext}`);
+
+  // digit / dot
+  if (/^[\d.]$/.test(action)) {
+    if (action === '.' && display.includes('.')) {
+      log('error','<span class="err">duplicate decimal — ignored</span>');
+      return state;
+    }
+    const next = (waitingNext || display === '0') && action !== '.'
+      ? action : display + action;
+    return { ...state, display: next, buffer: next, waitingNext: false, error: false };
+  }
+
+  if (action === 'AC') {
+    log('system','state reset — <span class="dim">AC</span>');
+    return initState(wasm);
+  }
+
+  if (action === '⌫') {
+    const next = display.length > 1 ? display.slice(0,-1) : '0';
+    return { ...state, display: next, buffer: next };
+  }
+
+  if (action === '+/-') {
+    const s = fmt(parseFloat(display) * -1);
+    return { ...state, display: s, buffer: s };
+  }
+
+  if (action === '%') {
+    const s = fmt(parseFloat(display) / 100);
+    return { ...state, display: s, buffer: s };
+  }
+
+  if (action === 'π') {
+    const s = fmt(Math.PI);
+    log('system', `const π → <span class="val">${s}</span>`);
+    return { ...state, display: s, buffer: s, waitingNext: false };
+  }
+
+  if (action === 'e') {
+    const s = fmt(Math.E);
+    log('system', `const e → <span class="val">${s}</span>`);
+    return { ...state, display: s, buffer: s, waitingNext: false };
+  }
+
+  if (action === 'x²') {
+    const n = parseFloat(display);
+    const r = wasm ? wasm.mul(n,n) : n*n;
+    const s = fmt(r);
+    log('result', `x² → <span class="val">${s}</span>`, `▸ ${n}² = ${r}`);
+    return { ...state, display: s, buffer: s, expression: `(${display})²`, waitingNext: true };
+  }
+
+  if (action === '1/x') {
+    if (parseFloat(display) === 0) {
+      log('error','<span class="err">1/x — division by zero</span>');
+      return { ...state, display: 'DIV/0', error: true };
+    }
+    const r = wasm ? wasm.div(1, parseFloat(display)) : 1/parseFloat(display);
+    const s = fmt(r);
+    log('result', `1/x → <span class="val">${s}</span>`);
+    return { ...state, display: s, buffer: s, expression: `1/(${display})`, waitingNext: true };
+  }
+
+  if (action === '!') {
+    const n = parseFloat(display);
+    const r = factorial(n);
+    if (isNaN(r)) {
+      log('error', `<span class="err">factorial(${n}) → NaN</span>`, '▸ must be non-negative integer');
+      return { ...state, display: 'ERROR', error: true };
+    }
+    const s = fmt(r);
+    log('result', `${n}! → <span class="val">${s}</span>`);
+    return { ...state, display: s, buffer: s, expression: `(${display})!`, waitingNext: true };
+  }
+
+  const sciFns = ['sin(','cos(','tan(','asin(','acos(','atan(','ln(','log(','sqrt(','cbrt(','abs('];
+  if (sciFns.includes(action)) {
+    const fn = action.slice(0,-1);
+    const x  = parseFloat(display);
+    const r  = wasmUnary(fn, x, wasm);
+    if (isNaN(r)||!isFinite(r)) {
+      log('error', `<span class="err">${fn}(${x}) domain error → ${r}</span>`);
+      return { ...state, display:'ERROR', expression:`${fn}(${display})`, waitingNext:true, error:true };
+    }
+    const s = fmt(r);
+    log('result', `${fn}(${x}) → <span class="val">${s}</span>`);
+    return { ...state, display:s, buffer:s, expression:`${fn}(${display})`, waitingNext:true, error:false };
+  }
+
+  if (action==='('||action===')') {
+    return { ...state, display: display+action, buffer: display+action };
+  }
+
+  const binOps = ['+','-','×','÷','%','^'];
+  if (binOps.includes(action)) {
+    if (operator && !waitingNext) {
+      const a = parseFloat(buffer), b = parseFloat(display);
+      const r = wasmBinOp(operator, a, b, wasm);
+      if (isNaN(r)||!isFinite(r)) {
+        log('error',`<span class="err">chain op NaN</span>`,`▸ ${a} ${operator} ${b}`);
+        return { ...state, display:'ERROR', error:true };
+      }
+      const s = fmt(r);
+      log('result',`chain ${a} ${operator} ${b} → <span class="val">${s}</span> then <span class="op">${action}</span>`);
+      return { ...state, display:s, buffer:s, operator:action, waitingNext:true, expression:`${s} ${action}`, error:false };
+    }
+    log('state',`operator set → <span class="op">${action}</span>`, `▸ buffer locked: ${display}`);
+    return { ...state, operator:action, buffer:display, waitingNext:true, expression:`${display} ${action}` };
+  }
+
+  if (action === '=') {
+    if (!operator) {
+      log('system','<span class="dim">= pressed — no operator pending</span>');
+      return state;
+    }
+    const a = parseFloat(buffer), b = parseFloat(display);
+    const r = wasmBinOp(operator, a, b, wasm);
+    const isErr = isNaN(r)||!isFinite(r);
+    const s = fmt(r);
+    if (isErr) log('error',`<span class="err">result invalid: ${r}</span>`,`▸ ${a} ${operator} ${b}`);
+    else       log('result',`<span class="val">${a}</span> <span class="op">${operator}</span> <span class="val">${b}</span> = <span class="val">${s}</span>`,`▸ WASM: ${!!wasm}`);
+    return { ...state, display:isErr?'ERROR':s, buffer:s, operator:null, waitingNext:true, expression:`${buffer} ${operator} ${display} =`, error:isErr };
+  }
+
+  if (action==='MC') { log('system','memory cleared'); return { ...state, memory:0 }; }
+  if (action==='MR') {
+    const s = fmt(memory);
+    log('system',`MR → <span class="val">${s}</span>`);
+    return { ...state, display:s, buffer:s, waitingNext:false };
+  }
+  if (action==='M+') {
+    const m = memory + parseFloat(display);
+    log('system',`M+ → <span class="val">${m}</span>`);
+    return { ...state, memory:m };
+  }
+  if (action==='M-') {
+    const m = memory - parseFloat(display);
+    log('system',`M− → <span class="val">${m}</span>`);
+    return { ...state, memory:m };
+  }
+
+  log('error',`<span class="err">unhandled action: "${action}"</span>`);
+  return state;
+};
+
+// ═══════════════════════════════════════════════════════════════════
+//  DOM RENDER
+// ═══════════════════════════════════════════════════════════════════
+const renderState = state => {
+  const d = document.getElementById('display');
+  const e = document.getElementById('expression');
+  if (d) { d.textContent = state.display; d.className = 'main-display' + (state.error?' error':''); }
+  if (e) e.textContent = state.expression;
+};
+
+// ═══════════════════════════════════════════════════════════════════
+//  APP BOOTSTRAP
+// ═══════════════════════════════════════════════════════════════════
+let appState = initState(null);
+
+async function initApp() {
+  log('system','boot sequence started');
+  const led   = document.getElementById('wasm-led');
+  const label = document.getElementById('wasm-label');
+
+  try {
+    log('wasm','building WASM binary programmatically…');
+    const bytes = buildWasmBytes();
+    log('wasm',`binary ready — <span class="val">${bytes.length} bytes</span>`);
+
+    const { instance } = await WebAssembly.instantiate(bytes, {});
+    const wasm = instance.exports;
+    log('wasm','WebAssembly.instantiate succeeded');
+
+    // Smoke tests — purely functional map/filter
+    const TESTS = [
+      { name:'add(2,3)',   fn:()=>wasm.add(2,3),   want:5    },
+      { name:'sub(10,4)',  fn:()=>wasm.sub(10,4),  want:6    },
+      { name:'mul(3,7)',   fn:()=>wasm.mul(3,7),   want:21   },
+      { name:'div(10,4)', fn:()=>wasm.div(10,4),  want:2.5  },
+      { name:'mod(10,3)', fn:()=>wasm.mod(10,3),  want:1    },
+      { name:'neg(5)',    fn:()=>wasm.neg(5),      want:-5   },
+      { name:'abs(-7)',   fn:()=>wasm.abs(-7),     want:7    },
+      { name:'sqrt(16)',  fn:()=>wasm.sqrt(16),    want:4    },
+    ].map(t => ({ ...t, got: t.fn() }));
+
+    const fails = TESTS.filter(t => Math.abs(t.got - t.want) > 1e-9);
+    TESTS.filter(t => !fails.includes(t)).forEach(t =>
+      log('wasm', `✓ <span class="dim">${t.name}</span> = <span class="val">${t.got}</span>`)
+    );
+    if (fails.length) {
+      fails.forEach(t =>
+        log('error',`<span class="err">FAIL ${t.name}</span>`,`got ${t.got}, want ${t.want}`)
+      );
+      throw new Error(`${fails.length} smoke test(s) failed`);
+    }
+
+    appState = initState(wasm);
+    led.classList.add('ready');
+    label.textContent = 'WASM READY';
+    log('system','<span class="val">WASM engine verified — all exports OK</span>');
+
+  } catch(err) {
+    log('error',`<span class="err">WASM failed — JS fallback</span>`,`▸ ${err.message}`);
+    appState = initState(null);
+    led.classList.add('fail');
+    label.textContent = 'JS FALLBACK';
+  }
+
+  renderState(appState);
+  log('system','calculator ready');
+}
+
+// Global handlers — plain functions on window (no module scope issues)
+window.press = action => {
+  const prev = appState;
+  appState = reduce(appState, action);
+  // State delta log
+  const WATCH = ['display','expression','operator','waitingNext','memory','error'];
+  const changed = WATCH.filter(k => prev[k] !== appState[k]);
+  if (changed.length) {
+    log('state',
+      `Δ [${changed.join(', ')}]`,
+      changed.map(k=>`${k}: ${JSON.stringify(prev[k])} → ${JSON.stringify(appState[k])}`).join('  |  ')
+    );
+  }
+  renderState(appState);
+};
+
+window.setMode = mode => {
+  ['basic','sci','mem'].forEach(s => {
+    const el  = document.getElementById(s+'-section');
+    const tab = document.getElementById('tab-'+s);
+    const on  = s === mode;
+    if (el)  el.style.display = on ? 'grid' : 'none';
+    if (tab) tab.className = 'mode-tab' + (on ? ' active' : '');
+  });
+  log('system', `mode → <span class="val">${mode.toUpperCase()}</span>`);
+};
+
+document.addEventListener('keydown', e => {
+  const MAP = {
+    '0':'0','1':'1','2':'2','3':'3','4':'4',
+    '5':'5','6':'6','7':'7','8':'8','9':'9',
+    '.':'.', '+':'+', '-':'-', '*':'×', '/':'÷',
+    'Enter':'=', '=':'=', 'Escape':'AC', 'Backspace':'⌫',
+    '%':'%', '^':'^',
+  };
+  const a = MAP[e.key];
+  if (a) { e.preventDefault(); window.press(a); }
+});
+
+initApp();
+</script>
+</body>
+</html>
