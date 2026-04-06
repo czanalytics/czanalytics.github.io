@@ -1,0 +1,1197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DRONE_WM_KB v6.0 | KB-DRIVEN BATTLEGROUND SIMULATION</title>
+<script src="https://cdn.jsdelivr.net/pyodide/v0.25.0/full/pyodide.js"></script>
+<script src="https://unpkg.com/swipl-wasm@3.3.0/dist/swipl/swipl-web.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@400;700;900&display=swap');
+
+:root {
+  --bg:       #020912;
+  --bg2:      #070f1a;
+  --bg3:      #0a1628;
+  --border:   #0f2847;
+  --border2:  #1a3a5c;
+  --text:     #8ab4d4;
+  --text2:    #4a7fa0;
+  --green:    #00ff88;
+  --red:      #ff3366;
+  --amber:    #ffaa00;
+  --cyan:     #00d4ff;
+  --blue:     #3b82f6;
+  --purple:   #a855f7;
+  --glow-g:   0 0 12px rgba(0,255,136,0.5);
+  --glow-r:   0 0 12px rgba(255,51,102,0.5);
+  --glow-c:   0 0 12px rgba(0,212,255,0.5);
+  --glow-a:   0 0 12px rgba(255,170,0,0.5);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: 'Share Tech Mono', monospace;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* Scanlines overlay */
+body::before {
+  content: '';
+  position: fixed; inset: 0; z-index: 9999; pointer-events: none;
+  background: repeating-linear-gradient(0deg,
+    transparent 0px, transparent 2px,
+    rgba(0,0,0,0.08) 2px, rgba(0,0,0,0.08) 4px);
+}
+
+header {
+  padding: 12px 20px;
+  border-bottom: 1px solid var(--border2);
+  background: linear-gradient(180deg, rgba(0,212,255,0.05) 0%, transparent 100%);
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 16px;
+}
+
+.header-title {
+  font-family: 'Orbitron', monospace;
+  font-size: 14px; font-weight: 900; letter-spacing: 3px;
+  color: var(--cyan);
+  text-shadow: var(--glow-c);
+}
+.header-sub { font-size: 9px; color: var(--text2); letter-spacing: 2px; margin-top: 2px; }
+
+.status-bar {
+  display: flex; gap: 12px; align-items: center; flex-wrap: wrap;
+}
+.status-pill {
+  font-size: 9px; padding: 3px 10px; border-radius: 2px; font-weight: bold;
+  letter-spacing: 1px; border: 1px solid;
+}
+.pill-off  { border-color: var(--border2); color: var(--text2); }
+.pill-boot { border-color: var(--amber);   color: var(--amber); animation: blink 1s infinite; }
+.pill-on   { border-color: var(--green);   color: var(--green); box-shadow: var(--glow-g); }
+.pill-err  { border-color: var(--red);     color: var(--red);   box-shadow: var(--glow-r); }
+
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:.4} }
+
+/* Main layout */
+.layout {
+  display: grid;
+  grid-template-columns: 260px 1fr 300px;
+  grid-template-rows: auto 1fr auto;
+  height: calc(100vh - 54px);
+  gap: 0;
+}
+
+/* Panels */
+.panel {
+  border: 1px solid var(--border);
+  background: var(--bg2);
+  display: flex; flex-direction: column;
+  overflow: hidden;
+}
+.panel-hdr {
+  font-family: 'Orbitron', monospace;
+  font-size: 9px; font-weight: 700; letter-spacing: 2px;
+  padding: 6px 10px;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg3);
+  color: var(--cyan);
+  display: flex; justify-content: space-between; align-items: center;
+  flex-shrink: 0;
+}
+.panel-hdr .hdr-tag {
+  color: var(--text2); font-size: 8px; letter-spacing: 1px;
+}
+.panel-body { flex: 1; overflow-y: auto; padding: 8px; }
+.panel-body::-webkit-scrollbar { width: 3px; }
+.panel-body::-webkit-scrollbar-track { background: var(--bg); }
+.panel-body::-webkit-scrollbar-thumb { background: var(--border2); }
+
+/* Left sidebar */
+.sidebar-left {
+  grid-column: 1; grid-row: 1/4;
+  border-right: 1px solid var(--border2);
+  display: flex; flex-direction: column;
+}
+
+/* Center — map + log */
+.center-top {
+  grid-column: 2; grid-row: 1;
+  border-bottom: 1px solid var(--border2);
+  position: relative;
+}
+.center-bot {
+  grid-column: 2; grid-row: 2/4;
+  display: flex; flex-direction: column;
+}
+
+/* Right sidebar */
+.sidebar-right {
+  grid-column: 3; grid-row: 1/4;
+  border-left: 1px solid var(--border2);
+  display: flex; flex-direction: column;
+}
+
+canvas {
+  width: 100%; display: block;
+  background: #000;
+  image-rendering: pixelated;
+}
+
+/* Scenario buttons */
+.scenario-btn {
+  width: 100%; text-align: left; background: var(--bg3);
+  border: 1px solid var(--border); border-left: 3px solid;
+  padding: 8px 10px; margin-bottom: 6px; cursor: pointer;
+  transition: all 0.15s; font-family: 'Share Tech Mono', monospace;
+  color: var(--text); font-size: 10px;
+}
+.scenario-btn:hover { background: #0f2030; }
+.scenario-btn.active { background: #0a1f35; }
+.scenario-btn .sc-name { font-size: 11px; font-weight: bold; color: #fff; display: block; margin-bottom: 2px; }
+
+/* Log lines */
+.log-line { border-bottom: 1px solid rgba(15,40,71,0.5); padding: 3px 0; font-size: 10px; line-height: 1.4; }
+.log-t    { color: var(--text2); }
+.log-ev   { color: var(--cyan); }
+.log-val  { color: var(--amber); }
+.log-act  { color: #fff; }
+.log-warn { color: var(--amber); font-weight: bold; }
+.log-crit { color: var(--red);   font-weight: bold; }
+.log-ok   { color: var(--green); }
+.log-kb   { color: var(--purple); }
+
+/* Prolog panel */
+.repl-out {
+  flex: 1; min-height: 120px; background: #000;
+  color: #00ff88; font-size: 10px;
+  padding: 8px; overflow-y: auto;
+  white-space: pre-wrap; line-height: 1.5;
+  border: 1px solid var(--border);
+  margin-bottom: 6px;
+}
+.repl-out::-webkit-scrollbar { width: 2px; }
+.repl-out::-webkit-scrollbar-thumb { background: var(--green); }
+.repl-row {
+  display: flex; gap: 4px; align-items: center;
+}
+.repl-row input {
+  flex: 1; font-family: 'Share Tech Mono', monospace; font-size: 10px;
+  background: var(--bg3); color: var(--cyan); border: 1px solid var(--border2);
+  padding: 4px 6px;
+}
+.repl-row input:focus { outline: none; border-color: var(--cyan); }
+.repl-row input:disabled { opacity: .4; }
+.btn-sm {
+  font-family: 'Orbitron', monospace; font-size: 8px; font-weight: 700;
+  letter-spacing: 1px; padding: 4px 8px; background: var(--bg3);
+  border: 1px solid var(--border2); color: var(--cyan); cursor: pointer;
+  transition: all 0.15s;
+}
+.btn-sm:hover { border-color: var(--cyan); background: #0f2030; }
+.btn-sm:disabled { opacity: .3; cursor: not-allowed; }
+
+/* Prolog query presets */
+.query-preset {
+  font-size: 9px; padding: 3px 6px; margin: 2px;
+  background: var(--bg3); border: 1px solid var(--border);
+  color: var(--purple); cursor: pointer; font-family: 'Share Tech Mono', monospace;
+}
+.query-preset:hover { border-color: var(--purple); }
+
+/* KB assertions panel */
+.kb-assert { font-size: 9px; color: var(--purple); padding: 2px 0; border-bottom: 1px solid rgba(168,85,247,0.1); }
+
+/* Probability bars */
+.prob-row { display: flex; align-items: center; gap: 6px; margin-bottom: 4px; font-size: 9px; }
+.prob-bar-bg { flex: 1; height: 5px; background: var(--border); border-radius: 2px; overflow: hidden; }
+.prob-bar-fill { height: 100%; border-radius: 2px; transition: width 0.4s; }
+
+/* Goal list */
+.goal-item { font-size: 10px; padding: 4px 6px; margin-bottom: 3px; border-left: 2px solid; }
+.goal-pending { border-color: var(--text2); color: var(--text2); }
+.goal-active  { border-color: var(--amber);  color: var(--amber); animation: blink 0.8s infinite; }
+.goal-done    { border-color: var(--green);  color: var(--green); text-decoration: line-through; }
+.goal-failed  { border-color: var(--red);    color: var(--red); }
+
+/* Action feed */
+.act-chip {
+  display: inline-block; font-size: 8px; font-weight: bold; letter-spacing: .5px;
+  padding: 2px 6px; margin: 2px; border: 1px solid;
+}
+.chip-hostile { border-color: var(--red);   color: var(--red); }
+.chip-reroute { border-color: var(--amber); color: var(--amber); }
+.chip-kb      { border-color: var(--purple);color: var(--purple); }
+.chip-ok      { border-color: var(--green); color: var(--green); }
+.chip-act     { border-color: var(--text2); color: var(--text2); }
+
+/* Badges */
+.badge-reroute {
+  position: absolute; top: 8px; left: 8px;
+  font-family: 'Orbitron', monospace; font-size: 9px; font-weight: 700;
+  background: rgba(255,170,0,0.15); border: 1px solid var(--amber);
+  color: var(--amber); padding: 3px 8px; letter-spacing: 1px;
+  animation: blink 0.5s infinite;
+}
+.badge-target {
+  position: absolute; top: 8px; right: 8px;
+  font-family: 'Share Tech Mono', monospace; font-size: 9px;
+  background: rgba(255,51,102,0.12); border: 1px solid rgba(255,51,102,0.5);
+  color: var(--red); padding: 3px 10px; letter-spacing: 1px;
+}
+
+/* Inline section headers inside panels */
+.sec-hdr {
+  font-family: 'Orbitron', monospace; font-size: 8px; color: var(--text2);
+  letter-spacing: 2px; padding: 4px 0 3px; border-bottom: 1px solid var(--border);
+  margin-bottom: 6px; margin-top: 8px;
+}
+.sec-hdr:first-child { margin-top: 0; }
+
+/* Divider */
+.divider { height: 1px; background: var(--border); margin: 6px 0; }
+
+/* Simulation tick counter */
+.tick-display {
+  font-family: 'Orbitron', monospace; font-size: 22px; font-weight: 900;
+  color: var(--cyan); text-shadow: var(--glow-c); letter-spacing: 3px;
+  text-align: center; padding: 8px 0;
+}
+.tick-label { font-size: 8px; color: var(--text2); text-align: center; letter-spacing: 2px; }
+
+/* Flash animation */
+@keyframes flash-red { 0%,100%{background:transparent} 50%{background:rgba(255,51,102,0.07)} }
+.flash-red { animation: flash-red 0.4s; }
+</style>
+</head>
+<body>
+
+<header>
+  <div>
+    <div class="header-title">DRONE_WM_KB // V6.0</div>
+    <div class="header-sub">KB-DRIVEN BATTLEGROUND — PROLOG + PYTHON + WASM</div>
+  </div>
+  <div class="status-bar">
+    <span class="status-pill pill-boot" id="pill-py">PY INIT</span>
+    <span class="status-pill pill-boot" id="pill-pl">PROLOG INIT</span>
+    <span class="status-pill pill-off"  id="pill-sim">SIM IDLE</span>
+    <span class="status-pill pill-off"  id="pill-kb">KB OFFLINE</span>
+    <span class="status-pill pill-off"  id="pill-plan">PLANNER IDLE</span>
+  </div>
+</header>
+
+<div class="layout">
+
+  <!-- ═══ LEFT SIDEBAR ═══ -->
+  <div class="sidebar-left">
+
+    <div class="panel-hdr">MISSION_SELECT <span class="hdr-tag">[SCENARIO_KB]</span></div>
+    <div style="padding:8px; border-bottom:1px solid var(--border2);">
+      <button class="scenario-btn active" style="border-left-color:#3b82f6" onclick="loadScenario('recon')" id="sc-recon">
+        <span class="sc-name">UAV Perimeter Recon</span>
+        Radiation avoidance + ISR tagging
+      </button>
+      <button class="scenario-btn" style="border-left-color:#ffaa00" onclick="loadScenario('escort')" id="sc-escort">
+        <span class="sc-name">Drone Swarm Escort</span>
+        EW jamming + formation integrity
+      </button>
+      <button class="scenario-btn" style="border-left-color:#ff3366" onclick="loadScenario('extraction')" id="sc-extraction">
+        <span class="sc-name">Kamikaze Stealth Strike</span>
+        Silent ingress under detection
+      </button>
+      <button class="scenario-btn" style="border-left-color:#00ff88" onclick="loadScenario('routing')" id="sc-routing">
+        <span class="sc-name">Terrain-Following Strike</span>
+        Dynamic re-routing to HVT
+      </button>
+    </div>
+
+    <div class="panel-hdr">OBJECTIVES <span class="hdr-tag">[OBJ_TRACK]</span></div>
+    <div class="panel-body" id="goal-list" style="border-bottom:1px solid var(--border2); max-height:160px; flex-shrink:0;">
+      <div style="color:var(--text2); font-size:9px; padding:4px 0;">— Awaiting mission load —</div>
+    </div>
+
+    <div class="panel-hdr">TICK / REPLAN <span class="hdr-tag">[T_INDEX]</span></div>
+    <div style="padding:8px; border-bottom:1px solid var(--border2); flex-shrink:0;">
+      <div class="tick-display" id="tick-display">T:--</div>
+      <div class="tick-label">DISCRETE_TIME_INDEX</div>
+      <div class="divider"></div>
+      <div class="sec-hdr">SURVIVAL PROBABILITIES</div>
+      <div id="prob-panel"></div>
+    </div>
+
+    <div class="panel-hdr">ACTION_FEED <span class="hdr-tag">[TIMELINE]</span></div>
+    <div class="panel-body" id="action-feed"></div>
+
+  </div>
+
+  <!-- ═══ CENTER TOP — MAP ═══ -->
+  <div class="center-top">
+    <canvas id="tactical-map" width="900" height="360"></canvas>
+    <div id="badge-reroute" class="badge-reroute" style="display:none">RE-ROUTING…</div>
+    <div id="badge-target"  class="badge-target">TARGET: NONE</div>
+    <div style="position:absolute; bottom:6px; left:8px; display:flex; gap:12px;
+         background:rgba(0,0,0,0.7); border:1px solid var(--border); padding:4px 8px; font-size:8px; letter-spacing:.5px;">
+      <span style="color:#3b82f6">● OWN_UAV</span>
+      <span style="color:#ff3366">◆ HOSTILE</span>
+      <span style="color:#ffaa00">■ OBJ</span>
+      <span style="color:#3b82f6; opacity:.5">━ HISTORY</span>
+      <span style="color:#00d4ff; opacity:.5">┄ PLAN</span>
+      <span style="color:rgba(239,68,68,0.5)">⊙ SAM_ZONE</span>
+    </div>
+  </div>
+
+  <!-- ═══ CENTER BOTTOM — EVENT LOG ═══ -->
+  <div class="center-bot">
+    <div class="panel-hdr" style="flex-shrink:0;">
+      EVENT_LOG
+      <span class="hdr-tag" id="log-count">[0 events]</span>
+    </div>
+    <div id="event-log" class="panel-body" style="font-size:10px; line-height:1.6;">
+      <div style="color:var(--text2); font-style:italic;">>> System standby — awaiting kernel boot</div>
+    </div>
+  </div>
+
+  <!-- ═══ RIGHT SIDEBAR ═══ -->
+  <div class="sidebar-right">
+
+    <!-- Prolog workstation -->
+    <div class="panel-hdr">KB_ENGINE <span class="hdr-tag">[SWI-PROLOG WASM]</span></div>
+    <div style="padding:8px; border-bottom:1px solid var(--border2); flex-shrink:0;">
+      <div class="repl-out" id="repl-out">% Tactical KB loading...<br>% SWI-Prolog WASM initializing.</div>
+      <div style="margin-bottom:6px; flex-wrap:wrap;">
+        <button class="query-preset" onclick="setQuery('listing(threat/2).')">threats</button>
+        <button class="query-preset" onclick="setQuery('listing(tactic/2).')">tactics</button>
+        <button class="query-preset" onclick="setQuery('listing(survive_prob/3).')">probs</button>
+        <button class="query-preset" onclick="setQuery('best_action(X,Y,A).')">best_action</button>
+        <button class="query-preset" onclick="setQuery('replan_needed(X,E).')">replan?</button>
+        <button class="query-preset" onclick="setQuery('high_threat_zone(Z).')">hot_zones</button>
+        <button class="query-preset" onclick="setQuery('listing.')">full_kb</button>
+      </div>
+      <div class="repl-row">
+        <span style="color:var(--green); font-size:11px; font-weight:bold; flex-shrink:0;">?-</span>
+        <input type="text" id="repl-input" placeholder="query KB…" disabled
+               onkeypress="if(event.key==='Enter') runPrologQuery()">
+        <button class="btn-sm" id="btn-run" onclick="runPrologQuery()" disabled>RUN</button>
+      </div>
+    </div>
+
+    <!-- Live KB assertions -->
+    <div class="panel-hdr" style="flex-shrink:0;">
+      KB_ASSERTIONS <span class="hdr-tag">[DYNAMIC_FACTS]</span>
+    </div>
+    <div class="panel-body" id="kb-facts" style="max-height:150px; flex-shrink:0; border-bottom:1px solid var(--border2);">
+      <div style="color:var(--text2); font-size:9px;">— KB not yet loaded —</div>
+    </div>
+
+    <!-- WM learning log -->
+    <div class="panel-hdr" style="flex-shrink:0;">
+      WM_LEARNING_LOG <span class="hdr-tag">[AI_TRACE]</span>
+    </div>
+    <div class="panel-body" id="wm-log" style="font-size:9px; line-height:1.5;"></div>
+
+  </div>
+
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════════════════
+// GLOBALS
+// ═══════════════════════════════════════════════════════════════════
+let py, prolog;
+let simRunning = false;
+let logCount = 0;
+let currentScenario = 'recon';
+let simSteps = [];
+let kbAssertions = [];
+
+const canvas = document.getElementById('tactical-map');
+const ctx    = canvas.getContext('2d');
+
+// ═══════════════════════════════════════════════════════════════════
+// TACTICAL KB — PROLOG KNOWLEDGE BASE
+// ═══════════════════════════════════════════════════════════════════
+const TACTICAL_KB = `
+:- dynamic threat/2.
+:- dynamic tactic/2.
+:- dynamic survive_prob/3.
+:- dynamic observed_event/3.
+:- dynamic drone_state/4.
+:- dynamic mission_goal/2.
+:- dynamic goal_status/2.
+:- dynamic replan_log/3.
+:- dynamic threat_density/2.
+:- dynamic wm_trace/3.
+
+% ── Threat taxonomy ───────────────────────────────────────────────
+threat(sam_site,    high).
+threat(ew_jammer,   medium).
+threat(hostile_uav, medium).
+threat(radiation,   low).
+threat(detection,   low).
+
+% ── Survival probability estimates (threat_type, proximity, p_survive)
+survive_prob(sam_site,    close,  0.15).
+survive_prob(sam_site,    medium, 0.50).
+survive_prob(sam_site,    far,    0.92).
+survive_prob(ew_jammer,   close,  0.55).
+survive_prob(ew_jammer,   medium, 0.80).
+survive_prob(ew_jammer,   far,    0.98).
+survive_prob(hostile_uav, close,  0.40).
+survive_prob(hostile_uav, medium, 0.72).
+survive_prob(hostile_uav, far,    0.95).
+survive_prob(radiation,   close,  0.60).
+survive_prob(radiation,   medium, 0.88).
+survive_prob(radiation,   far,    0.99).
+survive_prob(detection,   close,  0.30).
+survive_prob(detection,   medium, 0.68).
+survive_prob(detection,   far,    0.96).
+
+% ── Tactical rules ────────────────────────────────────────────────
+tactic(high_threat,    re_route_evade).
+tactic(medium_threat,  terrain_follow).
+tactic(low_threat,     patrol_hold).
+tactic(no_threat,      direct_course).
+tactic(jammed,         ew_pulse_counter).
+tactic(detected,       silent_run).
+
+% ── Threat level classification ───────────────────────────────────
+classify_threat(Val, high)   :- Val >= 3.5, !.
+classify_threat(Val, medium) :- Val >= 1.5, !.
+classify_threat(Val, low)    :- Val >= 0.5, !.
+classify_threat(_,   none).
+
+% ── Best action selection ─────────────────────────────────────────
+best_action(ThreatVal, HasEnemy, Action) :-
+    classify_threat(ThreatVal, ThreatLevel),
+    (HasEnemy = true -> tactic(high_threat, Action)
+    ; threat_level_tactic(ThreatLevel, Action)).
+
+threat_level_tactic(high,   Action) :- tactic(high_threat,   Action), !.
+threat_level_tactic(medium, Action) :- tactic(medium_threat, Action), !.
+threat_level_tactic(low,    Action) :- tactic(low_threat,    Action), !.
+threat_level_tactic(none,   Action) :- tactic(no_threat,     Action), !.
+
+% ── Re-planning trigger ───────────────────────────────────────────
+replan_needed(T, hostile_contact) :-
+    observed_event(T, hostile_uav, _), !.
+replan_needed(T, high_threat_zone) :-
+    observed_event(T, threat_val, V), V >= 3.5, !.
+replan_needed(T, detection_alert) :-
+    observed_event(T, detection, D), D >= 3.0, !.
+
+% ── High threat zone query ────────────────────────────────────────
+high_threat_zone(T) :-
+    observed_event(T, threat_val, V), V >= 3.0.
+
+% ── Composite survive probability ─────────────────────────────────
+composite_survive(T, P) :-
+    findall(Prob,
+      (observed_event(T, ThreatType, Prox),
+       survive_prob(ThreatType, Prox, Prob)),
+      Probs),
+    (Probs = [] -> P = 1.0
+    ; foldl([X, Acc, NAcc]>>(NAcc is Acc * X), Probs, 1.0, P)).
+
+% ── Foldl helper (SWI-Prolog compatible) ──────────────────────────
+:- meta_predicate foldl(3, ?, ?, ?).
+foldl(_, [], V, V).
+foldl(Goal, [H|T], V0, V) :-
+    call(Goal, H, V0, V1),
+    foldl(Goal, T, V1, V).
+
+% ── WM learning: assert a trace entry ─────────────────────────────
+record_trace(T, Event, Value) :-
+    assertz(wm_trace(T, Event, Value)).
+`;
+
+// ═══════════════════════════════════════════════════════════════════
+// BOOT
+// ═══════════════════════════════════════════════════════════════════
+async function boot() {
+  wmLog('SYS', 'Kernel boot sequence initiated');
+  await Promise.all([initPyodide(), initProlog()]);
+  setPill('pill-sim', 'on', 'SIM READY');
+  wmLog('SYS', 'All subsystems online — loading default scenario');
+  loadScenario('recon');
+}
+
+async function initPyodide() {
+  try {
+    py = await loadPyodide();
+    await py.runPythonAsync(PYTHON_SIM_CODE);
+    setPill('pill-py', 'on', 'PY ONLINE');
+    wmLog('PY', 'Pyodide kernel loaded, simulation module ready');
+  } catch(e) {
+    setPill('pill-py', 'err', 'PY FAILED');
+    wmLog('ERR', 'Pyodide boot failed: ' + e.message);
+  }
+}
+
+async function initProlog() {
+  try {
+    prolog = await SWIPL({
+      arguments: ['-q'],
+      locateFile: f => `https://unpkg.com/swipl-wasm@3.3.0/dist/swipl/${f}`,
+      print:    t => addReplLine(t),
+      printErr: t => addReplLine('ERR: ' + t)
+    });
+    prolog.FS.writeFile('/tactical_kb.pl', TACTICAL_KB);
+    prolog.prolog.query("consult('/tactical_kb.pl').").once();
+    setPill('pill-pl', 'on', 'PROLOG ONLINE');
+    setPill('pill-kb', 'on', 'KB LOADED');
+    addReplLine('% Tactical Knowledge Base loaded.');
+    addReplLine('% Predicates: threat/2, tactic/2, survive_prob/3');
+    addReplLine('% Dynamic: observed_event/3, drone_state/4');
+    addReplLine('% Rules: best_action/3, replan_needed/2, composite_survive/2');
+    addReplLine('');
+    wmLog('KB', 'Tactical KB consulted — ' + TACTICAL_KB.split('\n').filter(l=>l.trim()&&!l.trim().startsWith('%')).length + ' clauses loaded');
+  } catch(e) {
+    setPill('pill-pl', 'err', 'PROLOG FAILED');
+    wmLog('ERR', 'Prolog boot failed: ' + e.message);
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// PYTHON SIMULATION CODE
+// ═══════════════════════════════════════════════════════════════════
+const PYTHON_SIM_CODE = `
+import json, random, math
+
+def build_scenario(id_):
+    r  = lambda lo,hi: random.uniform(lo,hi)
+    ri = lambda lo,hi: random.randint(lo,hi)
+
+    if id_ == 'recon':
+        start_y   = ri(120,280)
+        delta_y   = ri(-6,6)/10.0
+        rad_break = ri(8,20)
+        enemy_ts  = {ri(5,10), ri(14,20), ri(22,28)}
+        goal_ts   = [ri(3,8), ri(18,25)]
+        steps = []
+        goals = ["ISR Sweep Sector A","Tag Infrastructure Node"]
+        reroute = False
+        for t in range(30):
+            x = t*28
+            rad = r(0.05,0.4) if t < rad_break else r(2.5,5.5)
+            if rad > 1.0: reroute = True
+            if reroute: start_y = max(60, start_y - 8)
+            y = max(30, min(330, start_y + delta_y*t*10))
+            action = "RE_ROUTE_NORTH" if rad>1.0 else "PATROL_HOLD" if reroute else "PATROL"
+            enemy = {"x":x+ri(20,50),"y":y+ri(-50,50)} if t in enemy_ts else None
+            goal  = goals[0] if t==goal_ts[0] else goals[1] if t==goal_ts[1] else None
+            p_survive = max(0.1, 1.0 - rad/6.0 - (0.3 if enemy else 0))
+            steps.append({"t":t,"x":x,"y":y,"val":round(rad,3),"type":"RAD",
+                "action":action,"target":"ALPHA_SITE","enemy":enemy,"goal":goal,
+                "reroute":reroute,"p_survive":round(p_survive,3),
+                "threat_type":"radiation"})
+        return json.dumps(steps)
+
+    if id_ == 'escort':
+        start_y = ri(80,220)
+        step_y  = ri(2,6) * (1 if r(0,1)>0.5 else -1)
+        enemy_t = ri(8,22)
+        goal_ts = [ri(4,10), ri(18,26)]
+        steps = []
+        goals = ["Verify Payload Integrity","Establish Relay SatLink"]
+        reroute = False
+        for t in range(30):
+            x = t*28
+            y = max(30, min(330, start_y + step_y*t))
+            sig = r(0,10)
+            if sig>7.5 and not reroute:
+                reroute = True
+                start_y = max(60,min(300,start_y+random.choice([-30,30])))
+            action = "EW_PULSE_JAMMER" if sig>7.5 else "ESCORT_FORMATION" if not reroute else "RE_ROUTE_EVADE"
+            enemy = {"x":x+ri(-30,-10),"y":y+ri(10,40)} if t==enemy_t else None
+            goal  = goals[0] if t==goal_ts[0] else goals[1] if t==goal_ts[1] else None
+            p_survive = max(0.1, 1.0 - sig/12.0 - (0.3 if enemy else 0))
+            steps.append({"t":t,"x":x,"y":y,"val":round(sig,3),"type":"SIG",
+                "action":action,"target":"BETA_CONVOY","enemy":enemy,"goal":goal,
+                "reroute":reroute,"p_survive":round(p_survive,3),
+                "threat_type":"ew_jammer"})
+        return json.dumps(steps)
+
+    if id_ == 'extraction':
+        start_y   = ri(60,300)
+        wave_mag  = ri(20,70)
+        wave_freq = r(0.15,0.45)
+        phase     = r(0, math.pi*2)
+        alert_peak= ri(10,20)
+        enemy_mod = ri(7,14)
+        goal_ts   = [ri(6,13), ri(20,27)]
+        steps = []
+        goals = ["Neutralize Air Defense Node","Confirm BDA Strike"]
+        reroute = False
+        reroute_off = 0
+        for t in range(30):
+            x = t*28
+            alert = r(3.0,5.0) if t>=alert_peak else r(0,2.5)
+            if alert>=3.0 and not reroute:
+                reroute = True
+                reroute_off = random.choice([-40,40])
+            y = max(30, min(330, start_y + wave_mag*math.sin(wave_freq*t+phase) + (reroute_off if reroute else 0)))
+            action = "SILENT_RUN" if alert<3.0 else "RE_ROUTE_EVADE" if reroute else "FULL_BURN"
+            enemy = {"x":x+ri(30,60),"y":y+ri(-30,30)} if t%enemy_mod==0 else None
+            goal  = goals[0] if t==goal_ts[0] else goals[1] if t==goal_ts[1] else None
+            p_survive = max(0.1, 1.0 - alert/6.0 - (0.25 if enemy else 0))
+            steps.append({"t":t,"x":x,"y":y,"val":round(alert,3),"type":"DET",
+                "action":action,"target":"HOT_ZONE","enemy":enemy,"goal":goal,
+                "reroute":reroute,"p_survive":round(p_survive,3),
+                "threat_type":"detection"})
+        return json.dumps(steps)
+
+    if id_ == 'routing':
+        target_x = 860
+        target_y = ri(60,300)
+        start_y  = ri(100,260)
+        defenses = [
+            (190, ri(80,160),  ri(35,60)),
+            (350, ri(200,300), ri(35,65)),
+            (500, ri(60,180),  ri(30,55)),
+            (620, ri(180,300), ri(40,60)),
+            (720, ri(80,200),  ri(25,45)),
+        ]
+        goal_ts  = [ri(4,8), ri(12,18), ri(22,28)]
+        enemy_ts = [ri(6,12), ri(16,22), ri(24,28)]
+        goals    = ["Breach Outer Ring","Acquire HVT Lock","Confirm Strike"]
+        x = 20.0
+        y = float(start_y)
+        reroute = False
+        last_reroute = -10
+        steps = []
+        for t in range(30):
+            step_x = (target_x - 20) / 29.0
+            x = 20 + t * step_x
+            in_threat = False
+            threat_val = r(0.2,1.0)
+            for (dx,dy,dr) in defenses:
+                dist = math.sqrt((x-dx)**2 + (y-dy)**2)
+                if dist < dr+15:
+                    in_threat = True
+                    threat_val = r(2.5,4.5)
+                    y = max(30, y-(r(10,22) if y<dy else -r(10,22)))
+                    break
+            if in_threat and not reroute:
+                reroute = True
+                last_reroute = t
+            elif reroute and (t-last_reroute)>4:
+                reroute = False
+            if not in_threat:
+                y = max(30, min(330, y + (target_y-y)*0.15 + r(-3,3)))
+            action = "RE_ROUTE_EVADE" if in_threat else "TERRAIN_FOLLOW" if not reroute else "RETURN_CORRIDOR"
+            enemy = {"x":x+ri(-40,40),"y":y+ri(-40,40)} if t in enemy_ts else None
+            goal  = goals[0] if t==goal_ts[0] else goals[1] if t==goal_ts[1] else goals[2] if t==goal_ts[2] else None
+            p_survive = max(0.08, 1.0 - threat_val/5.5 - (0.3 if enemy else 0))
+            steps.append({"t":t,"x":round(x,1),"y":round(y,1),"val":round(threat_val,3),
+                "type":"THR","action":action,"target":"HVT_COMPOUND",
+                "enemy":enemy,"goal":goal,"reroute":reroute or in_threat,
+                "p_survive":round(p_survive,3),"threat_type":"sam_site",
+                "defenses":[[d[0],d[1],d[2]] for d in defenses],
+                "target_pos":[target_x,target_y]})
+        return json.dumps(steps)
+
+    return json.dumps([])
+`;
+
+// ═══════════════════════════════════════════════════════════════════
+// SCENARIO LOADING
+// ═══════════════════════════════════════════════════════════════════
+async function loadScenario(id) {
+  if (!py || simRunning) return;
+  currentScenario = id;
+
+  // Highlight active button
+  ['recon','escort','extraction','routing'].forEach(s => {
+    document.getElementById('sc-'+s).classList.toggle('active', s===id);
+  });
+
+  setPill('pill-plan', 'boot', 'PLANNING');
+  wmLog('PLAN', `Loading scenario: ${id.toUpperCase()}`);
+
+  try {
+    py.globals.set('__sc_id', id);
+    const result = await py.runPythonAsync(`build_scenario(__sc_id)`);
+    simSteps = JSON.parse(result);
+    await runSimulation(simSteps, id);
+  } catch(e) {
+    wmLog('ERR', 'Scenario build failed: ' + e.message);
+    setPill('pill-plan', 'err', 'PLAN_FAIL');
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// SIMULATION RUNNER
+// ═══════════════════════════════════════════════════════════════════
+async function runSimulation(data, scenarioId) {
+  simRunning = true;
+  setPill('pill-sim', 'boot', 'SIM RUNNING');
+  setPill('pill-plan', 'on', 'PLAN ACTIVE');
+
+  // Reset UI
+  document.getElementById('event-log').innerHTML   = '';
+  document.getElementById('action-feed').innerHTML = '';
+  document.getElementById('kb-facts').innerHTML    = '';
+  document.getElementById('goal-list').innerHTML   = '';
+  document.getElementById('prob-panel').innerHTML  = '';
+  document.getElementById('wm-log').innerHTML      = '';
+  document.getElementById('badge-reroute').style.display = 'none';
+  document.getElementById('badge-target').textContent = 'TARGET: ' + data[0].target;
+  kbAssertions = [];
+  logCount = 0;
+
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  // Retract old dynamic facts from KB
+  if (prolog) {
+    try {
+      prolog.prolog.query('retractall(observed_event(_,_,_))').once();
+      prolog.prolog.query('retractall(drone_state(_,_,_,_))').once();
+      prolog.prolog.query('retractall(goal_status(_,_))').once();
+      prolog.prolog.query('retractall(replan_log(_,_,_))').once();
+      prolog.prolog.query('retractall(wm_trace(_,_,_))').once();
+    } catch(e) {}
+  }
+
+  // Collect goals
+  const goals = new Set();
+  data.forEach(p => { if (p.goal) goals.add(p.goal); });
+  goals.forEach(g => {
+    const el = document.createElement('div');
+    el.id = 'goal-' + sanitize(g);
+    el.className = 'goal-item goal-pending';
+    el.innerHTML = `<span style="color:var(--text2)">[○]</span> ${g}`;
+    document.getElementById('goal-list').appendChild(el);
+    // Assert in Prolog
+    if (prolog) tryProlog(`assertz(mission_goal(${sanitize(g).toLowerCase()}, pending))`);
+  });
+
+  // Draw static terrain for routing scenario
+  if (scenarioId === 'routing' && data[0].defenses) {
+    drawTerrain(data[0].defenses, data[0].target_pos);
+  }
+
+  // Run steps
+  data.forEach((step, i) => {
+    setTimeout(() => renderStep(step, i, data, scenarioId), i * 140);
+  });
+
+  setTimeout(() => {
+    simRunning = false;
+    setPill('pill-sim', 'on', 'SIM DONE');
+    setPill('pill-plan', 'on', 'PLAN COMPLETE');
+    wmLog('SYS', `Simulation complete — ${data.length} ticks recorded`);
+    // Final WM summary
+    buildWMSummary(data);
+  }, data.length * 140 + 200);
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// STEP RENDERER
+// ═══════════════════════════════════════════════════════════════════
+const HIST = 6, AHEAD = 5;
+
+function renderStep(p, i, all, sid) {
+  // ── tick counter
+  document.getElementById('tick-display').textContent = `T:${String(p.t).padStart(2,'0')}`;
+
+  // ── update Prolog KB with live observations
+  const threatType = p.threat_type || 'radiation';
+  const prox = p.val > 3.5 ? 'close' : p.val > 1.5 ? 'medium' : 'far';
+  assertKB(`observed_event(${p.t}, threat_val, ${p.val})`);
+  assertKB(`observed_event(${p.t}, ${threatType}, ${prox})`);
+  assertKB(`drone_state(${p.t}, ${Math.round(p.x)}, ${Math.round(p.y)}, ${p.p_survive})`);
+  if (p.enemy) assertKB(`observed_event(${p.t}, hostile_uav, close)`);
+
+  // ── query KB for best action
+  let kbAction = p.action;
+  if (prolog) {
+    try {
+      const hasEnemy = p.enemy ? 'true' : 'false';
+      const q = prolog.prolog.query(`best_action(${p.val}, ${hasEnemy}, Action)`);
+      const r = q.once();
+      if (r && r.Action) kbAction = r.Action.toString().toUpperCase();
+    } catch(e) {}
+  }
+
+  // ── query KB for replan trigger
+  let replanReason = null;
+  if (prolog) {
+    try {
+      const q = prolog.prolog.query(`replan_needed(${p.t}, Reason)`);
+      const r = q.once();
+      if (r && r.Reason) {
+        replanReason = r.Reason.toString();
+        assertKB(`replan_log(${p.t}, ${replanReason}, kb_triggered)`);
+        wmLog('KB', `T:${p.t} — Replan triggered: ${replanReason.toUpperCase()}`);
+      }
+    } catch(e) {}
+  }
+
+  // ── query composite survive prob from KB
+  let pSurviveKB = p.p_survive;
+  if (prolog) {
+    try {
+      const q = prolog.prolog.query(`composite_survive(${p.t}, P)`);
+      const r = q.once();
+      if (r && r.P !== undefined) pSurviveKB = parseFloat(r.P.toFixed(3));
+    } catch(e) {}
+  }
+
+  // ── reroute badge
+  const badge = document.getElementById('badge-reroute');
+  if (p.reroute || replanReason) {
+    badge.style.display = 'block';
+    badge.textContent = replanReason
+      ? `KB_REPLAN: ${replanReason.toUpperCase()}`
+      : `RE-ROUTING T:${p.t}`;
+  } else {
+    badge.style.display = 'none';
+  }
+
+  // ── draw history trail
+  const ts = Math.max(0, i - HIST);
+  for (let k = ts; k < i; k++) {
+    const prev = all[k], next = all[k+1];
+    const age   = i - k;
+    const alpha = (HIST - age + 1) / (HIST + 1);
+    ctx.save();
+    ctx.globalAlpha = alpha * 0.65;
+    ctx.strokeStyle = prev.reroute ? '#ffaa00' : '#3b82f6';
+    ctx.lineWidth   = 1.5;
+    ctx.beginPath();
+    ctx.moveTo(prev.x, prev.y);
+    ctx.lineTo(next.x, next.y);
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  // ── draw plan lookahead
+  if (i < all.length - 1) {
+    const pe = Math.min(all.length - 1, i + AHEAD);
+    ctx.save();
+    ctx.setLineDash([3,5]);
+    ctx.strokeStyle = '#00d4ff';
+    ctx.lineWidth   = 1;
+    ctx.globalAlpha = 0.3;
+    ctx.beginPath(); ctx.moveTo(p.x, p.y);
+    for (let k = i+1; k <= pe; k++) ctx.lineTo(all[k].x, all[k].y);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.restore();
+  }
+
+  // ── UAV dot
+  ctx.save();
+  const uavColor = p.reroute ? '#ffaa00' : '#3b82f6';
+  ctx.fillStyle   = uavColor;
+  ctx.shadowColor = uavColor;
+  ctx.shadowBlur  = i === all.length-1 ? 14 : 7;
+  ctx.beginPath();
+  ctx.arc(p.x, p.y, i === all.length-1 ? 6 : 4, 0, Math.PI*2);
+  ctx.fill();
+  ctx.restore();
+
+  // ── hostile unit
+  if (p.enemy) {
+    ctx.save();
+    ctx.translate(p.enemy.x, p.enemy.y);
+    ctx.rotate(Math.PI/4);
+    ctx.fillStyle   = '#ff3366';
+    ctx.shadowColor = '#ff3366';
+    ctx.shadowBlur  = 12;
+    ctx.fillRect(-5,-5,10,10);
+    ctx.restore();
+    addEventLog(`T:${p.t}`, 'HOSTILE_CONTACT', `[${Math.round(p.enemy.x)},${Math.round(p.enemy.y)}]`, 'crit');
+    addChip('chip-hostile', `HOSTILE @ T:${p.t}`);
+  }
+
+  // ── objective marker
+  if (p.goal) {
+    ctx.save();
+    ctx.fillStyle   = '#ffaa00';
+    ctx.shadowColor = '#ffaa00';
+    ctx.shadowBlur  = 10;
+    ctx.fillRect(p.x-4, p.y-20, 8, 8);
+    ctx.restore();
+
+    const gEl = document.getElementById('goal-' + sanitize(p.goal));
+    if (gEl) {
+      gEl.className = 'goal-item goal-done';
+      gEl.innerHTML = `<span style="color:var(--green)">[✔]</span> ${p.goal}`;
+    }
+    assertKB(`goal_status(${sanitize(p.goal).toLowerCase()}, achieved_t${p.t})`);
+    addChip('chip-ok', `OBJ: ${p.goal}`);
+    wmLog('GOAL', `T:${p.t} — Objective achieved: ${p.goal}`);
+  }
+
+  // ── replan event chip
+  if (replanReason) {
+    addChip('chip-kb', `KB_REPLAN: ${replanReason}`);
+  }
+
+  // ── reroute chip
+  if (p.reroute && !replanReason) {
+    addChip('chip-reroute', `REROUTE @ T:${p.t}`);
+  }
+
+  // ── action chip (every 5 or on events)
+  if (i % 5 === 0 || p.enemy || p.reroute) {
+    addChip('chip-act', `${kbAction} T:${p.t}`);
+  }
+
+  // ── event log line
+  const rerouteTag  = p.reroute   ? ` <span class="log-warn">[REROUTE]</span>` : '';
+  const kbTag       = replanReason? ` <span class="log-kb">[KB:${replanReason}]</span>` : '';
+  const kbActTag    = kbAction !== p.action ? ` <span class="log-kb">→${kbAction}</span>` : '';
+  addEventLogRaw(`<span class="log-t">T:${String(p.t).padStart(2,'0')}</span> | ` +
+    `<span class="log-ev">${p.type}:${p.val.toFixed(2)}</span> | ` +
+    `<span class="log-act">${p.action}</span>${kbActTag}${rerouteTag}${kbTag} | ` +
+    `<span style="color:${surviveColor(pSurviveKB)}">P_SURV:${(pSurviveKB*100).toFixed(0)}%</span>`);
+
+  // ── survival probability bars
+  updateProbPanel(pSurviveKB, p.val, p.p_survive);
+
+  // ── WM trace — assert for AI learning
+  if (prolog) {
+    tryProlog(`record_trace(${p.t}, p_survive_kb, ${pSurviveKB})`);
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// KB HELPERS
+// ═══════════════════════════════════════════════════════════════════
+function assertKB(fact) {
+  if (!prolog) return;
+  try {
+    prolog.prolog.query(`assertz(${fact})`).once();
+    kbAssertions.push(fact);
+    // Update live facts panel (last 12)
+    const panel = document.getElementById('kb-facts');
+    panel.innerHTML = kbAssertions.slice(-14).reverse().map(f =>
+      `<div class="kb-assert">+ ${f}</div>`
+    ).join('');
+  } catch(e) {}
+}
+
+function tryProlog(query) {
+  if (!prolog) return null;
+  try {
+    return prolog.prolog.query(query).once();
+  } catch(e) { return null; }
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// PROLOG REPL
+// ═══════════════════════════════════════════════════════════════════
+function setQuery(q) {
+  const inp = document.getElementById('repl-input');
+  inp.value = q; inp.focus();
+}
+
+function addReplLine(txt, isQuery=false) {
+  const el = document.getElementById('repl-out');
+  const color = isQuery ? '#ffaa00' : '#00ff88';
+  const prefix = isQuery ? '?- ' : '';
+  el.innerHTML += `<span style="color:${color}">${prefix}${txt}</span>\n`;
+  el.scrollTop = el.scrollHeight;
+}
+
+function runPrologQuery() {
+  if (!prolog) return;
+  const inp = document.getElementById('repl-input');
+  let raw = inp.value.trim();
+  if (!raw) return;
+  inp.value = '';
+
+  let display = raw.endsWith('.') ? raw : raw+'.';
+  addReplLine(display, true);
+  let safe = raw.replace(/^\?-\s*/,'').replace(/\.$/,'');
+
+  try {
+    const q = prolog.prolog.query(safe);
+    let res = q.next();
+    let found = false;
+
+    while (true) {
+      if (res.value !== null && res.value !== undefined) {
+        found = true;
+        // Filter $tag
+        const bindings = Object.entries(res.value)
+          .filter(([k]) => k !== '$tag')
+          .map(([k,v]) => {
+            let vs = typeof v==='object'&&v!==null
+              ? (v.functor ? `${v.functor}(...)` : JSON.stringify(v))
+              : String(v);
+            return `${k} = ${vs}`;
+          });
+        if (bindings.length===0) addReplLine('true.');
+        else addReplLine(bindings.join(', ') + (res.done ? '' : ' ;'));
+      }
+      if (res.done) {
+        if (!found) addReplLine('false.');
+        break;
+      }
+      res = q.next();
+    }
+  } catch(e) {
+    addReplLine('ERROR: ' + e.message);
+  }
+  addReplLine('');
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// WM LEARNING LOG
+// ═══════════════════════════════════════════════════════════════════
+function wmLog(tag, msg) {
+  const el = document.getElementById('wm-log');
+  const t  = new Date().toLocaleTimeString('en-GB',{hour12:false}).substring(0,8);
+  const colors = {SYS:'var(--cyan)',PY:'var(--blue)',KB:'var(--purple)',
+                  ERR:'var(--red)',GOAL:'var(--green)',PLAN:'var(--amber)'};
+  const c = colors[tag] || 'var(--text)';
+  const entry = document.createElement('div');
+  entry.className = 'log-line';
+  entry.innerHTML = `<span style="color:${c};font-size:8px">[${tag}]</span> `+
+    `<span style="color:var(--text2);font-size:8px">${t}</span> `+
+    `<span style="font-size:9px">${msg}</span>`;
+  el.prepend(entry);
+}
+
+function buildWMSummary(data) {
+  if (!prolog) return;
+  try {
+    let hotZones = [], replans = 0;
+    data.forEach(p => {
+      const q = prolog.prolog.query(`high_threat_zone(${p.t})`);
+      const r = q.once(); if (r) hotZones.push(p.t);
+    });
+    data.forEach(p => {
+      const q = prolog.prolog.query(`replan_needed(${p.t}, _)`);
+      const r = q.once(); if (r) replans++;
+    });
+    const avgSurv = (data.reduce((s,p)=>s+p.p_survive,0)/data.length*100).toFixed(1);
+    wmLog('KB', `WM Summary — Hot zones: T${hotZones.slice(0,4).join(',T')||'none'}`);
+    wmLog('KB', `Replan events: ${replans} | Avg P_survive: ${avgSurv}%`);
+    wmLog('KB', `KB asserted: ${kbAssertions.length} dynamic facts`);
+    const wmt = [];
+    for (let t=0;t<30;t++) {
+      const q = prolog.prolog.query(`wm_trace(${t}, p_survive_kb, P)`);
+      const r = q.once();
+      if (r && r.P!==undefined) wmt.push(parseFloat(r.P));
+    }
+    if (wmt.length>0) {
+      const min = Math.min(...wmt).toFixed(2);
+      const max = Math.max(...wmt).toFixed(2);
+      wmLog('KB', `P_survive trace — min:${min} max:${max} n=${wmt.length}`);
+    }
+  } catch(e) {}
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// TERRAIN DRAW
+// ═══════════════════════════════════════════════════════════════════
+function drawTerrain(defenses, targetPos) {
+  defenses.forEach(([dx,dy,dr]) => {
+    ctx.save();
+    const g = ctx.createRadialGradient(dx,dy,0,dx,dy,dr);
+    g.addColorStop(0,'rgba(255,51,102,0.18)');
+    g.addColorStop(1,'rgba(255,51,102,0.03)');
+    ctx.fillStyle = g;
+    ctx.beginPath(); ctx.arc(dx,dy,dr,0,Math.PI*2); ctx.fill();
+    ctx.strokeStyle = 'rgba(255,51,102,0.45)';
+    ctx.lineWidth = 1; ctx.setLineDash([4,4]);
+    ctx.beginPath(); ctx.arc(dx,dy,dr,0,Math.PI*2); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle = 'rgba(255,51,102,0.65)';
+    ctx.font = 'bold 8px "Share Tech Mono"';
+    ctx.fillText('SAM', dx-10, dy+3);
+    ctx.restore();
+  });
+  const [tx,ty] = targetPos;
+  ctx.save();
+  ctx.strokeStyle = '#ff3366'; ctx.lineWidth = 2;
+  ctx.shadowColor = '#ff3366'; ctx.shadowBlur  = 12;
+  ctx.beginPath(); ctx.moveTo(tx-14,ty); ctx.lineTo(tx+14,ty); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(tx,ty-14); ctx.lineTo(tx,ty+14); ctx.stroke();
+  ctx.beginPath(); ctx.arc(tx,ty,9,0,Math.PI*2); ctx.stroke();
+  ctx.fillStyle = 'rgba(255,51,102,0.12)'; ctx.fill();
+  ctx.shadowBlur = 0;
+  ctx.fillStyle = '#ff3366'; ctx.font = 'bold 8px "Share Tech Mono"';
+  ctx.fillText('HVT', tx+13, ty-7);
+  ctx.restore();
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// UI HELPERS
+// ═══════════════════════════════════════════════════════════════════
+function addEventLog(t, ev, val, cls='') {
+  const el = document.getElementById('event-log');
+  const d  = document.createElement('div');
+  d.className = 'log-line';
+  const cmap = {crit:'log-crit', warn:'log-warn', ok:'log-ok', kb:'log-kb'};
+  const c = cmap[cls]||'log-ev';
+  d.innerHTML = `<span class="log-t">${t}</span> | <span class="${c}">${ev}</span> | <span class="log-val">${val}</span>`;
+  el.prepend(d);
+  logCount++;
+  document.getElementById('log-count').textContent = `[${logCount} events]`;
+}
+
+function addEventLogRaw(html) {
+  const el = document.getElementById('event-log');
+  const d  = document.createElement('div');
+  d.className = 'log-line';
+  d.innerHTML = html;
+  el.prepend(d);
+  logCount++;
+  document.getElementById('log-count').textContent = `[${logCount} events]`;
+}
+
+function addChip(cls, label) {
+  const feed = document.getElementById('action-feed');
+  const d    = document.createElement('div');
+  d.style.marginBottom = '3px';
+  d.innerHTML = `<span class="act-chip ${cls}">${label}</span>`;
+  feed.prepend(d);
+}
+
+function updateProbPanel(pKB, threatVal, pRaw) {
+  const panel = document.getElementById('prob-panel');
+  panel.innerHTML = [
+    { label:'P_SURVIVE (KB)',  val: pKB,        color: surviveColor(pKB) },
+    { label:'P_SURVIVE (SIM)', val: pRaw,        color: surviveColor(pRaw) },
+    { label:'THREAT_NORM',     val: Math.min(1, threatVal/6), color:'#ff3366' },
+  ].map(({label,val,color}) => `
+    <div class="prob-row">
+      <span style="color:var(--text2);width:110px;flex-shrink:0">${label}</span>
+      <div class="prob-bar-bg">
+        <div class="prob-bar-fill" style="width:${(val*100).toFixed(1)}%;background:${color}"></div>
+      </div>
+      <span style="color:${color};width:36px;text-align:right">${(val*100).toFixed(0)}%</span>
+    </div>`).join('');
+}
+
+function surviveColor(p) {
+  if (p >= 0.75) return '#00ff88';
+  if (p >= 0.45) return '#ffaa00';
+  return '#ff3366';
+}
+
+function sanitize(s) { return String(s).replace(/\s+/g,'_').replace(/[^a-zA-Z0-9_]/g,''); }
+
+function setPill(id, state, label) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.className = 'status-pill pill-' + state;
+  el.textContent = label;
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// BOOT
+// ═══════════════════════════════════════════════════════════════════
+boot();
+</script>
+</body>
+</html>
