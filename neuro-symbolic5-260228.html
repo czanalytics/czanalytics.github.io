@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Neuro-Symbolic WebMCP: Prolog Workstation</title>
+    
+    <script src="https://cdn.jsdelivr.net/pyodide/v0.25.0/full/pyodide.js"></script>
+    <script src="https://unpkg.com/swipl-wasm@3.3.0/dist/swipl/swipl-web.js"></script>
+
+    <style>
+        :root { --primary: #0d6efd; --bg: #e9ecef; --panel-bg: #ffffff; --term-bg: #1e1e1e; --term-text: #d4d4d4; }
+        body { font-family: system-ui, -apple-system, sans-serif; background-color: var(--bg); color: #212529; max-width: 1600px; margin: 0 auto; padding: 20px; display: flex; gap: 20px; flex-wrap: wrap; }
+        h1 { width: 100%; color: #2c3e50; border-bottom: 2px solid #ced4da; padding-bottom: 10px; margin-bottom: 0;}
+        
+        .col { display: flex; flex-direction: column; gap: 15px; flex: 1; min-width: 350px; }
+        .col-wide { flex: 1.5; min-width: 450px; }
+        
+        .panel { background: var(--panel-bg); border-radius: 8px; padding: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); border: 1px solid #dee2e6; display: flex; flex-direction: column; }
+        .panel h2 { font-size: 16px; margin-top: 0; color: #495057; border-bottom: 1px solid #eee; padding-bottom: 8px; display: flex; justify-content: space-between; align-items: center; }
+        
+        /* Logs & Terminal */
+        .log-box { height: 150px; overflow-y: auto; font-family: monospace; background: #000; color: #0f0; padding: 10px; border-radius: 4px; font-size: 12px; white-space: pre-wrap; }
+        
+        .repl-output { flex: 1; min-height: 250px; max-height: 400px; overflow-y: auto; font-family: 'Courier New', monospace; background: var(--term-bg); color: var(--term-text); padding: 15px; border-radius: 6px; font-size: 14px; white-space: pre-wrap; margin-bottom: 10px; border: 1px solid #333; line-height: 1.5; }
+        .repl-input-area { display: flex; gap: 10px; }
+        .repl-input-area input { flex: 1; font-family: monospace; font-size: 14px; padding: 10px; border-radius: 4px; border: 1px solid #ced4da; background: #f8f9fa; }
+        
+        button { background: var(--primary); color: white; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 13px; }
+        button:disabled { background: #adb5bd; cursor: not-allowed; }
+        button.action { background: #27ae60; }
+        select { padding: 8px; border-radius: 4px; border: 1px solid #ced4da; font-size: 13px; }
+
+        /* Chat UI */
+        .chat-messages { flex: 1; min-height: 400px; max-height: 500px; padding: 15px; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; background: #f8f9fa; border-radius: 6px; border: 1px solid #dee2e6; margin-bottom: 10px; }
+        .message { max-width: 90%; padding: 10px 14px; border-radius: 8px; line-height: 1.4; font-size: 14px; }
+        .message.user { align-self: flex-end; background-color: #e7f1ff; border-bottom-right-radius: 0; border: 1px solid #b6d4fe; }
+        .message.ai { align-self: flex-start; background-color: #fff; border-bottom-left-radius: 0; border: 1px solid #e9ecef; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
+        .message.system { align-self: center; background-color: transparent; color: #6c757d; font-size: 12px; font-style: italic; }
+        
+        .chat-ui-widget { border: 1px solid #dee2e6; border-radius: 6px; overflow: hidden; margin-top: 8px; background: white; }
+    </style>
+</head>
+<body>
+
+    <h1>🧠 Neuro-Symbolic Agent: Diagnostic Expert System</h1>
+    
+    <div class="col">
+        <div class="panel" style="border-top: 4px solid #f39c12;">
+            <h2>System Status</h2>
+            <div id="py-status" style="margin-bottom: 5px;">🐍 Python: Booting...</div>
+            <div id="pl-status">🦉 Prolog: Booting...</div>
+        </div>
+
+        <div class="panel" style="border-top: 4px solid #34495e;">
+            <h2>System Event Log</h2>
+            <div id="event-log" class="log-box"></div>
+        </div>
+        
+        <div class="panel" style="border-top: 4px solid #9b59b6;">
+            <h2>Prolog KB Reference</h2>
+            <p style="font-size: 12px; color: #555; margin-top: 0;">The default KB loaded contains rules for diagnosing IT hardware. Predicates available:</p>
+            <ul style="font-size: 12px; font-family: monospace; color: #d63031; padding-left: 20px; margin: 0;">
+                <li>symptom(Device, Symptom).</li>
+                <li>rule(Diagnosis, Device).</li>
+                <li>diagnose(Device, Diagnosis).</li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="col col-wide">
+        <div class="panel" style="border-top: 4px solid #e74c3c; height: 100%;">
+            <h2>
+                <span>🦉 Prolog Workstation (Raw Logic)</span>
+                <div>
+                    <input type="file" id="pl-upload" accept=".pl" style="display: none;" onchange="handlePrologUpload(event)">
+                    <button class="action" onclick="document.getElementById('pl-upload').click()" id="btn-upload" disabled>📁 Upload .pl File</button>
+                </div>
+            </h2>
+            
+            <div style="margin-bottom: 10px; display: flex; gap: 10px; align-items: center;">
+                <span style="font-size: 13px; font-weight: bold;">Prolog 101:</span>
+                <select id="sample-queries" onchange="document.getElementById('repl-input').value = this.value;">
+                    <option value="">-- Select an example to test --</option>
+                    <option disabled>--- Inspection ---</option>
+                    <option value="listing.">1. List entire Knowledge Base</option>
+                    <option value="listing(symptom).">2. List only 'symptom' facts</option>
+                    <option value="listing(rule).">3. List the diagnostic rules</option>
+                    <option disabled>--- Basic Queries ---</option>
+                    <option value="symptom(Device, Symptom).">4. What are all known symptoms?</option>
+                    <option value="rule(Diagnosis, server_alpha).">5. What rules apply to server_alpha?</option>
+                    <option disabled>--- Modifying the KB (assertz) ---</option>
+                    <option value="assertz(symptom(printer_01, paper_jam)).">6. Add Fact: printer_01 has a paper_jam</option>
+                    <option value="assertz((rule(needs_maintenance, Device) :- symptom(Device, paper_jam))).">7. Add Rule: if paper_jam then needs_maintenance</option>
+                    <option value="diagnose(printer_01, X).">8. Test: Diagnose printer_01 (run 6 & 7 first)</option>
+                </select>
+            </div>
+
+            <div class="repl-output" id="repl-output">
+% SWI-Prolog WASM Workstation Ready.
+% Type queries below. Example: listing(symptom).
+</div>
+            
+            <div class="repl-input-area">
+                <span style="font-family: monospace; font-size: 16px; font-weight: bold; margin-top: 8px;">?-</span>
+                <input type="text" id="repl-input" placeholder="listing(symptom)." onkeypress="if(event.key === 'Enter') executePrologQuery()" disabled>
+                <button id="btn-repl" onclick="executePrologQuery()" disabled>Run</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="col col-wide">
+        <div class="panel" style="border-top: 4px solid #0d6efd; height: 100%;">
+            <h2>💬 AI Chat (Python UI Router)</h2>
+            <div class="chat-messages" id="chat-messages">
+                <div class="message system">WASM Engines initializing. Please wait...</div>
+            </div>
+            <div class="repl-input-area">
+                <input type="text" id="chat-input" placeholder="Ask AI: 'Diagnose server_alpha'" disabled onkeypress="if(event.key === 'Enter') handleChatSend()">
+                <button id="btn-chat" onclick="handleChatSend()" disabled>Send</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- LOGGING ---
+        const logEl = document.getElementById("event-log");
+        function addLog(msg) {
+            const time = new Date().toLocaleTimeString();
+            logEl.innerHTML += `[${time}] ${msg}\n`;
+            logEl.scrollTop = logEl.scrollHeight;
+        }
+
+        let pyodideInstance;
+        let prologEngine;
+
+        // --- PROLOG WORKSTATION LOGIC ---
+        const replOutput = document.getElementById("repl-output");
+        function addReplLine(text, isQuery = false) {
+            const prefix = isQuery ? "\n?- " : "";
+            const color = isQuery ? "#f39c12" : "inherit";
+            replOutput.innerHTML += `<span style="color: ${color}">${prefix}${text}</span>\n`;
+            replOutput.scrollTop = replOutput.scrollHeight;
+        }
+
+        async function initProlog() {
+            addLog("Fetching SWI-Prolog WASM...");
+            try {
+                prologEngine = await SWIPL({
+                    arguments: ['-q'],
+                    locateFile: (file) => `https://unpkg.com/swipl-wasm@3.3.0/dist/swipl/${file}`,
+                    print: function(text) { addReplLine(text); }, 
+                    printErr: function(text) { addReplLine("ERR: " + text); }
+                });
+                
+                const kb = `
+:- dynamic symptom/2.
+:- dynamic rule/2.
+
+% Facts
+symptom(server_alpha, blue_screen).
+symptom(server_alpha, overheating).
+symptom(router_01, no_lights).
+symptom(workstation_5, slow_network).
+
+% Diagnostic Rules
+rule(hardware_failure, Device) :- symptom(Device, blue_screen), symptom(Device, overheating).
+rule(power_supply_dead, Device) :- symptom(Device, no_lights).
+rule(network_congestion, Device) :- symptom(Device, slow_network).
+
+% Main Query Predicate
+diagnose(Device, Diagnosis) :- rule(Diagnosis, Device).
+`;
+                prologEngine.FS.writeFile('/default_kb.pl', kb);
+                prologEngine.prolog.query("consult('/default_kb.pl').").once();
+                
+                document.getElementById("pl-status").innerHTML = "✅ Prolog: Online";
+                document.getElementById("pl-status").style.color = "#27ae60";
+                addLog("Default Knowledge Base consulted successfully.");
+            } catch (err) {
+                addLog(`Prolog Boot Failed: ${err.message}`);
+                document.getElementById("pl-status").innerHTML = "❌ Prolog: Failed";
+            }
+        }
+
+        function executePrologQuery() {
+            const inputEl = document.getElementById("repl-input");
+            let originalQuery = inputEl.value.trim();
+            if (!originalQuery) return;
+            
+            // For display purposes, ensure it has a period
+            let displayQuery = originalQuery;
+            if (!displayQuery.endsWith(".")) displayQuery += ".";
+            addReplLine(displayQuery, true);
+            inputEl.value = "";
+            
+            // Clean up the query for the SWIPL API
+            let safeQuery = originalQuery;
+            if (safeQuery.startsWith("?-")) safeQuery = safeQuery.substring(2).trim(); // Strip pasted "?-"
+            if (safeQuery.endsWith(".")) safeQuery = safeQuery.slice(0, -1);           // Strip trailing period
+            
+            try {
+                const query = prologEngine.prolog.query(safeQuery);
+                let result = query.next();
+                
+                if (safeQuery.startsWith("listing")) {
+                    addReplLine("true.");
+                    return;
+                }
+
+                let outputFound = false;
+
+                // FIX: Correctly handle JS Iterators for deterministic success
+                while (true) {
+                    if (result.value !== undefined && result.value !== null) {
+                        outputFound = true;
+                        let bindings = [];
+                        
+                        for (let v in result.value) {
+                            if (v !== '$tag') {
+                                let val = result.value[v];
+                                if (typeof val === 'object' && val !== null) {
+                                    val = val.functor ? `${val.functor}(...)` : JSON.stringify(val);
+                                }
+                                bindings.push(`${v} = ${val}`);
+                            }
+                        }
+                        
+                        if (bindings.length === 0) {
+                            addReplLine("true.");
+                        } else {
+                            // Only append a semicolon if we aren't done yet
+                            addReplLine(bindings.join(", ") + (result.done ? "" : " ;"));
+                        }
+                    }
+                    
+                    if (result.done) {
+                        if (!outputFound) addReplLine("false.");
+                        break;
+                    }
+                    
+                    result = query.next();
+                }
+
+            } catch(e) {
+                addReplLine("ERROR: " + e.message);
+            }
+        }
+
+        function handlePrologUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const text = e.target.result;
+                try {
+                    prologEngine.FS.writeFile('/uploaded_kb.pl', text);
+                    prologEngine.prolog.query(`consult('/uploaded_kb.pl').`).once();
+                    
+                    addReplLine(`% File '${file.name}' loaded successfully into VFS.`);
+                    addReplLine("true.");
+                    addLog(`Consulted uploaded Prolog file: ${file.name}`);
+                } catch (err) {
+                    addReplLine(`ERROR loading file: ${err.message}`);
+                }
+            };
+            reader.readAsText(file);
+            event.target.value = ''; 
+        }
+
+        // --- PYTHON MCP SERVER (UI RENDERING) ---
+        const pythonCode = `
+import json
+
+class MCPServer:
+    def call_tool(self, name, **kwargs):
+        if name == "render_diagnostic_ticket":
+            device = kwargs["device"]
+            diagnosis = kwargs["diagnosis"]
+            
+            color = "#d63031" if "failure" in diagnosis or "dead" in diagnosis else "#f39c12"
+            formatted_diag = diagnosis.replace('_', ' ').title()
+            
+            html = "<div style='padding: 15px; font-family: sans-serif; border-left: 5px solid " + color + ";'>"
+            html += "<h3 style='margin: 0 0 10px 0;'>🎟️ IT Support Ticket</h3>"
+            html += "<strong>Device ID:</strong> <code>" + device + "</code><br>"
+            html += "<div style='margin-top: 10px; padding: 10px; background: #f8f9fa; border: 1px solid #dee2e6; border-radius: 4px;'>"
+            html += "<strong>Determined Diagnosis:</strong> <span style='color: " + color + "; font-weight: bold;'>" + formatted_diag + "</span>"
+            html += "</div></div>"
+            
+            return json.dumps({"type": "ui", "ui": {"html": html}})
+
+mcp_app = MCPServer()
+
+def js_call_tool(name, kwargs_json):
+    return mcp_app.call_tool(name, **json.loads(kwargs_json))
+`;
+
+        async function initPyodide() {
+            addLog("Fetching Pyodide Engine...");
+            try {
+                pyodideInstance = await loadPyodide();
+                await pyodideInstance.runPythonAsync(pythonCode);
+                document.getElementById("py-status").innerHTML = "✅ Python: Online";
+                document.getElementById("py-status").style.color = "#27ae60";
+                addLog("Python MCP Server loaded.");
+            } catch (err) {
+                addLog(`Pyodide Boot Failed: ${err}`);
+            }
+        }
+
+        // --- CHAT UI & AI ROUTER ---
+        const chatMessages = document.getElementById("chat-messages");
+        
+        function appendChatMessage(role, content, type = "text") {
+            const msgDiv = document.createElement("div");
+            msgDiv.className = `message ${role}`;
+            if (type === "text") msgDiv.innerText = content;
+            else if (type === "html") msgDiv.innerHTML = `<div class="chat-ui-widget">${content}</div>`;
+            chatMessages.appendChild(msgDiv);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        async function mockAIRouter(userInput) {
+            const inputLower = userInput.toLowerCase();
+            
+            if (inputLower.includes("diagnose")) {
+                const words = inputLower.split(" ");
+                const device = words[words.length - 1]; 
+                
+                try {
+                    const q = prologEngine.prolog.query(`diagnose(${device}, Diagnosis).`);
+                    const result = q.once();
+                    
+                    if (result && result.Diagnosis) {
+                        const diagnosis = result.Diagnosis.toString();
+                        
+                        const pyArgs = JSON.stringify({device, diagnosis});
+                        pyodideInstance.globals.set("temp_args", pyArgs);
+                        const resStr = pyodideInstance.runPython(`js_call_tool("render_diagnostic_ticket", temp_args)`);
+                        const resJson = JSON.parse(resStr);
+                        
+                        appendChatMessage("ai", `I queried the Knowledge Base. Based on the symptoms, here is the strict diagnosis for ${device}:`);
+                        appendChatMessage("ai", resJson.ui.html, "html");
+                    } else {
+                        appendChatMessage("ai", `I checked the Knowledge Base. There are no rules that currently yield a diagnosis for '${device}'. Try querying the REPL to check its symptoms!`);
+                    }
+                } catch (e) {
+                    appendChatMessage("ai", "Error querying Prolog: " + e.message);
+                }
+            } else {
+                appendChatMessage("ai", "I am your AI agent. I use the Python UI framework to render data derived strictly from the Prolog KB. Ask me to 'diagnose server_alpha'.");
+            }
+        }
+
+        async function handleChatSend() {
+            const inputEl = document.getElementById("chat-input");
+            const text = inputEl.value.trim();
+            if (!text) return;
+            
+            inputEl.value = "";
+            appendChatMessage("user", text);
+            
+            const typingId = "typing-" + Date.now();
+            const msgDiv = document.createElement("div");
+            msgDiv.className = "message system"; msgDiv.id = typingId; msgDiv.innerText = "Querying Knowledge Base...";
+            chatMessages.appendChild(msgDiv); chatMessages.scrollTop = chatMessages.scrollHeight;
+
+            setTimeout(async () => {
+                document.getElementById(typingId).remove();
+                await mockAIRouter(text);
+            }, 600);
+        }
+
+        // --- BOOT ---
+        async function boot() {
+            try {
+                await Promise.all([initPyodide(), initProlog()]);
+                
+                document.getElementById("repl-input").disabled = false;
+                document.getElementById("btn-repl").disabled = false;
+                document.getElementById("btn-upload").disabled = false;
+                document.getElementById("chat-input").disabled = false;
+                document.getElementById("btn-chat").disabled = false;
+                
+                document.getElementById("chat-messages").innerHTML = "";
+                appendChatMessage("system", "Systems Online.");
+                appendChatMessage("ai", "Hello! Try asking me to 'diagnose server_alpha', or hop over to the Prolog Workstation and run raw queries against the KB!");
+            } catch (err) {
+                addLog(`CRITICAL FAILURE: ${err.message}`);
+            }
+        }
+        
+        boot();
+    </script>
+</body>
+</html>
