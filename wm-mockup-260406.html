@@ -1,0 +1,516 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>DEFENSE-WM v5.0 | DRONE_OPS_CONTROL</title>
+    <script src="https://cdn.jsdelivr.net/pyodide/v0.25.0/full/pyodide.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;700&display=swap');
+        body { font-family: 'Fira Code', monospace; background-color: #020617; color: #cbd5e1; }
+        .grid-bg { background-image: radial-gradient(#1e293b 1px, transparent 1px); background-size: 30px 30px; }
+        #tactical-map { background: #000; border: 1px solid #334155; box-shadow: 0 0 40px rgba(0,0,0,0.5); }
+        .action-chip { font-size: 9px; padding: 2px 6px; border-radius: 4px; font-weight: bold; text-transform: uppercase; }
+        .log-line { border-bottom: 1px solid #1e293b; padding: 4px 0; }
+        .goal-pending { color: #64748b; }
+        .goal-done { color: #22c55e; text-shadow: 0 0 8px #22c55e; }
+        .reroute-flash { animation: flash-red 0.4s ease; }
+        @keyframes flash-red { 0%,100% { background: transparent; } 50% { background: rgba(239,68,68,0.15); } }
+    </style>
+</head>
+<body class="p-6">
+
+    <div class="max-w-7xl mx-auto">
+        <header class="flex justify-between items-start mb-6 border-b border-slate-800 pb-4">
+            <div>
+                <h1 class="text-2xl font-bold text-white italic">BATTLEFIELD_WM <span class="text-red-500 underline decoration-2">V5.0_DRONE</span></h1>
+                <p class="text-[10px] text-slate-500 mt-1 uppercase tracking-widest">WASM-Powered Drone Combat Intelligence & Multi-Objective Suite</p>
+            </div>
+            <div id="status" class="text-[10px] bg-slate-900 px-4 py-2 border border-slate-700 rounded shadow-lg italic text-amber-500">INIT_PY_KERNEL...</div>
+        </header>
+
+        <div class="grid grid-cols-12 gap-6">
+            <div class="col-span-12 lg:col-span-4 space-y-4">
+                <div class="bg-slate-900 p-4 rounded border border-slate-800">
+                    <h2 class="text-xs font-bold text-blue-400 mb-4 uppercase tracking-tighter">Mission Scenario</h2>
+                    <div class="space-y-2">
+                        <button onclick="loadScenario('recon')" class="w-full text-left bg-slate-800 hover:bg-slate-700 p-3 rounded text-[11px] border-l-4 border-blue-500 transition-all">
+                            <span class="block text-white font-bold text-xs">UAV Perimeter Recon</span>
+                            Radiation avoidance re-routing + ISR tagging.
+                        </button>
+                        <button onclick="loadScenario('escort')" class="w-full text-left bg-slate-800 hover:bg-slate-700 p-3 rounded text-[11px] border-l-4 border-amber-500 transition-all">
+                            <span class="block text-white font-bold text-xs">Drone Swarm Escort</span>
+                            EW jamming + formation integrity checks.
+                        </button>
+                        <button onclick="loadScenario('extraction')" class="w-full text-left bg-slate-800 hover:bg-slate-700 p-3 rounded text-[11px] border-l-4 border-red-600 transition-all">
+                            <span class="block text-white font-bold text-xs">Kamikaze Stealth Strike</span>
+                            Silent ingress + target acquisition under detection.
+                        </button>
+                        <button onclick="loadScenario('routing')" class="w-full text-left bg-slate-800 hover:bg-slate-700 p-3 rounded text-[11px] border-l-4 border-emerald-500 transition-all">
+                            <span class="block text-white font-bold text-xs">Terrain-Following Strike Run</span>
+                            Dynamic re-routing around defenses toward HVT.
+                        </button>
+                    </div>
+                </div>
+
+                <div class="bg-slate-900/50 p-4 rounded border border-slate-800">
+                    <h2 class="text-xs font-bold text-emerald-400 mb-3 uppercase tracking-tighter flex justify-between">
+                        Mission Objectives <span>[OBJ_TRACKER]</span>
+                    </h2>
+                    <div id="goal-list" class="text-[10px] space-y-2"></div>
+                </div>
+
+                <div class="bg-black/40 border border-slate-800 rounded p-4 h-48 overflow-hidden flex flex-col">
+                    <span class="text-[10px] font-bold text-slate-500 mb-2 uppercase italic">Action Timeline</span>
+                    <div id="action-feed" class="text-[10px] space-y-2 overflow-y-auto"></div>
+                </div>
+            </div>
+
+            <div class="col-span-12 lg:col-span-8 space-y-4">
+                <div class="relative rounded-lg overflow-hidden border border-slate-700">
+                    <canvas id="tactical-map" width="800" height="400" class="w-full grid-bg"></canvas>
+                    <div id="target-indicator" class="absolute top-4 right-4 bg-red-900/40 text-red-400 text-[10px] px-3 py-1 rounded border border-red-600 font-bold animate-pulse">LOCKED: NULL</div>
+                    <!-- Route status badge -->
+                    <div id="route-badge" class="absolute top-4 left-4 hidden bg-amber-900/60 text-amber-300 text-[9px] px-3 py-1 rounded border border-amber-600 font-bold">RE-ROUTING…</div>
+
+                    <div class="absolute bottom-4 left-4 flex gap-4 bg-black/60 p-2 rounded border border-slate-800 text-[9px] uppercase font-bold">
+                        <!-- FIX: Self is always blue circle, Hostile is always red diamond — described clearly -->
+                        <div class="flex items-center gap-1"><span class="inline-block w-3 h-3 rounded-full bg-blue-500"></span> Own UAV</div>
+                        <div class="flex items-center gap-1"><span class="inline-block w-3 h-3 rotate-45 bg-red-500"></span> Hostile</div>
+                        <div class="flex items-center gap-1"><span class="inline-block w-3 h-3 rounded-sm bg-yellow-400"></span> Objective</div>
+                        <div class="flex items-center gap-1"><span class="inline-block w-3 h-1 bg-blue-400 opacity-60"></span> History</div>
+                        <div class="flex items-center gap-1"><span class="inline-block w-3 h-1 bg-cyan-400 opacity-40 border-t border-dashed border-cyan-400"></span> Plan</div>
+                    </div>
+                </div>
+
+                <div id="event-log" class="bg-slate-950 border border-slate-800 rounded h-64 overflow-y-auto p-4 font-mono text-[10px] leading-relaxed">
+                    <div class="text-blue-900 italic">>> System standing by...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let py;
+        const canvas = document.getElementById('tactical-map');
+        const ctx = canvas.getContext('2d');
+
+        // ─── Scenario builders ─────────────────────────────────────────────────────
+        function buildScenario(id) {
+            const r  = (lo, hi) => (Math.random() * (hi - lo) + lo);
+            const ri = (lo, hi) => Math.floor(r(lo, hi + 1));
+
+            // ── UAV Perimeter Recon ───────────────────────────────────────────────
+            if (id === 'recon') {
+                const startY   = ri(120, 280);
+                const deltaY   = ri(-6, 6);
+                const radBreak = ri(8, 20);
+                const enemyTs  = new Set([ri(5,10), ri(14,20), ri(22,28)]);
+                const goalTs   = [ri(3,8), ri(18,25)];
+                return `
+import json, random, math
+def plan():
+    steps = []
+    goals = ["ISR Sweep Sector A", "Tag Infrastructure Node"]
+    start_y = ${startY}
+    delta_y = ${deltaY / 10}
+    rad_break = ${radBreak}
+    enemy_ts = ${JSON.stringify([...enemyTs])}
+    goal_ts = ${JSON.stringify(goalTs)}
+    reroute_active = False
+    for t in range(30):
+        x = t * 26
+        rad = random.uniform(0.05, 0.4) if t < rad_break else random.uniform(2.5, 5.5)
+        if rad > 1.0:
+            reroute_active = True
+        if reroute_active:
+            start_y = max(60, start_y - 8)
+        y = max(30, min(370, start_y + delta_y * t * 10))
+        action = "RE_ROUTE_NORTH" if rad > 1.0 else "PATROL_HOLD" if reroute_active else "PATROL"
+        enemy = {"x": x + random.randint(20, 50), "y": y + random.randint(-50, 50)} if t in enemy_ts else None
+        opt_goal = goals[0] if t == goal_ts[0] else goals[1] if t == goal_ts[1] else None
+        steps.append({"t":t,"x":x,"y":y,"val":rad,"type":"RAD","action":action,"target":"ALPHA_SITE","enemy":enemy,"goal":opt_goal,"reroute":reroute_active})
+    return json.dumps(steps)
+plan()`;
+            }
+
+            // ── Drone Swarm Escort ────────────────────────────────────────────────
+            if (id === 'escort') {
+                const startY   = ri(80, 220);
+                const dirY     = r(-1, 1) > 0 ? 1 : -1;
+                const stepY    = ri(2, 6) * dirY;
+                const enemyT   = ri(8, 22);
+                const goalTs   = [ri(4,10), ri(18,26)];
+                return `
+import json, random
+def plan():
+    steps = []
+    goals = ["Verify Payload Integrity", "Establish Relay SatLink"]
+    start_y = ${startY}
+    step_y = ${stepY}
+    enemy_t = ${enemyT}
+    goal_ts = ${JSON.stringify(goalTs)}
+    reroute_active = False
+    for t in range(30):
+        x = t * 26
+        y = max(30, min(370, start_y + step_y * t))
+        interference = random.uniform(0, 10)
+        if interference > 7.5 and not reroute_active:
+            reroute_active = True
+            start_y = max(60, min(340, start_y + random.choice([-30, 30]))  )
+        action = "EW_PULSE_JAMMER" if interference > 7.5 else "ESCORT_FORMATION" if not reroute_active else "RE_ROUTE_EVADE"
+        enemy = {"x": x + random.randint(-30, -10), "y": y + random.randint(10, 40)} if t == enemy_t else None
+        opt_goal = goals[0] if t == goal_ts[0] else goals[1] if t == goal_ts[1] else None
+        steps.append({"t":t,"x":x,"y":y,"val":interference,"type":"SIG","action":action,"target":"BETA_CONVOY","enemy":enemy,"goal":opt_goal,"reroute":reroute_active})
+    return json.dumps(steps)
+plan()`;
+            }
+
+            // ── Kamikaze Stealth Strike ───────────────────────────────────────────
+            if (id === 'extraction') {
+                const startY    = ri(60, 320);
+                const waveMag   = ri(20, 70);
+                const waveFreq  = r(0.15, 0.45);
+                const phaseShift = r(0, Math.PI * 2);
+                const enemyMod  = ri(7, 14);
+                const alertPeak = ri(10, 20);
+                const goalTs    = [ri(6,13), ri(20,27)];
+                return `
+import json, random, math
+def plan():
+    steps = []
+    goals = ["Neutralize Air Defense Node", "Confirm BDA Strike"]
+    start_y = ${startY}
+    wave_mag = ${waveMag}
+    wave_freq = ${waveFreq.toFixed(4)}
+    phase = ${phaseShift.toFixed(4)}
+    alert_peak = ${alertPeak}
+    enemy_mod = ${enemyMod}
+    goal_ts = ${JSON.stringify(goalTs)}
+    reroute_active = False
+    reroute_offset = 0
+    for t in range(30):
+        x = t * 26
+        alert_lvl = random.uniform(3.0, 5.0) if t >= alert_peak else random.uniform(0, 2.5)
+        if alert_lvl >= 3.0 and not reroute_active:
+            reroute_active = True
+            reroute_offset = random.choice([-40, 40])
+        y = max(30, min(370, start_y + wave_mag * math.sin(wave_freq * t + phase) + (reroute_offset if reroute_active else 0)))
+        action = "SILENT_RUN" if alert_lvl < 3.0 else "RE_ROUTE_EVADE" if reroute_active else "FULL_BURN"
+        enemy = {"x": x + random.randint(30, 60), "y": y + random.randint(-30, 30)} if t % enemy_mod == 0 else None
+        opt_goal = goals[0] if t == goal_ts[0] else goals[1] if t == goal_ts[1] else None
+        steps.append({"t":t,"x":x,"y":y,"val":alert_lvl,"type":"DET","action":action,"target":"HOT_ZONE","enemy":enemy,"goal":opt_goal,"reroute":reroute_active})
+    return json.dumps(steps)
+plan()`;
+            }
+
+            // ── Terrain-Following Strike Run (NEW) ────────────────────────────────
+            if (id === 'routing') {
+                const targetX = 740;
+                const targetY = ri(60, 340);
+                const numDefenses = ri(3, 5);
+                const startY = ri(100, 300);
+                return `
+import json, random, math
+def plan():
+    steps = []
+    goals = ["Breach Outer Air Defense Ring", "Acquire HVT Lock", "Confirm Kinetic Strike"]
+    target_x = ${targetX}
+    target_y = ${targetY}
+    start_y = ${startY}
+
+    # Fixed obstacles: (center_x, center_y, radius) — air defense zones
+    defenses = [
+        (180, ${ri(80,160)}, ${ri(35,60)}),
+        (340, ${ri(200,320)}, ${ri(35,65)}),
+        (480, ${ri(60,180)}, ${ri(30,55)}),
+        (600, ${ri(180,320)}, ${ri(40,60)}),
+        (680, ${ri(80,200)}, ${ri(25,45)}),
+    ]
+
+    goal_ts = [${ri(4,8)}, ${ri(12,18)}, ${ri(22,28)}]
+    enemy_ts = [${ri(6,12)}, ${ri(16,22)}, ${ri(24,28)}]
+
+    x = 20
+    y = float(start_y)
+    reroute_active = False
+    last_reroute_t = -5
+
+    for t in range(30):
+        # Move toward target in x, steer y toward target_y
+        step_x = (target_x - 20) / 29.0
+        x = 20 + t * step_x
+
+        # Check if on course through a defense zone — if so, evade
+        in_threat = False
+        for (dx, dy, dr) in defenses:
+            dist = math.sqrt((x - dx)**2 + (y - dy)**2)
+            if dist < dr + 15:
+                in_threat = True
+                # Evade: steer away from center
+                if y < dy:
+                    y = max(30, y - random.uniform(10, 22))
+                else:
+                    y = min(370, y + random.uniform(10, 22))
+                break
+
+        if in_threat and not reroute_active:
+            reroute_active = True
+            last_reroute_t = t
+        elif reroute_active and (t - last_reroute_t) > 4:
+            reroute_active = False  # clear after escape
+
+        if not in_threat:
+            # Drift toward target_y
+            dy_pull = (target_y - y) * 0.15
+            y = max(30, min(370, y + dy_pull + random.uniform(-3, 3)))
+
+        action = "RE_ROUTE_EVADE" if in_threat else "TERRAIN_FOLLOW" if not reroute_active else "RETURN_TO_CORRIDOR"
+        enemy_t_list = ${JSON.stringify([...Array(4)].map(()=>ri(5,28)))}
+        enemy = {"x": x + random.randint(-40, 40), "y": y + random.randint(-40, 40)} if t in enemy_t_list else None
+        opt_goal = goals[0] if t == goal_ts[0] else goals[1] if t == goal_ts[1] else goals[2] if t == goal_ts[2] else None
+
+        steps.append({
+            "t": t, "x": round(x, 1), "y": round(y, 1),
+            "val": round(random.uniform(0.2, 1.0) if not in_threat else random.uniform(2.0, 4.5), 2),
+            "type": "THR", "action": action,
+            "target": "HVT_COMPOUND",
+            "enemy": enemy, "goal": opt_goal,
+            "reroute": reroute_active or in_threat,
+            "defenses": [[d[0],d[1],d[2]] for d in defenses],
+            "target_pos": [target_x, target_y]
+        })
+    return json.dumps(steps)
+plan()`;
+            }
+        }
+
+        async function init() {
+            py = await loadPyodide();
+            document.getElementById('status').innerText = "SYSTEM_READY_FOR_ENGAGEMENT";
+            document.getElementById('status').className = "text-[10px] bg-green-900/20 text-green-400 px-4 py-2 border border-green-700 rounded shadow-lg font-bold";
+            loadScenario('recon');
+        }
+
+        function loadScenario(id) { runSimulation(buildScenario(id), id); }
+
+        // ─── Main simulation runner ────────────────────────────────────────────────
+        async function runSimulation(code, scenarioId) {
+            const logDiv    = document.getElementById('event-log');
+            const actionDiv = document.getElementById('action-feed');
+            const goalList  = document.getElementById('goal-list');
+            const badge     = document.getElementById('route-badge');
+
+            logDiv.innerHTML    = ">> UPLOADING MISSION MANIFEST...";
+            actionDiv.innerHTML = "";
+            goalList.innerHTML  = "";
+            badge.classList.add('hidden');
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            try {
+                const result = await py.runPythonAsync(code);
+                const data   = JSON.parse(result);
+                document.getElementById('target-indicator').innerText = "TARGET: " + data[0].target;
+
+                // Draw static terrain features for routing scenario
+                if (scenarioId === 'routing' && data[0].defenses) {
+                    drawTerrain(data[0].defenses, data[0].target_pos);
+                }
+
+                // Collect unique goal strings
+                const seenGoals = new Set();
+                data.forEach(p => { if (p.goal) seenGoals.add(p.goal); });
+                seenGoals.forEach(g => {
+                    const gEl = document.createElement('div');
+                    gEl.id = `goal-${String(g).replace(/\s+/g, '')}`;
+                    gEl.className = "goal-pending flex items-center gap-2";
+                    gEl.innerHTML = `<span>[ ]</span> ${g}`;
+                    goalList.appendChild(gEl);
+                });
+
+                // Staggered render — each step shown after terrain is drawn
+                data.forEach((p, i) => { setTimeout(() => renderStep(p, i, data, scenarioId), i * 130); });
+
+            } catch (e) {
+                logDiv.innerHTML = `<span class="text-red-500">CRITICAL_SYSTEM_ERROR: ${e.message}</span>`;
+            }
+        }
+
+        // ─── Draw static terrain / air-defense zones ──────────────────────────────
+        function drawTerrain(defenses, targetPos) {
+            // Air defense threat circles
+            defenses.forEach(([dx, dy, dr]) => {
+                // Danger zone fill
+                ctx.save();
+                const grad = ctx.createRadialGradient(dx, dy, 0, dx, dy, dr);
+                grad.addColorStop(0, 'rgba(239,68,68,0.18)');
+                grad.addColorStop(1, 'rgba(239,68,68,0.04)');
+                ctx.fillStyle = grad;
+                ctx.beginPath();
+                ctx.arc(dx, dy, dr, 0, Math.PI*2);
+                ctx.fill();
+                // Dashed ring
+                ctx.strokeStyle = 'rgba(239,68,68,0.5)';
+                ctx.lineWidth = 1;
+                ctx.setLineDash([4, 4]);
+                ctx.beginPath();
+                ctx.arc(dx, dy, dr, 0, Math.PI*2);
+                ctx.stroke();
+                ctx.setLineDash([]);
+                // Label
+                ctx.fillStyle = 'rgba(239,68,68,0.7)';
+                ctx.font = 'bold 8px "Fira Code", monospace';
+                ctx.fillText('SAM', dx - 10, dy + 3);
+                ctx.restore();
+            });
+
+            // HVT target marker
+            const [tx, ty] = targetPos;
+            ctx.save();
+            ctx.strokeStyle = '#f43f5e';
+            ctx.lineWidth   = 2;
+            ctx.shadowColor = '#f43f5e';
+            ctx.shadowBlur  = 10;
+            // Crosshair
+            ctx.beginPath(); ctx.moveTo(tx - 12, ty); ctx.lineTo(tx + 12, ty); ctx.stroke();
+            ctx.beginPath(); ctx.moveTo(tx, ty - 12); ctx.lineTo(tx, ty + 12); ctx.stroke();
+            ctx.beginPath(); ctx.arc(tx, ty, 8, 0, Math.PI*2); ctx.stroke();
+            ctx.fillStyle = 'rgba(244,63,94,0.15)';
+            ctx.fill();
+            ctx.shadowBlur = 0;
+            ctx.fillStyle  = '#f43f5e';
+            ctx.font = 'bold 8px "Fira Code", monospace';
+            ctx.fillText('HVT', tx + 12, ty - 6);
+            ctx.restore();
+        }
+
+        // ─── Render a single simulation step ──────────────────────────────────────
+        const HISTORY_WINDOW = 5;  // steps of trail to show
+        const PLAN_WINDOW    = 4;  // lookahead steps to project
+
+        function renderStep(p, i, allData, scenarioId) {
+            const logDiv    = document.getElementById('event-log');
+            const actionDiv = document.getElementById('action-feed');
+            const badge     = document.getElementById('route-badge');
+
+            // ── Route badge ──────────────────────────────────────────────────────
+            if (p.reroute) {
+                badge.classList.remove('hidden');
+                badge.textContent = `RE-ROUTING… T:${p.t}`;
+                logDiv.classList.add('reroute-flash');
+                setTimeout(() => logDiv.classList.remove('reroute-flash'), 500);
+            } else {
+                badge.classList.add('hidden');
+            }
+
+            // ── Route History trail (last HISTORY_WINDOW steps) ──────────────────
+            // Draw fading trail of past positions
+            const trailStart = Math.max(0, i - HISTORY_WINDOW);
+            for (let k = trailStart; k < i; k++) {
+                const prev = allData[k];
+                const next = allData[k + 1];
+                const age  = i - k;                        // 1 = most recent
+                const alpha = (HISTORY_WINDOW - age + 1) / (HISTORY_WINDOW + 1);
+                ctx.save();
+                ctx.globalAlpha = alpha * 0.7;
+                ctx.strokeStyle = prev.reroute ? '#f59e0b' : '#3b82f6';
+                ctx.lineWidth   = 1.5;
+                ctx.beginPath();
+                ctx.moveTo(prev.x, prev.y);
+                ctx.lineTo(next.x, next.y);
+                ctx.stroke();
+                ctx.restore();
+            }
+
+            // ── Projected Plan ahead (dashed, next PLAN_WINDOW steps) ────────────
+            const planEnd = Math.min(allData.length - 1, i + PLAN_WINDOW);
+            if (i < allData.length - 1) {
+                ctx.save();
+                ctx.setLineDash([3, 5]);
+                ctx.strokeStyle = '#22d3ee';
+                ctx.lineWidth   = 1;
+                ctx.globalAlpha = 0.35;
+                ctx.beginPath();
+                ctx.moveTo(p.x, p.y);
+                for (let k = i + 1; k <= planEnd; k++) {
+                    ctx.lineTo(allData[k].x, allData[k].y);
+                }
+                ctx.stroke();
+                ctx.setLineDash([]);
+                ctx.globalAlpha = 1;
+                ctx.restore();
+            }
+
+            // ── Own UAV dot — ALWAYS blue circle (FIX: never inherits hostile red) ─
+            ctx.save();
+            const isRerouting = p.reroute;
+            ctx.fillStyle   = isRerouting ? '#f59e0b' : '#3b82f6';   // amber when re-routing, else blue
+            ctx.shadowColor = isRerouting ? '#f59e0b' : '#3b82f6';
+            ctx.shadowBlur  = 8;
+            ctx.globalAlpha = 1;
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, i === allData.length - 1 ? 6 : 4, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.restore();  // ← restore BEFORE hostile draw — color isolation fix
+
+            // ── Hostile unit — ALWAYS red diamond ───────────────────────────────
+            if (p.enemy) {
+                ctx.save();   // fresh save, never inherits own-UAV state
+                ctx.translate(p.enemy.x, p.enemy.y);
+                ctx.rotate(45 * Math.PI / 180);
+                ctx.fillStyle   = '#ef4444';
+                ctx.shadowColor = '#ef4444';
+                ctx.shadowBlur  = 12;
+                ctx.fillRect(-5, -5, 10, 10);
+                ctx.restore();
+
+                const enemyLog = document.createElement('div');
+                enemyLog.className = "log-line text-red-500 font-bold bg-red-950/20";
+                enemyLog.innerHTML = `>> T:${p.t} | HOSTILE UAV DETECTED @ [${p.enemy.x.toFixed(0)}, ${p.enemy.y.toFixed(0)}]`;
+                logDiv.prepend(enemyLog);
+            }
+
+            // ── Objective marker ─────────────────────────────────────────────────
+            if (p.goal) {
+                ctx.save();
+                ctx.fillStyle   = '#facc15';
+                ctx.shadowColor = '#facc15';
+                ctx.shadowBlur  = 8;
+                ctx.fillRect(p.x - 4, p.y - 20, 8, 8);
+                ctx.restore();
+
+                const goalEl = document.getElementById(`goal-${String(p.goal).replace(/\s+/g, '')}`);
+                if (goalEl) {
+                    goalEl.className = "goal-done font-bold italic";
+                    goalEl.innerHTML = `<span>[✔]</span> ${p.goal}`;
+                }
+
+                const goalChip = document.createElement('div');
+                goalChip.innerHTML = `<span class="action-chip bg-yellow-600 text-black">OBJ_COMPLETE: ${p.goal}</span>`;
+                actionDiv.prepend(goalChip);
+            }
+
+            // ── Log line ─────────────────────────────────────────────────────────
+            const logLine = document.createElement('div');
+            const rerouteTag = p.reroute ? `<span class="text-amber-400 font-bold"> [RE-ROUTE]</span>` : '';
+            logLine.className = "log-line";
+            logLine.innerHTML = `<span class="text-slate-600">T:${p.t}</span> | <span class="text-blue-400">${p.type}:${p.val.toFixed(2)}</span> | <span class="text-white">${p.action}</span>${rerouteTag}`;
+            logDiv.prepend(logLine);
+
+            // ── Action timeline chip ──────────────────────────────────────────────
+            if (i % 5 === 0 || p.enemy || p.reroute) {
+                const chip  = document.createElement('div');
+                const color = p.enemy
+                    ? "bg-red-600"
+                    : p.reroute
+                        ? "bg-amber-600 text-black"
+                        : "bg-slate-800 border border-slate-700";
+                chip.innerHTML = `<span class="action-chip ${color}">${p.enemy ? "HOSTILE_CONTACT" : p.reroute ? "RE-ROUTE_ACTIVE" : p.action}</span> <span class="text-slate-500 ml-2">@ T:${p.t}</span>`;
+                actionDiv.prepend(chip);
+            }
+        }
+
+        init();
+    </script>
+</body>
+</html>
